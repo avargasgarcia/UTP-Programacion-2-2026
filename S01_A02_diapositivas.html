@@ -1,0 +1,939 @@
+<meta charset="utf-8">
+<title>Anatomía de un Algoritmo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F2F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#EBEDF3;
+  --line:#D6D9E4;
+  --ink:#141828;
+  --muted:#5B6278;
+  --accent:#4557C9;
+  --accent-soft:#E3E6F8;
+  --fn:#0B7C71;
+  --fn-soft:#DCF0ED;
+  --imp:#A2620E;
+  --imp-soft:#F6E8D3;
+  --shadow:0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.08);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1120;
+    --surface:#171B2C;
+    --surface-2:#1F2438;
+    --line:#2E3448;
+    --ink:#E8EAF4;
+    --muted:#98A0BA;
+    --accent:#8494F2;
+    --accent-soft:#232A48;
+    --fn:#3FC7B4;
+    --fn-soft:#12312F;
+    --imp:#E9A94A;
+    --imp-soft:#33270F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1120;
+  --surface:#171B2C;
+  --surface-2:#1F2438;
+  --line:#2E3448;
+  --ink:#E8EAF4;
+  --muted:#98A0BA;
+  --accent:#8494F2;
+  --accent-soft:#232A48;
+  --fn:#3FC7B4;
+  --fn-soft:#12312F;
+  --imp:#E9A94A;
+  --imp-soft:#33270F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:"IBM Plex Serif", Georgia, "Times New Roman", serif;font-weight:600}
+p{margin:0}
+code,pre,.mono{font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace}
+
+/* ============ CHROME ============ */
+.rail{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  font-size:12px;
+}
+.rail .id{font-family:"IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rail .id b{color:var(--ink);font-weight:600}
+.rail .spacer{flex:1}
+.btn{
+  font:inherit;font-size:12px;
+  background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.counter{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.counter b{color:var(--ink)}
+
+.progress{height:3px;background:var(--surface-2);position:relative}
+.progress span{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .25s ease}
+
+/* ============ STAGE ============ */
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px}
+.stage{
+  width:min(100%,1180px);
+  aspect-ratio:16/9;
+  max-height:calc(100vh - 150px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  container-type:inline-size;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;
+  padding:4.4cqi 5cqi 4cqi;
+  display:none;
+  flex-direction:column;
+  gap:2.2cqi;
+  overflow-y:auto;
+}
+.slide.on{display:flex}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:1.25cqi;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:1cqi;
+}
+.eyebrow .tick{width:2.6cqi;height:1px;background:var(--line)}
+h2.title{font-size:3.9cqi;line-height:1.12;letter-spacing:-.01em}
+h3.sub{font-size:2.05cqi;line-height:1.25}
+.lead{font-size:1.95cqi;line-height:1.5;color:var(--ink);max-width:62ch}
+.note{font-size:1.5cqi;line-height:1.5;color:var(--muted);max-width:70ch}
+.slide ul{margin:0;padding-left:2.2cqi;display:flex;flex-direction:column;gap:1.1cqi}
+.slide li{font-size:1.8cqi;line-height:1.42}
+.slide li::marker{color:var(--accent)}
+
+/* two-world grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;align-items:start}
+.panel{
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+  padding:2cqi 2.2cqi;
+  display:flex;flex-direction:column;gap:1.2cqi;
+  min-width:0;
+}
+.panel.fn{border-top:3px solid var(--fn)}
+.panel.imp{border-top:3px solid var(--imp)}
+.tag{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+.tag.fn{color:var(--fn)}
+.tag.imp{color:var(--imp)}
+.panel h4{margin:0;font-size:1.85cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.panel p{font-size:1.5cqi;line-height:1.45;color:var(--muted)}
+.panel ul{padding-left:2cqi;gap:.7cqi}
+.panel li{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1.4cqi 1.6cqi;font-size:1.42cqi;line-height:1.55;
+  overflow-x:auto;white-space:pre;
+}
+pre .k{color:var(--accent);font-weight:500}
+pre .c{color:var(--muted);font-style:italic}
+pre .n{color:var(--imp)}
+pre .s{color:var(--fn)}
+.filename{
+  font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted);
+  display:flex;justify-content:space-between;gap:1cqi;
+}
+.filename em{font-style:normal;color:var(--fn)}
+
+/* trace machine */
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqi;align-items:stretch}
+.cell{
+  display:flex;gap:1.2cqi;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+}
+.box{
+  border:2px solid var(--imp);border-radius:6px;background:var(--imp-soft);
+  padding:.8cqi 1.6cqi;font-size:2.4cqi;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;min-width:7cqi;text-align:center;
+}
+.box.flash{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.expr{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;line-height:1.7;
+  color:var(--ink);word-break:break-word;
+}
+.expr .old{color:var(--muted)}
+.steps{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:1cqi;align-items:center;flex-wrap:wrap}
+.ctl{
+  font-family:"IBM Plex Sans",sans-serif;font-size:1.4cqi;
+  padding:.8cqi 1.6cqi;border-radius:6px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;cursor:pointer;
+}
+.ctl.ghost{background:transparent;color:var(--accent)}
+.ctl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctl:disabled{opacity:.45;cursor:default}
+
+/* comparison table */
+table{border-collapse:collapse;width:100%;font-size:1.5cqi}
+th,td{text-align:left;padding:1cqi 1.2cqi;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+thead th.cfn{color:var(--fn)}
+thead th.cimp{color:var(--imp)}
+tbody th{font-weight:500;color:var(--muted);font-family:"IBM Plex Sans",sans-serif}
+
+/* cover */
+.cover{justify-content:center;gap:1.6cqi;background:
+  linear-gradient(105deg, var(--fn-soft) 0%, transparent 42%),
+  linear-gradient(255deg, var(--imp-soft) 0%, transparent 42%);}
+.cover .inst{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);line-height:1.7;letter-spacing:.04em}
+.cover h1{font-size:5.4cqi;line-height:1.05;letter-spacing:-.02em;max-width:20ch}
+.cover .course{font-size:2cqi;color:var(--accent);font-weight:600}
+.cover .who{display:flex;gap:3cqi;flex-wrap:wrap;font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+.cover .who b{display:block;color:var(--ink);font-weight:600;font-size:1.75cqi}
+
+/* q&a */
+.qa{display:flex;flex-direction:column;gap:1.4cqi}
+.q{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi}
+.q p{font-size:1.6cqi;line-height:1.4}
+.q .ans{font-size:1.45cqi;color:var(--fn);line-height:1.45;display:none}
+.q.open .ans{display:block}
+.q button{align-self:flex-start;font:inherit;font-size:1.25cqi;background:none;border:1px solid var(--line);border-radius:5px;padding:.5cqi 1.1cqi;color:var(--muted);cursor:pointer}
+.q button:hover{color:var(--accent);border-color:var(--accent)}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:1.4cqi 1.8cqi;border-radius:0 7px 7px 0;font-size:1.55cqi;line-height:1.45;
+}
+.refs{font-size:1.3cqi;line-height:1.6;color:var(--muted)}
+.refs b{color:var(--ink);font-weight:500}
+
+/* notes drawer */
+.notes{
+  width:min(100%,1180px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);padding:14px 18px;
+  font-size:14px;line-height:1.55;color:var(--ink);
+  display:none;
+}
+.notes.on{display:block}
+.notes h5{margin:0 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notes p{color:var(--muted)}
+.notes .time{color:var(--accent);font-family:"IBM Plex Mono",monospace}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+@media (max-width:720px){
+  .duo,.trace{grid-template-columns:1fr}
+  .stage{aspect-ratio:auto;height:auto;min-height:520px}
+  .slide{position:relative;padding:22px}
+  .slide:not(.on){display:none}
+}
+
+/* =====================================================================
+   AÑADIDOS DE LA CÁPSULA 1.2
+   Solo se agregan componentes nuevos; ningún token de color ni tamaño
+   de la cápsula 1.1 se modifica.
+   ===================================================================== */
+
+/* panel de interfaz: ni paradigma ni máquina, es el andamiaje del curso */
+.panel.ui{border-top:3px solid var(--accent)}
+.tag.ui{color:var(--accent)}
+
+/* diapositivas con más piezas: se reduce la separación vertical */
+.slide.tight{gap:1.6cqi}
+
+/* retícula 2x2 de los cuatro pilares */
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:1.6cqi;align-items:stretch}
+.quad .panel{padding:1.4cqi 1.6cqi;gap:.7cqi}
+.quad h4{font-size:1.7cqi}
+.quad p{font-size:1.38cqi;line-height:1.4}
+.pnum{font-family:"IBM Plex Mono",monospace;font-size:1.1cqi;letter-spacing:.12em;color:var(--muted)}
+.deja{font-size:1.3cqi;line-height:1.35;color:var(--ink);border-top:1px solid var(--line);padding-top:.6cqi}
+.deja b{color:var(--fn);font-weight:600}
+
+/* tabla compacta dentro de un panel (convención del curso) */
+.panel table{font-size:1.35cqi}
+.panel th,.panel td{padding:.5cqi .7cqi}
+.convtab td.sym{font-family:"IBM Plex Mono",monospace;color:var(--fn);font-weight:600;white-space:nowrap}
+
+/* pseudocódigo que se construye pilar a pilar */
+pre.build{font-size:1.18cqi;line-height:1.5;min-height:20cqi}
+pre.narrow{font-size:1.3cqi}
+pre.tiny{font-size:1.18cqi}
+pre .new{background:var(--fn-soft);border-radius:3px;box-shadow:0 0 0 .25cqi var(--fn-soft)}
+.pilartxt{font-size:1.42cqi;line-height:1.45;color:var(--ink)}
+.pilartxt b{color:var(--fn)}
+.slide .pilarlist{padding-left:2cqi;gap:.45cqi;margin:.7cqi 0 0}
+.slide .pilarlist li{font-size:1.32cqi;line-height:1.35;color:var(--ink)}
+
+/* constructor / verificador de pseudocódigo */
+.chips{display:flex;flex-direction:column;gap:.5cqi}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;text-align:left;line-height:1.3;
+  background:var(--surface);color:var(--ink);
+  border:1px solid var(--line);border-radius:6px;
+  padding:.62cqi .9cqi;cursor:pointer;
+  white-space:pre;overflow-x:auto;
+}
+.chip:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chip:disabled{opacity:.32;cursor:default;text-decoration:line-through}
+.chip.wrong{border-color:var(--imp);background:var(--imp-soft);animation:shake .32s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-.5cqi)}75%{transform:translateX(.5cqi)}}
+ol.slots{
+  margin:0;padding-left:3cqi;display:flex;flex-direction:column;gap:.5cqi;
+  font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;flex:1;
+}
+ol.slots li{color:var(--fn);line-height:1.35;white-space:pre}
+ol.slots li::marker{color:var(--muted);font-size:1.05cqi}
+.msg{
+  font-size:1.32cqi;line-height:1.4;
+  border-left:3px solid var(--line);background:var(--surface);
+  padding:.8cqi 1.1cqi;border-radius:0 6px 6px 0;
+}
+.msg.err{border-left-color:var(--imp);background:var(--imp-soft)}
+.msg.ok{border-left-color:var(--fn);background:var(--fn-soft)}
+.msg b{font-weight:600}
+
+/* salida real revelada bajo botón */
+.reveal{display:none}
+.reveal.on{display:block}
+.badge{
+  font-family:"IBM Plex Mono",monospace;font-size:1.1cqi;letter-spacing:.08em;
+  text-transform:uppercase;font-weight:600;
+  color:var(--fn);border:1px solid var(--fn);border-radius:4px;
+  padding:.2cqi .7cqi;display:inline-block;
+}
+.badge.warn{color:var(--imp);border-color:var(--imp)}
+
+/* pie con los criterios de la rúbrica */
+.rubrica{
+  border-top:1px solid var(--line);padding-top:1cqi;
+  display:flex;gap:1.6cqi;flex-wrap:wrap;font-size:1.3cqi;color:var(--muted);
+}
+.rubrica b{color:var(--accent);font-weight:600}
+
+@media (max-width:720px){
+  .quad{grid-template-columns:1fr}
+}
+</style>
+
+<div class="rail">
+  <span class="id"><b>IS284</b> · Programación II</span>
+  <span class="id">Semana 1 · Cápsula 1.2</span>
+  <span class="spacer"></span>
+  <span class="counter"><b id="cur">1</b> / 10</span>
+  <button class="btn" id="prev" type="button">← Anterior</button>
+  <button class="btn" id="next" type="button">Siguiente →</button>
+  <button class="btn" id="toggleNotes" type="button" aria-pressed="false">Notas (N)</button>
+</div>
+<div class="progress"><span id="bar" style="width:10%"></span></div>
+
+<div class="wrap">
+<div class="stage" id="stage">
+
+<!-- 1 ............................................................. -->
+<section class="slide cover on" data-t="0:19">
+  <p class="inst">UNIVERSIDAD TECNOLÓGICA DE PEREIRA<br>Facultad de Ingenierías · Ingeniería de Sistemas y Computación</p>
+  <p class="course">Programación II · IS284 · Semana 1 · Cápsula 1.2</p>
+  <h1>Los seudolenguajes: anatomía de un algoritmo</h1>
+  <div class="who">
+    <span>Docente<b>Ing. Andres Vargas</b></span>
+    <span>Duración<b>7 minutos</b></span>
+    <span>Requisito<b>Cápsula 1.1</b></span>
+  </div>
+</section>
+
+<!-- 2 ............................................................. -->
+<section class="slide" data-t="0:42">
+  <p class="eyebrow"><span class="tick"></span> De dónde venimos · a dónde vamos</p>
+  <h2 class="title">Ya sabemos <em>qué</em> es lo imperativo. Falta en qué se escribe.</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Lo que dejó la cápsula 1.1</span>
+      <ul>
+        <li>Un paradigma es un <b>modelo de cómputo</b> más una forma de expresar la solución</li>
+        <li>Lo imperativo describe <b>cómo</b> se llega al resultado: una secuencia de instrucciones</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">La pregunta que queda abierta</span>
+      <ul>
+        <li>¿En qué se escribe esa secuencia <b>mientras uno la piensa</b>?</li>
+        <li>Escribir directo en C mezcla dos problemas: <b>qué hay que hacer</b> y <b>cómo se escribe</b></li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout"><b>Objetivo de esta cápsula:</b> al terminar, usted escribe un algoritmo lineal en la convención de pseudocódigo del curso, con encabezado, declaración, secuencia correcta y salida —los cuatro criterios con que se califica la entrega.</div>
+</section>
+
+<!-- 3 ............................................................. -->
+<section class="slide" data-t="0:49">
+  <p class="eyebrow"><span class="tick"></span> Concepto 1 de 2 · la notación</p>
+  <h2 class="title">Un algoritmo y la notación en la que se escribe</h2>
+  <p class="lead">Un <b>algoritmo</b> es una secuencia <b>finita</b>, <b>ordenada</b> y <b>no ambigua</b> de instrucciones que, a partir de unos datos de entrada, produce un resultado.</p>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Las condiciones, una por una</span>
+      <ul>
+        <li><b>Finita:</b> si no termina, no es un algoritmo</li>
+        <li><b>Ordenada:</b> cambiar dos líneas cambia el resultado</li>
+        <li><b>No ambigua:</b> una instrucción, una sola interpretación</li>
+        <li><b>Con entrada y salida:</b> lo que no se escribe, no existe</li>
+      </ul>
+    </div>
+    <div class="panel ui">
+      <span class="tag ui">Por qué se escribe primero en pseudocódigo</span>
+      <ul>
+        <li><span class="mono">1</span> Separa el <b>razonamiento</b> de la <b>sintaxis</b></li>
+        <li><span class="mono">2</span> Lo lee cualquier persona, no solo quien sabe C</li>
+        <li><span class="mono">3</span> No depende de compilador ni de entorno: basta un lápiz</li>
+        <li><span class="mono">4</span> Se traduce a cualquier lenguaje</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">Un <b>pseudolenguaje</b> es una notación de reglas fijas, intermedia entre el lenguaje natural y un lenguaje de programación. No tiene compilador, y por eso se verifica a mano. Los lenguajes pasan; los algoritmos quedan.</p>
+</section>
+
+<!-- 4 ............................................................. -->
+<section class="slide tight" data-t="0:48">
+  <p class="eyebrow"><span class="tick"></span> Concepto 2 de 2 · la convención del curso</p>
+  <h2 class="title">Estas son las reglas, y son las que se califican</h2>
+  <div class="duo">
+    <div class="panel ui">
+      <span class="tag ui">Convención de pseudocódigo · IS284</span>
+      <table class="convtab">
+        <tbody>
+          <tr><th>Encabezado</th><td class="sym">Algoritmo &lt;Nombre&gt;</td></tr>
+          <tr><th>Bloque</th><td class="sym">Inicio … Fin</td></tr>
+          <tr><th>Declaración</th><td class="sym">Real base, altura</td></tr>
+          <tr><th>Entrada</th><td class="sym">Leer</td></tr>
+          <tr><th>Salida</th><td class="sym">Escribir</td></tr>
+          <tr><th>Asignación</th><td class="sym">←</td></tr>
+          <tr><th>Indentación</th><td class="sym">dos espacios</td></tr>
+          <tr><th>Comentario</th><td class="sym">//</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel fn">
+      <div class="filename"><span>01_area_rectangulo.txt</span><em>versión compacta · completa en la carpeta de código</em></div>
+      <pre class="narrow"><span class="k">Algoritmo</span> AreaRectangulo
+<span class="k">Inicio</span>
+  Real base, altura, area      <span class="c">// declaración</span>
+  <span class="k">Leer</span> base, altura            <span class="c">// entrada</span>
+  area ← base * altura         <span class="c">// proceso</span>
+  <span class="k">Escribir</span> <span class="s">"Área: "</span>, area      <span class="c">// salida</span>
+<span class="k">Fin</span></pre>
+      <p class="note"><b>La flecha apunta a la izquierda</b> para que nadie la lea como una igualdad: primero se calcula la derecha, y con ese valor se sobrescribe la variable de la izquierda.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 ............................................................. -->
+<section class="slide tight" data-t="0:50">
+  <p class="eyebrow"><span class="tick"></span> Cómo se llega del enunciado al algoritmo</p>
+  <h2 class="title">Pensamiento computacional: los cuatro pilares</h2>
+  <div class="quad">
+    <div class="panel fn">
+      <span class="pnum">PILAR 1</span>
+      <h4>Descomposición</h4>
+      <p>Partir el problema en subproblemas que se puedan resolver y verificar por separado.</p>
+      <p class="deja">Deja: <b>una lista de pasos</b></p>
+    </div>
+    <div class="panel fn">
+      <span class="pnum">PILAR 2</span>
+      <h4>Reconocimiento de patrones</h4>
+      <p>Identificar qué tiene este problema en común con otros ya resueltos y reutilizar la forma.</p>
+      <p class="deja">Deja: <b>el nombre de la forma</b> — «esto es un algoritmo lineal»</p>
+    </div>
+    <div class="panel fn">
+      <span class="pnum">PILAR 3</span>
+      <h4>Abstracción</h4>
+      <p>Decidir qué datos y qué detalles del enunciado son relevantes, y descartar los demás.</p>
+      <p class="deja">Deja: <b>la línea de declaración</b></p>
+    </div>
+    <div class="panel fn">
+      <span class="pnum">PILAR 4</span>
+      <h4>Diseño de algoritmos</h4>
+      <p>Expresar la solución como una secuencia finita, ordenada y no ambigua de instrucciones.</p>
+      <p class="deja">Deja: <b>el pseudocódigo terminado</b></p>
+    </div>
+  </div>
+  <p class="refs"><b>Origen del término.</b> Wing, J. M. (2006). <i>Computational Thinking</i>. <i>Communications of the ACM</i>, 49(3), marzo de 2006, pp. 33–35. El artículo lo reivindica como una <b>habilidad general</b>, útil para cualquier persona, y no como una destreza exclusiva de quien programa.</p>
+</section>
+
+<!-- 6 ............................................................. -->
+<section class="slide tight" data-t="0:55">
+  <p class="eyebrow"><span class="tick"></span> Taller · pulse cada pilar y vea construirse el algoritmo</p>
+  <h2 class="title">Los cuatro pilares sobre un enunciado real</h2>
+  <div class="trace">
+    <div class="panel ui">
+      <span class="tag ui">Enunciado en lenguaje natural</span>
+      <p class="note">«En la papelería del barrio, el 14 de marzo, doña Rosa compró 3 cuadernos a 12 500 pesos cada uno y pagó en efectivo. Calcule el total que debe pagar si al subtotal se le suma el IVA del 19 %.»</p>
+      <p class="pilartxt" id="pilarTxt">Pulse <b>Descomponer</b> para empezar. Los botones se habilitan en orden, porque el orden de los pilares es parte del método.</p>
+      <ul class="pilarlist" id="pilarList"></ul>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">Pseudocódigo en construcción</span>
+      <pre class="build" id="pcode">Algoritmo CostoTotalConIva
+Inicio
+  ...
+Fin</pre>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="ctl" id="p1" type="button">1 · Descomponer</button>
+    <button class="ctl" id="p2" type="button" disabled>2 · Patrón</button>
+    <button class="ctl" id="p3" type="button" disabled>3 · Abstraer</button>
+    <button class="ctl" id="p4" type="button" disabled>4 · Algoritmo</button>
+    <button class="ctl ghost" id="pReset" type="button">Reiniciar</button>
+    <span class="steps" id="pCount">pilar 0 de 4</span>
+  </div>
+</section>
+
+<!-- 7 ............................................................. -->
+<section class="slide tight" data-t="0:41">
+  <p class="eyebrow"><span class="tick"></span> Constructor · pulse las líneas en el orden correcto</p>
+  <h2 class="title">¿Por qué la secuencia no es negociable?</h2>
+  <div class="trace">
+    <div class="panel ui">
+      <span class="tag ui">Líneas por colocar · desordenadas</span>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">Algoritmo en construcción</span>
+      <ol class="slots" id="slots"></ol>
+      <p class="msg" id="msg">Empiece por la línea que todo algoritmo necesita primero. Si se equivoca, la página le dice <b>por qué</b> esa línea no puede ir todavía.</p>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="ctl ghost" id="undo" type="button">Deshacer</button>
+    <button class="ctl ghost" id="cReset" type="button">Reiniciar</button>
+    <span class="steps" id="cCount">0 de 7 líneas colocadas</span>
+  </div>
+</section>
+
+<!-- 8 ............................................................. -->
+<section class="slide tight" data-t="0:43">
+  <p class="eyebrow"><span class="tick"></span> Comprobación · demostración del docente</p>
+  <h2 class="title">El mismo algoritmo, traducido a un lenguaje real</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Pseudocódigo del curso · lo que usted escribe</span>
+      <pre><span class="c">// PROCESO · calcular</span>
+fahrenheit ← celsius * <span class="n">9</span> / <span class="n">5</span> + <span class="n">32</span></pre>
+      <p class="note">Con <span class="mono">celsius = 25</span> la prueba de escritorio da <b>77.0</b>, en papel y sin compilador.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">C99 · lo que hace la máquina</span>
+      <pre class="tiny"><span class="k">void</span> celsiusAFahrenheit(<span class="k">double</span> c)
+{
+    <span class="k">double</span> f = c * <span class="n">9.0</span> / <span class="n">5.0</span> + <span class="n">32.0</span>;
+    printf(<span class="s">"%.1f C equivalen a %.1f F\n"</span>, c, f);
+}</pre>
+      <p class="note">Cambia la envoltura —tipos, llaves, punto y coma—; <b>no cambia el algoritmo</b>.</p>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="ctl" id="salidaBtn" type="button">Ver la salida real</button>
+    <span class="badge warn">Adelanto del docente · usted no escribe C en la semana 1</span>
+  </div>
+  <div class="reveal" id="salidaBox">
+    <div class="filename"><span>algoritmos_lineales.c</span><em>gcc -std=c99 -Wall -Wextra -pedantic · sin advertencias · salida real</em></div>
+    <pre>Area del rectangulo (8.0 x 3.5) = 28.00
+25.0 C equivalen a 77.0 F
+Promedio de 4.2, 3.8 y 4.5 = 4.17
+Subtotal = 37500.00 | IVA (19%) = 7125.00 | Total = 44625.00</pre>
+  </div>
+</section>
+
+<!-- 9 ............................................................. -->
+<section class="slide tight" data-t="0:36">
+  <p class="eyebrow"><span class="tick"></span> Síntesis</p>
+  <h2 class="title">Cada pilar deja un rastro y se entrena con un hábito</h2>
+  <table>
+    <thead>
+      <tr><th>Pilar</th><th>Qué le exige</th><th class="cfn">Dónde se ve en el pseudocódigo</th><th>Hábito que lo entrena</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>Descomposición</th><td>Partir en pasos verificables</td><td class="mono">los comentarios que separan entrada, proceso y salida</td><td>Explicarlo en voz alta a alguien más</td></tr>
+      <tr><th>Reconocimiento de patrones</th><td>Ver a qué se parece</td><td class="mono">el orden leer → calcular → escribir</td><td>Reescribir más corto un algoritmo de la semana pasada</td></tr>
+      <tr><th>Abstracción</th><td>Decidir qué importa</td><td class="mono">la línea de declaración</td><td>Nombrar las cosas antes de operarlas</td></tr>
+      <tr><th>Diseño de algoritmos</th><td>Escribir la secuencia</td><td class="mono">todo el bloque Inicio … Fin</td><td>Buscar el caso que rompe el algoritmo</td></tr>
+    </tbody>
+  </table>
+  <div class="rubrica">
+    <span>Rúbrica de la entrega:</span>
+    <span><b>1</b> Encabezado</span>
+    <span><b>2</b> Declaración</span>
+    <span><b>3</b> Secuencia correcta</span>
+    <span><b>4</b> Salida</span>
+    <span>· los ocho hábitos, con su forma de comprobación, están en el documento de lectura</span>
+  </div>
+</section>
+
+<!-- 10 ............................................................ -->
+<section class="slide" data-t="0:34">
+  <p class="eyebrow"><span class="tick"></span> Cierre · qué aprendimos</p>
+  <h2 class="title">Tres ideas y tres preguntas</h2>
+  <div class="duo">
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">Qué aprendimos</span>
+      <ul>
+        <li>El pseudocódigo es <b>donde se piensa</b> el algoritmo, no la documentación de algo ya pensado</li>
+        <li>El <b>pensamiento computacional</b> tiene cuatro pilares, y los cuatro dejan rastro en el papel</li>
+        <li>Un algoritmo <b>se verifica a mano</b>, con una prueba de escritorio, antes de que una máquina lo ejecute</li>
+      </ul>
+    </div>
+    <div class="panel qa">
+      <span class="tag" style="color:var(--accent)">Autoevaluación</span>
+      <div class="q">
+        <p>1 · ¿Por qué la asignación se escribe <span class="mono">←</span> y no <span class="mono">=</span>?</p>
+        <button type="button">Ver respuesta</button>
+        <p class="ans">Porque no afirma una igualdad: ordena calcular la expresión de la derecha y sobrescribir con ese valor la variable de la izquierda. La flecha tiene dirección; el signo igual, no.</p>
+      </div>
+      <div class="q">
+        <p>2 · Si no hay compilador, ¿cómo se sabe que el algoritmo está bien?</p>
+        <button type="button">Ver respuesta</button>
+        <p class="ans">Con una prueba de escritorio: se ejecuta a mano con un caso concreto, anotando el valor de cada variable después de cada instrucción, y se compara con el resultado esperado.</p>
+      </div>
+      <div class="q">
+        <p>3 · ¿Cuál de los cuatro pilares produce la línea de declaración?</p>
+        <button type="button">Ver respuesta</button>
+        <p class="ans">La abstracción: decidir qué datos importan y cuáles se descartan es exactamente lo que se materializa al nombrar y tipar las variables.</p>
+      </div>
+    </div>
+  </div>
+  <p class="refs"><b>Lecturas recomendadas.</b> Wing, J. M. (2006). <i>Computational Thinking</i>. <i>Communications of the ACM</i>, 49(3), pp. 33–35. · Joyanes Aguilar, L. <i>Programación en C</i>, McGraw Hill — capítulo introductorio sobre diseño de algoritmos. · Deitel, P. y Deitel, H. <i>Cómo programar en C</i>, Pearson. · Documento de lectura <span class="mono">S01_A02_lectura.md</span>, secciones 5 y 6.</p>
+</section>
+
+</div>
+
+<div class="notes" id="notesBox">
+  <h5>Notas del presentador · <span class="time" id="notesTime"></span></h5>
+  <p id="notesText"></p>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var notesBox = document.getElementById('notesBox');
+  var notesText = document.getElementById('notesText');
+  var notesTime = document.getElementById('notesTime');
+
+  var NOTES = [
+    "Preséntese y anuncie el recorrido: en siete minutos veremos en qué se escribe un algoritmo mientras uno lo piensa, y cómo se llega hasta él. No prometa más de lo que la cápsula cubre.",
+    "Enlace con la cápsula 1.1 y deje la pregunta abierta en la columna derecha. Lea el objetivo despacio y textualmente: nombra los cuatro criterios con los que se califica la entrega escrita.",
+    "Defina algoritmo antes de hablar de notación. No enumere las cuatro razones a la misma velocidad: apoye la primera y la cuarta, que son las que el estudiante recuerda.",
+    "Deténgase en la flecha y explique su dirección; es el punto que retoma la cápsula 1.3. Al terminar, recorra el algoritmo señalando los cuatro criterios de la rúbrica.",
+    "Atribuya el término con los datos completos: Wing, Communications of the ACM, 2006. Insista en la palabra «general»: es lo que separa esta cápsula de un curso de programación. No se extienda en cada pilar; la siguiente diapositiva los muestra funcionando.",
+    "Pulse el primer botón sin hablar y deje un segundo de silencio. En el tercer pilar lea en voz alta los datos que se descartan: ahí la abstracción se vuelve concreta. No pulse los cuatro botones seguidos.",
+    "Equivóquese a propósito: el mensaje de error es el contenido de la diapositiva, no un accidente. Pulse la línea equivocada con calma y lea el mensaje en voz alta.",
+    "Diga en voz alta que esto es demostración suya y no materia evaluable. Antes de pulsar el botón, pregunte cuánto debería dar; deje un segundo antes de revelar y después lea los cuatro números.",
+    "No lea la tabla completa: escoja abstracción y diseño de algoritmos, y deje el resto como repaso. Mencione que los hábitos son ocho y que cada uno trae su forma de comprobación.",
+    "Cierre con las tres ideas y deje las preguntas en pantalla mientras enuncia la actividad: diez preguntas más dos algoritmos en pseudocódigo, con la rúbrica de cuatro criterios. Mantenga las respuestas ocultas."
+  ];
+
+  function show(n){
+    if(n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('on');
+    slides[i].scrollTop = 0;
+    cur.textContent = String(i + 1);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    notesText.textContent = NOTES[i];
+    notesTime.textContent = slides[i].getAttribute('data-t');
+  }
+
+  document.getElementById('next').addEventListener('click', function(){ show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function(){ show(i - 1); });
+  var tn = document.getElementById('toggleNotes');
+  tn.addEventListener('click', function(){
+    var on = notesBox.classList.toggle('on');
+    tn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.target && (e.target.tagName === 'BUTTON') && (e.key === ' ' || e.key === 'Enter')) return;
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ show(i - 1); }
+    else if(e.key === 'n' || e.key === 'N'){ tn.click(); }
+  });
+
+  /* =================================================================
+     Diapositiva 6 · taller de descomposición
+     Cada pilar añade su parte al pseudocódigo; las líneas nuevas
+     quedan destacadas. El algoritmo final es el de
+     S01_A02_codigo/04_costo_total_con_iva.txt
+     ================================================================= */
+
+  var K = function(s){ return '<span class="k">' + s + '</span>'; };
+  var C = function(s){ return '<span class="c">' + s + '</span>'; };
+  var S = function(s){ return '<span class="s">' + s + '</span>'; };
+  var N = function(s){ return '<span class="n">' + s + '</span>'; };
+
+  /* cada etapa: lista de [html, esNueva] */
+  var ETAPAS = [
+    /* 0 · estado inicial, antes de cualquier pilar */
+    [[K('Algoritmo') + ' CostoTotalConIva', 0],
+     [K('Inicio'), 0],
+     ['  ' + C('// todavía no hemos pensado nada'), 0],
+     [K('Fin'), 0]],
+
+    /* 1 · descomposición */
+    [[K('Algoritmo') + ' CostoTotalConIva', 0],
+     [K('Inicio'), 0],
+     ['  ' + C('// 1. obtener el precio unitario y la cantidad'), 1],
+     ['  ' + C('// 2. calcular el subtotal'), 1],
+     ['  ' + C('// 3. calcular el IVA'), 1],
+     ['  ' + C('// 4. sumar y mostrar el total'), 1],
+     [K('Fin'), 0]],
+
+    /* 2 · reconocimiento de patrones */
+    [[K('Algoritmo') + ' CostoTotalConIva', 0],
+     [K('Inicio'), 0],
+     ['  ' + C('// ENTRADA · leer'), 1],
+     ['  ' + C('//   1. precio unitario y cantidad'), 0],
+     ['  ' + C('// PROCESO · calcular'), 1],
+     ['  ' + C('//   2. subtotal   3. IVA'), 0],
+     ['  ' + C('// SALIDA · escribir'), 1],
+     ['  ' + C('//   4. total'), 0],
+     [K('Fin'), 0]],
+
+    /* 3 · abstracción */
+    [[K('Algoritmo') + ' CostoTotalConIva', 0],
+     [K('Inicio'), 0],
+     ['  Real precioUnitario, tasaIva, subtotal, iva, total', 1],
+     ['  Entero cantidad', 1],
+     ['  ' + C('// ENTRADA · leer'), 0],
+     ['  ' + C('//   1. precio unitario y cantidad'), 0],
+     ['  ' + C('// PROCESO · calcular'), 0],
+     ['  ' + C('//   2. subtotal   3. IVA'), 0],
+     ['  ' + C('// SALIDA · escribir'), 0],
+     ['  ' + C('//   4. total'), 0],
+     [K('Fin'), 0]],
+
+    /* 4 · diseño del algoritmo */
+    [[K('Algoritmo') + ' CostoTotalConIva', 0],
+     [K('Inicio'), 0],
+     ['  Real precioUnitario, tasaIva, subtotal, iva, total', 0],
+     ['  Entero cantidad', 0],
+     ['  ' + K('Leer') + ' precioUnitario, cantidad', 1],
+     ['  tasaIva  ← ' + N('0.19'), 1],
+     ['  subtotal ← precioUnitario * cantidad', 1],
+     ['  iva      ← subtotal * tasaIva', 1],
+     ['  total    ← subtotal + iva', 1],
+     ['  ' + K('Escribir') + ' ' + S('"Total a pagar: "') + ', total', 1],
+     [K('Fin'), 0]]
+  ];
+
+  var PILAR_TXT = [
+    'Pulse <b>Descomponer</b> para empezar. Los botones se habilitan en orden, porque el orden de los pilares es parte del método.',
+    '<b>Pilar 1 · Descomposición.</b> Partir el enunciado en pasos mínimos, cada uno verificable por separado. La descomposición ya es el esqueleto del algoritmo:',
+    '<b>Pilar 2 · Reconocimiento de patrones.</b> Esto se parece al área del rectángulo y al promedio de tres notas. Los tres tienen la misma forma:',
+    '<b>Pilar 3 · Abstracción.</b> De los ocho datos del enunciado, solo tres entran al algoritmo. La prueba es una sola pregunta: si cambio este dato, ¿cambia el resultado?',
+    '<b>Pilar 4 · Diseño de algoritmos.</b> Ahora, y solo ahora, se escriben las instrucciones en la notación del curso. Cada paso usa lo que produjo el anterior:'
+  ];
+
+  var PILAR_LIST = [
+    [],
+    ['1. Obtener el precio unitario y la cantidad',
+     '2. Calcular el subtotal',
+     '3. Calcular el IVA sobre el subtotal',
+     '4. Sumar y mostrar el total'],
+    ['leer → calcular → escribir',
+     'Tiene nombre: algoritmo lineal o secuencial',
+     'Saberlo decide la organización antes de escribir una línea'],
+    ['Se conservan: precio unitario · cantidad · tasa de IVA',
+     'Se descartan: la papelería · el 14 de marzo · doña Rosa · el pago en efectivo · que sean cuadernos',
+     'Y tres nombres nuevos que el enunciado no trae: subtotal, iva, total'],
+    ['El subtotal necesita el precio y la cantidad',
+     'El IVA necesita el subtotal',
+     'El total necesita los dos: la secuencia no es negociable',
+     'Prueba de escritorio: 12 500 × 3 = 37 500 · IVA 7 125 · total 44 625']
+  ];
+
+  var etapa = 0;
+  var pcode = document.getElementById('pcode');
+  var pilarTxt = document.getElementById('pilarTxt');
+  var pilarList = document.getElementById('pilarList');
+  var pCount = document.getElementById('pCount');
+  var pBtns = [document.getElementById('p1'), document.getElementById('p2'),
+               document.getElementById('p3'), document.getElementById('p4')];
+
+  function pintaTaller(){
+    var lineas = ETAPAS[etapa].map(function(l){
+      return l[1] ? '<span class="new">' + l[0] + '</span>' : l[0];
+    });
+    pcode.innerHTML = lineas.join('\n');
+    pilarTxt.innerHTML = PILAR_TXT[etapa];
+    pilarList.innerHTML = PILAR_LIST[etapa].map(function(t){
+      return '<li>' + t + '</li>';
+    }).join('');
+    pCount.textContent = 'pilar ' + etapa + ' de 4';
+    for(var k = 0; k < 4; k++){
+      pBtns[k].disabled = (k !== etapa);
+    }
+  }
+
+  pBtns.forEach(function(b, k){
+    b.addEventListener('click', function(){
+      if(etapa === k){ etapa = k + 1; pintaTaller(); }
+    });
+  });
+  document.getElementById('pReset').addEventListener('click', function(){
+    etapa = 0; pintaTaller();
+  });
+
+  /* =================================================================
+     Diapositiva 7 · constructor y verificador de pseudocódigo
+     Algoritmo de S01_A02_codigo/03_promedio_tres_notas.txt
+     ================================================================= */
+
+  var LINEAS = [
+    'Algoritmo PromedioTresNotas',
+    'Inicio',
+    '  Real nota1, nota2, nota3, promedio',
+    '  Leer nota1, nota2, nota3',
+    '  promedio ← (nota1 + nota2 + nota3) / 3',
+    '  Escribir "El promedio es: ", promedio',
+    'Fin'
+  ];
+  /* orden en que se muestran los botones: desordenado a propósito */
+  var BARAJA = [3, 6, 4, 0, 5, 2, 1];
+
+  var POR_QUE_SI = [
+    'Correcto. Todo algoritmo empieza por su encabezado: el nombre con el que se lo identifica. <b>Criterio 1 de la rúbrica.</b>',
+    'Correcto. <b>Inicio</b> abre el bloque. Ninguna instrucción puede quedar fuera de Inicio … Fin.',
+    'Correcto. Antes de usar un dato hay que nombrarlo y decir de qué tipo es: abstracción hecha línea. <b>Criterio 2.</b>',
+    'Correcto. Primero entran los datos. Ninguna operación puede usar lo que todavía no ha llegado.',
+    'Correcto. Se calcula antes de mostrar. <b>Criterio 3: secuencia correcta.</b>',
+    'Correcto. La salida va al final, y con un rótulo que dice qué es ese número. <b>Criterio 4.</b>',
+    '<b>Algoritmo completo y correcto.</b> Los cuatro criterios de la rúbrica están presentes: encabezado, declaración, secuencia y salida.'
+  ];
+
+  var POR_QUE_NO = [
+    'Falta el <b>encabezado</b>: antes de cualquier instrucción hay que decir de qué algoritmo se trata. Es el criterio 1 de la rúbrica.',
+    'El encabezado ya está, pero el bloque todavía no se ha abierto: lo siguiente es <b>Inicio</b>.',
+    'Las variables aún no existen. Antes de leer o calcular hay que <b>declararlas</b> con su tipo.',
+    'Las variables están declaradas pero vacías: hay que <b>leer</b> los datos. No se puede calcular con lo que no ha entrado.',
+    'Los datos ya entraron, pero nadie los ha usado: falta la línea que <b>calcula</b> el promedio. Primero se calcula, después se muestra.',
+    'El promedio ya está calculado; ahora sí se puede <b>escribir</b>. Un algoritmo que calcula y no muestra nada es, desde afuera, igual a uno que no hizo nada.',
+    'Ya está todo hecho: solo falta cerrar con <b>Fin</b> el bloque que abrió Inicio.'
+  ];
+
+  var puestas = [];
+  var chipsBox = document.getElementById('chips');
+  var slotsBox = document.getElementById('slots');
+  var msgBox = document.getElementById('msg');
+  var cCount = document.getElementById('cCount');
+  var MSG_INICIAL = 'Empiece por la línea que todo algoritmo necesita primero. Si se equivoca, la página le dice <b>por qué</b> esa línea no puede ir todavía.';
+
+  function pintaConstructor(){
+    slotsBox.innerHTML = '';
+    puestas.forEach(function(id){
+      var li = document.createElement('li');
+      li.textContent = LINEAS[id];
+      slotsBox.appendChild(li);
+    });
+    cCount.textContent = puestas.length + ' de 7 líneas colocadas';
+    Array.prototype.forEach.call(chipsBox.children, function(b){
+      b.disabled = (puestas.indexOf(parseInt(b.getAttribute('data-id'), 10)) !== -1);
+      b.classList.remove('wrong');
+    });
+  }
+
+  function mensaje(txt, clase){
+    msgBox.innerHTML = txt;
+    msgBox.className = 'msg' + (clase ? ' ' + clase : '');
+  }
+
+  BARAJA.forEach(function(id){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.setAttribute('data-id', String(id));
+    b.textContent = LINEAS[id];
+    b.addEventListener('click', function(){
+      var esperada = puestas.length;          /* la posición que toca */
+      if(id === esperada){
+        puestas.push(id);
+        pintaConstructor();
+        mensaje(POR_QUE_SI[esperada], 'ok');
+      } else {
+        b.classList.add('wrong');
+        mensaje('«' + LINEAS[id].trim() + '» no puede ir en la posición ' +
+                (esperada + 1) + '. ' + POR_QUE_NO[esperada], 'err');
+      }
+    });
+    chipsBox.appendChild(b);
+  });
+
+  document.getElementById('undo').addEventListener('click', function(){
+    if(puestas.length){
+      puestas.pop();
+      pintaConstructor();
+      mensaje(puestas.length ? POR_QUE_SI[puestas.length - 1] : MSG_INICIAL,
+              puestas.length ? 'ok' : '');
+    }
+  });
+  document.getElementById('cReset').addEventListener('click', function(){
+    puestas = [];
+    pintaConstructor();
+    mensaje(MSG_INICIAL, '');
+  });
+
+  /* ---- diapositiva 8 · salida real verificada de algoritmos_lineales.c ---- */
+  var salidaBox = document.getElementById('salidaBox');
+  var salidaBtn = document.getElementById('salidaBtn');
+  salidaBtn.addEventListener('click', function(){
+    var on = salidaBox.classList.toggle('on');
+    salidaBtn.textContent = on ? 'Ocultar la salida' : 'Ver la salida real';
+  });
+
+  /* ---- autoevaluación ---- */
+  Array.prototype.forEach.call(document.querySelectorAll('.q button'), function(b){
+    b.addEventListener('click', function(){
+      var q = b.parentNode;
+      var open = q.classList.toggle('open');
+      b.textContent = open ? 'Ocultar respuesta' : 'Ver respuesta';
+    });
+  });
+
+  pintaTaller();
+  pintaConstructor();
+  show(0);
+})();
+</script>
