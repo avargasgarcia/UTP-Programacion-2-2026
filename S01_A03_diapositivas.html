@@ -1,0 +1,878 @@
+<meta charset="utf-8">
+<title>Asignación y Modelo de Estado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F2F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#EBEDF3;
+  --line:#D6D9E4;
+  --ink:#141828;
+  --muted:#5B6278;
+  --accent:#4557C9;
+  --accent-soft:#E3E6F8;
+  --fn:#0B7C71;
+  --fn-soft:#DCF0ED;
+  --imp:#A2620E;
+  --imp-soft:#F6E8D3;
+  --shadow:0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.08);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1120;
+    --surface:#171B2C;
+    --surface-2:#1F2438;
+    --line:#2E3448;
+    --ink:#E8EAF4;
+    --muted:#98A0BA;
+    --accent:#8494F2;
+    --accent-soft:#232A48;
+    --fn:#3FC7B4;
+    --fn-soft:#12312F;
+    --imp:#E9A94A;
+    --imp-soft:#33270F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1120;
+  --surface:#171B2C;
+  --surface-2:#1F2438;
+  --line:#2E3448;
+  --ink:#E8EAF4;
+  --muted:#98A0BA;
+  --accent:#8494F2;
+  --accent-soft:#232A48;
+  --fn:#3FC7B4;
+  --fn-soft:#12312F;
+  --imp:#E9A94A;
+  --imp-soft:#33270F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:"IBM Plex Serif", Georgia, "Times New Roman", serif;font-weight:600}
+p{margin:0}
+code,pre,.mono{font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace}
+
+/* ============ CHROME ============ */
+.rail{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  font-size:12px;
+}
+.rail .id{font-family:"IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rail .id b{color:var(--ink);font-weight:600}
+.rail .spacer{flex:1}
+.btn{
+  font:inherit;font-size:12px;
+  background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.counter{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.counter b{color:var(--ink)}
+
+.progress{height:3px;background:var(--surface-2);position:relative}
+.progress span{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .25s ease}
+
+/* ============ STAGE ============ */
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px}
+.stage{
+  width:min(100%,1180px);
+  aspect-ratio:16/9;
+  max-height:calc(100vh - 150px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  container-type:inline-size;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;
+  padding:4.4cqi 5cqi 4cqi;
+  display:none;
+  flex-direction:column;
+  gap:2.2cqi;
+  overflow-y:auto;
+}
+.slide.on{display:flex}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:1.25cqi;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:1cqi;
+}
+.eyebrow .tick{width:2.6cqi;height:1px;background:var(--line)}
+h2.title{font-size:3.9cqi;line-height:1.12;letter-spacing:-.01em}
+h3.sub{font-size:2.05cqi;line-height:1.25}
+.lead{font-size:1.95cqi;line-height:1.5;color:var(--ink);max-width:62ch}
+.note{font-size:1.5cqi;line-height:1.5;color:var(--muted);max-width:70ch}
+.slide ul{margin:0;padding-left:2.2cqi;display:flex;flex-direction:column;gap:1.1cqi}
+.slide li{font-size:1.8cqi;line-height:1.42}
+.slide li::marker{color:var(--accent)}
+
+/* two-world grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;align-items:start}
+.panel{
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+  padding:2cqi 2.2cqi;
+  display:flex;flex-direction:column;gap:1.2cqi;
+  min-width:0;
+}
+.panel.fn{border-top:3px solid var(--fn)}
+.panel.imp{border-top:3px solid var(--imp)}
+.tag{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+.tag.fn{color:var(--fn)}
+.tag.imp{color:var(--imp)}
+.panel h4{margin:0;font-size:1.85cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.panel p{font-size:1.5cqi;line-height:1.45;color:var(--muted)}
+.panel ul{padding-left:2cqi;gap:.7cqi}
+.panel li{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1.4cqi 1.6cqi;font-size:1.42cqi;line-height:1.55;
+  overflow-x:auto;white-space:pre;
+}
+pre .k{color:var(--accent);font-weight:500}
+pre .c{color:var(--muted);font-style:italic}
+pre .n{color:var(--imp)}
+pre .s{color:var(--fn)}
+.filename{
+  font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted);
+  display:flex;justify-content:space-between;gap:1cqi;
+}
+.filename em{font-style:normal;color:var(--fn)}
+
+/* trace machine */
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqi;align-items:stretch}
+.cell{
+  display:flex;gap:1.2cqi;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+}
+.box{
+  border:2px solid var(--imp);border-radius:6px;background:var(--imp-soft);
+  padding:.8cqi 1.6cqi;font-size:2.4cqi;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;min-width:7cqi;text-align:center;
+}
+.box.flash{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.expr{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;line-height:1.7;
+  color:var(--ink);word-break:break-word;
+}
+.expr .old{color:var(--muted)}
+.steps{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:1cqi;align-items:center;flex-wrap:wrap}
+.ctl{
+  font-family:"IBM Plex Sans",sans-serif;font-size:1.4cqi;
+  padding:.8cqi 1.6cqi;border-radius:6px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;cursor:pointer;
+}
+.ctl.ghost{background:transparent;color:var(--accent)}
+.ctl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctl:disabled{opacity:.45;cursor:default}
+
+/* comparison table */
+table{border-collapse:collapse;width:100%;font-size:1.5cqi}
+th,td{text-align:left;padding:1cqi 1.2cqi;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+thead th.cfn{color:var(--fn)}
+thead th.cimp{color:var(--imp)}
+tbody th{font-weight:500;color:var(--muted);font-family:"IBM Plex Sans",sans-serif}
+
+/* cover */
+.cover{justify-content:center;gap:1.6cqi;background:
+  linear-gradient(105deg, var(--fn-soft) 0%, transparent 42%),
+  linear-gradient(255deg, var(--imp-soft) 0%, transparent 42%);}
+.cover .inst{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);line-height:1.7;letter-spacing:.04em}
+.cover h1{font-size:5.4cqi;line-height:1.05;letter-spacing:-.02em;max-width:20ch}
+.cover .course{font-size:2cqi;color:var(--accent);font-weight:600}
+.cover .who{display:flex;gap:3cqi;flex-wrap:wrap;font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+.cover .who b{display:block;color:var(--ink);font-weight:600;font-size:1.75cqi}
+
+/* q&a */
+.qa{display:flex;flex-direction:column;gap:1.4cqi}
+.q{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi}
+.q p{font-size:1.6cqi;line-height:1.4}
+.q .ans{font-size:1.45cqi;color:var(--fn);line-height:1.45;display:none}
+.q.open .ans{display:block}
+.q button{align-self:flex-start;font:inherit;font-size:1.25cqi;background:none;border:1px solid var(--line);border-radius:5px;padding:.5cqi 1.1cqi;color:var(--muted);cursor:pointer}
+.q button:hover{color:var(--accent);border-color:var(--accent)}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:1.4cqi 1.8cqi;border-radius:0 7px 7px 0;font-size:1.55cqi;line-height:1.45;
+}
+.refs{font-size:1.3cqi;line-height:1.6;color:var(--muted)}
+.refs b{color:var(--ink);font-weight:500}
+
+/* notes drawer */
+.notes{
+  width:min(100%,1180px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);padding:14px 18px;
+  font-size:14px;line-height:1.55;color:var(--ink);
+  display:none;
+}
+.notes.on{display:block}
+.notes h5{margin:0 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notes p{color:var(--muted)}
+.notes .time{color:var(--accent);font-family:"IBM Plex Mono",monospace}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+@media (max-width:720px){
+  .duo,.trace{grid-template-columns:1fr}
+  .stage{aspect-ratio:auto;height:auto;min-height:520px}
+  .slide{position:relative;padding:22px}
+  .slide:not(.on){display:none}
+}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.3 — componentes que no existían en la 1.1.
+   No se modificó ningún token de color ni ningún tamaño anterior.
+   ====================================================================== */
+
+/* retícula de tres columnas (los tres intercambios) */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.6cqi;align-items:start}
+.trio .panel{padding:1.5cqi 1.6cqi;gap:.9cqi}
+.trio pre{font-size:1.24cqi;padding:1.1cqi 1.2cqi}
+.trio li{font-size:1.35cqi}
+.trio .tag{font-size:1.05cqi}
+
+/* retícula de dos columnas desiguales */
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:2.2cqi;align-items:start}
+.split-r{display:grid;grid-template-columns:.85fr 1.15fr;gap:2.2cqi;align-items:start}
+
+/* celdas de memoria con desvanecimiento del valor anterior */
+.mem{display:flex;gap:2.6cqi;align-items:flex-end;flex-wrap:wrap}
+.memcell{display:flex;flex-direction:column;align-items:center;gap:.5cqi;position:relative}
+.memcell .name{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--imp);font-weight:600}
+.memcell .addr{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;color:var(--muted)}
+.memcell .box{min-width:8.4cqi}
+.memcell .box.empty{color:var(--muted);border-style:dashed;background:transparent}
+.memcell .gone{
+  position:absolute;left:0;right:0;top:2.1cqi;
+  font-family:"IBM Plex Mono",monospace;font-size:2.4cqi;font-weight:600;
+  color:var(--muted);text-align:center;pointer-events:none;
+  text-decoration:line-through;
+  animation:vanish 1.1s ease forwards;
+}
+@keyframes vanish{
+  0%{opacity:.9;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-3.2cqi) scale(.8)}
+}
+
+/* registro de transiciones del simulador */
+.log{
+  font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;line-height:1.6;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1cqi 1.2cqi;height:15cqi;overflow:auto;color:var(--ink);
+  white-space:pre;
+}
+.log .dim{color:var(--muted)}
+
+/* indicador de estado actual */
+.statebar{display:flex;align-items:center;gap:1.2cqi;flex-wrap:wrap}
+.statebar .lab{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:1.7cqi;font-weight:600;
+  border:2px solid var(--imp);background:var(--imp-soft);color:var(--ink);
+  border-radius:999px;padding:.5cqi 1.6cqi;
+}
+.chip.flash{animation:pop .35s ease}
+
+/* diagramas de estados en SVG */
+.fsm{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fsm .node{fill:var(--dsurf);stroke:var(--dimp);stroke-width:2.5}
+.fsm .node.on{fill:var(--dimps);stroke-width:6}
+.fsm .inner{fill:none;stroke:var(--dfn);stroke-width:2}
+.fsm .lbl{fill:var(--dink);font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;text-anchor:middle}
+.fsm .edge{fill:none;stroke:var(--dmut);stroke-width:2}
+.fsm .elbl{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:15px;text-anchor:middle}
+.fsm .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fsm .cap.acc{fill:var(--dfn)}
+.fsm marker path{fill:var(--dmut)}
+.fsm.big .lbl{font-size:21px}
+.fsm.big .elbl{font-size:17px}
+.fsm.big .cap{font-size:15px}
+</style>
+
+<div class="rail">
+  <span class="id"><b>IS284</b> · Programación II</span>
+  <span class="id">Semana 1 · Cápsula 1.3</span>
+  <span class="spacer"></span>
+  <span class="counter"><b id="cur">1</b> / 10</span>
+  <button class="btn" id="prev" type="button">← Anterior</button>
+  <button class="btn" id="next" type="button">Siguiente →</button>
+  <button class="btn" id="toggleNotes" type="button" aria-pressed="false">Notas (N)</button>
+</div>
+<div class="progress"><span id="bar" style="width:10%"></span></div>
+
+<div class="wrap">
+<div class="stage" id="stage">
+
+<!-- 1 ............................................................. -->
+<section class="slide cover on" data-t="0:25">
+  <p class="inst">UNIVERSIDAD TECNOLÓGICA DE PEREIRA<br>Facultad de Ingenierías · Ingeniería de Sistemas y Computación</p>
+  <p class="course">Programación II · IS284 · Semana 1 · Cápsula 1.3</p>
+  <h1>La asignación y el modelo de estado</h1>
+  <div class="who">
+    <span>Docente<b>Ing. Andres Vargas</b></span>
+    <span>Duración<b>7 minutos</b></span>
+    <span>Requisito<b>Cápsulas 1.1 y 1.2</b></span>
+    <span>Carácter<b>Prerrequisito duro</b></span>
+  </div>
+</section>
+
+<!-- 2 ............................................................. -->
+<section class="slide" data-t="0:37">
+  <p class="eyebrow"><span class="tick"></span> De dónde viene · a dónde vamos</p>
+  <h2 class="title">Hoy nombramos la operación que sostiene todo el paradigma imperativo</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Lo que ya tiene</span>
+      <ul>
+        <li>De la 1.1: el estado y la asignación destructiva, ya <b>nombrados</b></li>
+        <li>De la 1.2: el pseudocódigo del curso, con la flecha <span class="mono">←</span></li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Lo que construye hoy</span>
+      <ul>
+        <li>La variable como <b>celda de memoria con nombre</b></li>
+        <li>El <b>orden de evaluación</b> de una asignación</li>
+        <li>El <b>modelo de estado</b> y la máquina de estados finitos</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout"><b>Objetivo de esta cápsula:</b> al terminar, usted traza paso a paso el estado de un fragmento de asignaciones, y lee y construye una máquina de estados en sus tres representaciones —diagrama, tabla de transiciones y código—.</div>
+  <p class="note"><b>Prerrequisito duro.</b> Esta cápsula es la base de las entrevistas orales del curso: se le pedirá trazar y explicar, no repetir definiciones.</p>
+</section>
+
+<!-- 3 ............................................................. -->
+<section class="slide" data-t="0:46">
+  <p class="eyebrow"><span class="tick"></span> Idea 1 de 6</p>
+  <h2 class="title">Una variable no es una incógnita: es una celda con nombre</h2>
+  <div class="split">
+    <div class="panel imp">
+      <span class="tag imp">Tres cosas distintas, un solo nombre</span>
+      <ul>
+        <li><b>Nombre:</b> la etiqueta que usted escribe en el programa</li>
+        <li><b>Dirección:</b> el lugar de la memoria que el compilador le reserva</li>
+        <li><b>Contenido:</b> el valor que hay ahí <em>ahora</em>, y que puede cambiar</li>
+      </ul>
+      <p>La celda existe desde que se declara. Antes de la primera asignación existe pero <b>no tiene un valor útil</b>.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Estado inicial de traza.c</span>
+      <div class="mem">
+        <div class="memcell"><span class="name">a</span><span class="box empty">?</span><span class="addr">dirección fija</span></div>
+        <div class="memcell"><span class="name">b</span><span class="box empty">?</span><span class="addr">dirección fija</span></div>
+        <div class="memcell"><span class="name">c</span><span class="box empty">?</span><span class="addr">dirección fija</span></div>
+      </div>
+      <p><span class="mono">int a, b, c;</span> — tres celdas reservadas, ningún valor todavía.</p>
+    </div>
+  </div>
+  <p class="note">En Racket, <span class="mono">(define x 5)</span> le pone un <b>nombre a un valor</b>. En C, <span class="mono">x = 5;</span> le pone un <b>valor a una celda</b>. La diferencia parece de matiz y es la diferencia entera entre los dos paradigmas.</p>
+</section>
+
+<!-- 4 ............................................................. -->
+<section class="slide" data-t="0:53">
+  <p class="eyebrow"><span class="tick"></span> Idea 2 de 6 · la operación</p>
+  <h2 class="title"><span class="mono">a ← b − 2</span> es una orden, y tiene un orden</h2>
+  <div class="split">
+    <div class="panel imp">
+      <span class="tag imp">Los dos tiempos de toda asignación</span>
+      <ul>
+        <li><b>Primero</b> se evalúa <b>por completo</b> el lado derecho, con los valores que las celdas tienen <em>en ese instante</em>.</li>
+        <li><b>Después</b> ese único valor se escribe en la celda de la izquierda, y <b>lo que había se pierde</b>.</li>
+      </ul>
+      <p>Nunca al revés, y nunca a medias. Por eso <span class="mono">x ← x + 1</span> funciona: cuando se escribe en <span class="mono">x</span>, el lado derecho ya es un número.</p>
+    </div>
+    <div class="panel imp">
+      <div class="filename"><span>pseudocódigo del curso · y su equivalente en C99</span></div>
+      <pre>x ← 5          <span class="c">// la celda x queda en 5</span>
+x ← x + 1      <span class="c">// 1) derecha: 5 + 1 = 6</span>
+               <span class="c">// 2) izquierda: x pasa a 6</span>
+
+<span class="k">int</span> x = <span class="n">5</span>;
+x = x + <span class="n">1</span>;    <span class="c">/* lo mismo en C */</span></pre>
+      <p><span class="mono">←</span> y <span class="mono">=</span> son el <b>mismo</b> operador de asignación. La igualdad, en C, se escribe <span class="mono">==</span>.</p>
+    </div>
+  </div>
+  <div class="callout">Como ecuación, <span class="mono">x = x + 1</span> no tiene solución. Como asignación es una de las líneas más frecuentes de todo el software escrito.</div>
+</section>
+
+<!-- 5 ............................................................. -->
+<section class="slide" data-t="0:41">
+  <p class="eyebrow"><span class="tick"></span> Idea 3 de 6 · demostración · pulse «Paso»</p>
+  <h2 class="title">Seis asignaciones, tres celdas, un solo estado que avanza</h2>
+  <div class="split">
+    <div class="panel imp">
+      <span class="tag imp">Memoria · el valor tachado es el que se destruyó</span>
+      <div class="mem">
+        <div class="memcell"><span class="name">a</span><span class="box empty" id="cA">?</span></div>
+        <div class="memcell"><span class="name">b</span><span class="box empty" id="cB">?</span></div>
+        <div class="memcell"><span class="name">c</span><span class="box empty" id="cC">?</span></div>
+      </div>
+      <p class="expr" id="tInstr">estado inicial · ninguna asignación ejecutada</p>
+      <p class="steps" id="tEval">las tres celdas existen, ninguna tiene valor útil</p>
+    </div>
+    <div class="panel imp">
+      <div class="filename"><span>traza.c</span><em>gcc -std=c99 -Wall -Wextra -pedantic · verificado</em></div>
+      <pre id="tOut">(pulse «Paso» para ver la salida real, línea a línea)</pre>
+      <div class="controls">
+        <button class="ctl" id="stepBtn" type="button">Paso</button>
+        <button class="ctl ghost" id="resetBtn" type="button">Reiniciar</button>
+        <span class="steps" id="tCount">paso 0 de 6</span>
+      </div>
+    </div>
+  </div>
+  <p class="note">Mire el <b>paso 5</b>: <span class="mono">b ← c / a</span> vuelve a dejar 8 en <span class="mono">b</span>. El valor no cambió, pero la escritura <b>sí ocurrió</b>: se leyó el lado derecho y se sobrescribió la celda. Una asignación siempre escribe.</p>
+</section>
+
+<!-- 6 ............................................................. -->
+<section class="slide" data-t="0:48">
+  <p class="eyebrow"><span class="tick"></span> Idea 4 de 6 · la consecuencia</p>
+  <h2 class="title">Intercambiar dos valores exige una tercera celda</h2>
+  <div class="trio">
+    <div class="panel imp">
+      <span class="tag imp">1 · Con auxiliar — correcto</span>
+      <pre>aux ← x
+x   ← y
+y   ← aux</pre>
+      <pre class="steps">x=3 y=7
+x=3 y=7 aux=3
+x=7 y=7 aux=3
+x=7 y=3 aux=3</pre>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">2 · Sin auxiliar — correcto, con riesgo</span>
+      <pre>p ← p + q
+q ← p − q
+p ← p − q</pre>
+      <pre class="steps">p=3 q=7
+p=10 q=7
+p=10 q=3
+p=7 q=3</pre>
+    </div>
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">3 · Lo intuitivo — INCORRECTO</span>
+      <pre>m ← n
+n ← m</pre>
+      <pre class="steps">m=3 n=7
+m=7 n=7  ← se perdió el 3
+m=7 n=7  ← ya no hay 3</pre>
+    </div>
+  </div>
+  <p class="note">Salida real de <span class="mono">intercambio.c</span>. La tercera versión falla por la razón de la diapositiva anterior: la primera asignación <b>destruye</b> el 3 antes de que la segunda pueda usarlo. La variable auxiliar no es un adorno: es la copia de seguridad del valor que va a ser sobrescrito. La versión aritmética funciona con enteros, pero puede desbordar el rango del tipo (cápsula 1.4); en este curso, use el auxiliar.</p>
+</section>
+
+<!-- 7 ............................................................. -->
+<section class="slide" data-t="0:52">
+  <p class="eyebrow"><span class="tick"></span> Idea 5 de 6 · el modelo</p>
+  <h2 class="title">Un programa imperativo <em>es</em> una máquina de estados</h2>
+  <div class="split">
+    <div class="panel imp">
+      <span class="tag imp">La traza, releída</span>
+      <p><b>Estado</b> = la tupla de valores de todas las variables en un instante.<br><b>Transición</b> = una asignación ejecutada.</p>
+      <pre>(a=6, b=8, c=?)
+     │  c ← a * b
+     ▼
+(a=6, b=8, c=48)</pre>
+      <p>La traza de la diapositiva 5 es exactamente la lista de estados por los que pasó el programa.</p>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">Máquina de estados finitos · las cinco piezas</span>
+      <ul>
+        <li><b>Q</b> · conjunto <b>finito</b> de estados</li>
+        <li><b>q₀</b> · estado inicial, uno solo, en Q</li>
+        <li><b>Σ</b> · alfabeto de entradas</li>
+        <li><b>δ</b> · función de transición: a cada par (estado, entrada) le asigna un estado</li>
+        <li><b>F</b> · estados de aceptación, un subconjunto de Q</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">La diferencia es el tamaño de <b>Q</b>. Con tres enteros el número de estados posibles es astronómico. Una máquina de estados <b>finitos</b> se diseña con pocos estados <b>con nombre</b> —BLOQUEADO, DESBLOQUEADO— y por eso cabe en una hoja y se puede verificar entera.</p>
+</section>
+
+<!-- 8 ............................................................. -->
+<section class="slide" data-t="0:44">
+  <p class="eyebrow"><span class="tick"></span> Idea 6 de 6 · simulador · pulse los botones</p>
+  <h2 class="title">El torniquete: dos estados, dos entradas, ninguna sorpresa</h2>
+  <div class="split-r">
+    <div class="panel imp">
+      <span class="tag imp">Diagrama de estados · el activo va resaltado y rotulado</span>
+      <svg class="fsm" viewBox="0 0 500 260" role="img" aria-labelledby="tt1 td1">
+        <title id="tt1">Diagrama de estados del torniquete</title>
+        <desc id="td1">Dos estados. BLOQUEADO es el estado inicial: con la entrada m pasa a DESBLOQUEADO y con la entrada e se queda en BLOQUEADO. DESBLOQUEADO: con la entrada e pasa a BLOQUEADO y con la entrada m se queda en DESBLOQUEADO.</desc>
+        <defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+        <path class="edge" d="M 18,150 L 78,150" marker-end="url(#ah1)"/>
+        <text class="cap" x="44" y="138">inicio</text>
+        <circle class="node on" id="nBloq" cx="140" cy="150" r="56"/>
+        <circle class="node" id="nDesb" cx="360" cy="150" r="56"/>
+        <text class="lbl" x="140" y="146" style="font-size:13px">BLOQUEADO</text>
+        <text class="lbl" id="mkBloq" x="140" y="170" style="font-size:12px;fill:var(--dimp)"></text>
+        <text class="lbl" x="360" y="146" style="font-size:13px">DESBLOQUEADO</text>
+        <text class="lbl" id="mkDesb" x="360" y="170" style="font-size:12px;fill:var(--dimp)"></text>
+        <path class="edge" d="M 112,101 C 100,50 180,50 168,101" marker-end="url(#ah1)"/>
+        <text class="elbl" x="140" y="42">e · no cede</text>
+        <path class="edge" d="M 332,101 C 320,50 400,50 388,101" marker-end="url(#ah1)"/>
+        <text class="elbl" x="360" y="42">m · devuelve</text>
+        <path class="edge" d="M 194,131 Q 250,108 306,131" marker-end="url(#ah1)"/>
+        <text class="elbl" x="250" y="104">m · destraba</text>
+        <path class="edge" d="M 306,169 Q 250,192 194,169" marker-end="url(#ah1)"/>
+        <text class="elbl" x="250" y="212">e · pasa y traba</text>
+      </svg>
+      <div class="statebar">
+        <span class="lab">Estado actual</span>
+        <span class="chip" id="simChip">BLOQUEADO</span>
+        <span class="steps" id="simPass">personas que pasaron: 0</span>
+      </div>
+    </div>
+    <div class="panel imp">
+      <div class="filename"><span>torniquete.c</span><em>salida real · verificada</em></div>
+      <div class="log" id="simLog"><span class="dim">estado inicial: BLOQUEADO</span></div>
+      <div class="controls">
+        <button class="ctl" id="btnM" type="button">Insertar moneda (m)</button>
+        <button class="ctl" id="btnE" type="button">Empujar (e)</button>
+        <button class="ctl ghost" id="btnR" type="button">Reiniciar</button>
+      </div>
+      <p>Pulse <b>e e m m e e m</b> y obtendrá, fila por fila, la salida de <span class="mono">torniquete.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 ............................................................. -->
+<section class="slide" data-t="0:34">
+  <p class="eyebrow"><span class="tick"></span> Síntesis · la misma máquina, dos veces</p>
+  <h2 class="title">Diagrama y tabla dicen exactamente lo mismo</h2>
+  <div class="split">
+    <div class="panel imp">
+      <span class="tag imp">Diagrama · validador de entero con signo</span>
+      <svg class="fsm big" viewBox="0 0 700 350" role="img" aria-labelledby="tt2 td2">
+        <title id="tt2">Diagrama de estados del validador de enteros con signo</title>
+        <desc id="td2">Cuatro estados. INICIO es el inicial: con un signo pasa a SIGNO, con un dígito pasa a DIGITOS y con cualquier otro carácter pasa a ERROR. SIGNO: con un dígito pasa a DIGITOS, con cualquier otro carácter pasa a ERROR. DIGITOS es el estado de aceptación: con un dígito se queda en DIGITOS, con cualquier otro carácter pasa a ERROR. ERROR es sumidero: con cualquier símbolo se queda en ERROR.</desc>
+        <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+        <path class="edge" d="M 90,14 L 90,66" marker-end="url(#ah2)"/>
+        <text class="cap" x="142" y="40">inicio</text>
+        <path class="edge" d="M 39,84 Q 300,-6 561,84" marker-end="url(#ah2)"/>
+        <text class="elbl" x="300" y="24">dígito</text>
+        <path class="edge" d="M 158,110 L 232,110" marker-end="url(#ah2)"/>
+        <text class="elbl" x="195" y="98">+ o −</text>
+        <path class="edge" d="M 368,110 L 442,110" marker-end="url(#ah2)"/>
+        <text class="elbl" x="405" y="98">dígito</text>
+        <path class="edge" d="M 300,152 L 300,196" marker-end="url(#ah2)"/>
+        <text class="elbl" x="356" y="178">no dígito</text>
+        <path class="edge" d="M 132,141 L 238,226" marker-end="url(#ah2)"/>
+        <text class="elbl" x="148" y="212">otro</text>
+        <path class="edge" d="M 456,133 L 362,226" marker-end="url(#ah2)"/>
+        <text class="elbl" x="462" y="208">no dígito</text>
+        <path class="edge" d="M 570,127 C 645,158 645,62 570,93" marker-end="url(#ah2)"/>
+        <text class="elbl" x="656" y="115">dígito</text>
+        <path class="edge" d="M 277,278 C 250,328 350,328 323,278" marker-end="url(#ah2)"/>
+        <text class="elbl" x="300" y="344">cualquier símbolo</text>
+        <ellipse class="node" cx="90" cy="110" rx="66" ry="40"/>
+        <ellipse class="node" cx="300" cy="110" rx="66" ry="40"/>
+        <ellipse class="node" cx="510" cy="110" rx="66" ry="40"/>
+        <ellipse class="inner" cx="510" cy="110" rx="59" ry="33"/>
+        <ellipse class="node" cx="300" cy="240" rx="66" ry="40"/>
+        <text class="lbl" x="90" y="118">INICIO</text>
+        <text class="lbl" x="300" y="118">SIGNO</text>
+        <text class="lbl" x="510" y="105" style="font-size:18px">DIGITOS</text>
+        <text class="cap acc" x="510" y="129">acepta</text>
+        <text class="lbl" x="300" y="235">ERROR</text>
+        <text class="cap" x="300" y="259">sumidero</text>
+      </svg>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Tabla de transiciones · función δ</span>
+      <table>
+        <thead><tr><th>δ</th><th>+ o −</th><th>dígito</th><th>otro</th></tr></thead>
+        <tbody>
+          <tr><th>→ INICIO</th><td>SIGNO</td><td>DIGITOS</td><td>ERROR</td></tr>
+          <tr><th>SIGNO</th><td>ERROR</td><td>DIGITOS</td><td>ERROR</td></tr>
+          <tr><th>DIGITOS ✔</th><td>ERROR</td><td>DIGITOS</td><td>ERROR</td></tr>
+          <tr><th>ERROR</th><td>ERROR</td><td>ERROR</td><td>ERROR</td></tr>
+        </tbody>
+      </table>
+      <p><span class="mono">→</span> marca el estado inicial · <span class="mono">✔</span> marca el estado de aceptación, el mismo que el diagrama dibuja con doble contorno. Doce casillas, ninguna vacía: eso es lo que hay que verificar.</p>
+    </div>
+  </div>
+  <div class="callout">El <b>diagrama</b> muestra mejor la forma global y se vuelve ilegible con muchos estados. La <b>tabla</b> muestra mejor que no falte ningún par (estado, entrada). El <b>código</b> muestra lo que ocurre de verdad al ejecutar. Las tres son equivalentes; la herramienta de trabajo del curso es la <b>tabla</b>, porque una casilla vacía es un caso que usted olvidó.</div>
+</section>
+
+<!-- 10 ............................................................ -->
+<section class="slide" data-t="0:37">
+  <p class="eyebrow"><span class="tick"></span> Cierre · qué aprendimos</p>
+  <h2 class="title">Tres ideas y tres preguntas</h2>
+  <div class="duo">
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">Qué aprendimos</span>
+      <ul>
+        <li>La asignación evalúa <b>primero</b> el lado derecho completo y <b>después</b> sobrescribe la celda izquierda</li>
+        <li>El <b>estado</b> es la tupla de valores de las variables; cada asignación es una <b>transición</b></li>
+        <li>Una máquina de estados finitos se escribe de tres formas equivalentes: diagrama, <b>tabla</b> y código</li>
+      </ul>
+    </div>
+    <div class="panel qa">
+      <span class="tag" style="color:var(--accent)">Autoevaluación</span>
+      <div class="q">
+        <p>1 · En <span class="mono">traza.c</span>, el paso 5 deja <span class="mono">b</span> valiendo 8, igual que antes. ¿Ocurrió algo?</p>
+        <button type="button">Ver respuesta</button>
+        <p class="ans">Sí: se evaluó <span class="mono">48 / 6</span> y se escribió el resultado en la celda <span class="mono">b</span>. El valor coincide con el anterior, pero la escritura se ejecutó. Una asignación no comprueba si el valor cambia.</p>
+      </div>
+      <div class="q">
+        <p>2 · ¿Por qué <span class="mono">m ← n</span> seguido de <span class="mono">n ← m</span> no intercambia?</p>
+        <button type="button">Ver respuesta</button>
+        <p class="ans">Porque la primera asignación destruye el contenido de <span class="mono">m</span>. Cuando se ejecuta la segunda, el valor original de <span class="mono">m</span> ya no existe en ninguna celda: se copia 7 sobre 7.</p>
+      </div>
+      <div class="q">
+        <p>3 · Un torniquete en BLOQUEADO recibe <span class="mono">m</span>, <span class="mono">m</span>, <span class="mono">e</span>. ¿En qué estado queda y cuántas personas pasaron?</p>
+        <button type="button">Ver respuesta</button>
+        <p class="ans">Queda en <span class="mono">BLOQUEADO</span> y pasó <b>una</b> persona. La segunda moneda no acumula nada: la transición (DESBLOQUEADO, m) devuelve al mismo estado.</p>
+      </div>
+    </div>
+  </div>
+  <p class="refs"><b>Lecturas recomendadas.</b> Turing, A. M. (1937). <i>On Computable Numbers, with an Application to the Entscheidungsproblem</i>. <i>Proceedings of the London Mathematical Society</i>, serie 2, 42, 230–265. · von Neumann, J. (1945). <i>First Draft of a Report on the EDVAC</i>. Moore School of Electrical Engineering, University of Pennsylvania. · Kernighan, B. W. y Ritchie, D. M. <i>El lenguaje de programación C</i>. · Joyanes Aguilar, L. <i>Programación en C</i>, McGraw Hill.</p>
+</section>
+
+</div>
+
+<div class="notes" id="notesBox">
+  <h5>Notas del presentador · <span class="time" id="notesTime"></span></h5>
+  <p id="notesText"></p>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var notesBox = document.getElementById('notesBox');
+  var notesText = document.getElementById('notesText');
+  var notesTime = document.getElementById('notesTime');
+
+  var NOTES = [
+    "Preséntese y advierta el peso de la cápsula: es prerrequisito duro y base de las entrevistas orales. No dramatice; dígalo una sola vez y siga.",
+    "Enlace con 1.1 y 1.2 en una frase cada una. Lea el objetivo textualmente: pide trazar y construir, no definir. Ahí está el criterio de evaluación.",
+    "Separe las tres cosas —nombre, dirección, contenido— antes de hablar de asignación. El cierre con Racket es la bisagra con la cápsula 1.1: nombre a un valor frente a valor a una celda.",
+    "Esta es la diapositiva conceptual central. Diga los dos tiempos despacio y en orden, y solo entonces resuelva x ← x + 1. Si va con retraso, no recorte aquí: recorte en la 9.",
+    "Pulse Paso las seis veces. Guarde silencio en el primer paso. En el paso 5 deténgase: es la trampa de la cápsula y reaparece en el quiz y en la entrevista.",
+    "Lea las tres columnas de izquierda a derecha y termine en la tercera. El fracaso de la tercera versión es el argumento; no lo explique antes de mostrarlo.",
+    "Aquí se une todo: el estado es la tupla y la asignación es la transición. Nombre las cinco piezas sin detenerse en cada una; están en la lectura y en el taller.",
+    "Pulse e, e, m, m, e, e, m en ese orden: reproduce la salida de torniquete.c. Nombre la transición en voz alta mientras el diagrama resalta el estado activo.",
+    "No lea la tabla completa. Quédese con la fila de la tabla de transiciones y con la frase del recuadro: una casilla vacía es un caso olvidado.",
+    "Cierre con las tres ideas, deje las respuestas ocultas y anuncie las dos entregas: el cuestionario de diez preguntas y el taller de máquina de estados, que no tiene nota."
+  ];
+
+  function show(n){
+    if(n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('on');
+    slides[i].scrollTop = 0;
+    cur.textContent = String(i + 1);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    notesText.textContent = NOTES[i];
+    notesTime.textContent = slides[i].getAttribute('data-t');
+  }
+
+  document.getElementById('next').addEventListener('click', function(){ show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function(){ show(i - 1); });
+  var tn = document.getElementById('toggleNotes');
+  tn.addEventListener('click', function(){
+    var on = notesBox.classList.toggle('on');
+    tn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ show(i - 1); }
+    else if(e.key === 'n' || e.key === 'N'){ tn.click(); }
+  });
+
+  /* ================= diapositiva 5 · traza de traza.c =================
+     Los valores y las líneas de salida son los de la ejecución real de
+     traza.c con gcc -std=c99 -Wall -Wextra -pedantic.                */
+  var ST = [
+    { a:null, b:null, c:null, ch:null,
+      instr:"estado inicial · ninguna asignación ejecutada",
+      ev:"las tres celdas existen, ninguna tiene valor útil" },
+    { a:5, b:null, c:null, ch:"a",
+      instr:"a ← 5",
+      ev:"lado derecho = 5 · se escribe en a" },
+    { a:5, b:8, c:null, ch:"b",
+      instr:"b ← a + 3",
+      ev:"lado derecho = 5 + 3 = 8 · se escribe en b" },
+    { a:6, b:8, c:null, ch:"a",
+      instr:"a ← b − 2",
+      ev:"lado derecho = 8 − 2 = 6 · se escribe en a, el 5 se pierde" },
+    { a:6, b:8, c:48, ch:"c",
+      instr:"c ← a * b",
+      ev:"lado derecho = 6 × 8 = 48 · se escribe en c" },
+    { a:6, b:8, c:48, ch:"b",
+      instr:"b ← c / a",
+      ev:"lado derecho = 48 ÷ 6 = 8 · se escribe en b: el mismo valor, pero se escribió" },
+    { a:62, b:8, c:48, ch:"a",
+      instr:"a ← a + b + c",
+      ev:"lado derecho = 6 + 8 + 48 = 62 · se escribe en a" }
+  ];
+  var OUT = [
+    "paso 1: a=5",
+    "paso 2: a=5 b=8",
+    "paso 3: a=6 b=8",
+    "paso 4: a=6 b=8 c=48",
+    "paso 5: a=6 b=8 c=48",
+    "paso 6: a=62 b=8 c=48"
+  ];
+  var t = 0;
+  var CBOX = { a:document.getElementById('cA'), b:document.getElementById('cB'), c:document.getElementById('cC') };
+  var tInstr = document.getElementById('tInstr');
+  var tEval  = document.getElementById('tEval');
+  var tOut   = document.getElementById('tOut');
+  var tCount = document.getElementById('tCount');
+  var stepBtn = document.getElementById('stepBtn');
+
+  function setCell(k, val, changed, prev){
+    var el = CBOX[k];
+    var host = el.parentNode;
+    var g = host.querySelector('.gone');
+    if(g){ host.removeChild(g); }
+    el.textContent = (val === null) ? "?" : String(val);
+    if(val === null){ el.classList.add('empty'); } else { el.classList.remove('empty'); }
+    if(changed){
+      el.classList.remove('flash');
+      void el.offsetWidth;
+      el.classList.add('flash');
+      if(prev !== null && prev !== undefined){
+        var s = document.createElement('span');
+        s.className = 'gone';
+        s.textContent = String(prev);
+        host.appendChild(s);
+      }
+    }
+  }
+
+  function paintTrace(animate){
+    var s = ST[t];
+    var p = (t > 0) ? ST[t-1] : { a:null, b:null, c:null };
+    setCell('a', s.a, animate && s.ch === 'a', p.a);
+    setCell('b', s.b, animate && s.ch === 'b', p.b);
+    setCell('c', s.c, animate && s.ch === 'c', p.c);
+    tInstr.textContent = s.instr;
+    tEval.textContent  = s.ev;
+    tOut.textContent = (t === 0)
+      ? "(pulse «Paso» para ver la salida real, línea a línea)"
+      : OUT.slice(0, t).join("\n");
+    tCount.textContent = 'paso ' + t + ' de 6';
+    stepBtn.disabled = (t === 6);
+  }
+  stepBtn.addEventListener('click', function(){ if(t < 6){ t++; paintTrace(true); } });
+  document.getElementById('resetBtn').addEventListener('click', function(){ t = 0; paintTrace(false); });
+
+  /* ============ diapositiva 8 · simulador del torniquete ============
+     Réplica exacta de la función de transición de torniquete.c.     */
+  var BLOQ = 0, DESB = 1;
+  var NOMBRE = ["BLOQUEADO", "DESBLOQUEADO"];
+  var estado = BLOQ, pasadas = 0, fila = 0;
+  var nBloq = document.getElementById('nBloq');
+  var nDesb = document.getElementById('nDesb');
+  var mkBloq = document.getElementById('mkBloq');
+  var mkDesb = document.getElementById('mkDesb');
+  var simChip = document.getElementById('simChip');
+  var simPass = document.getElementById('simPass');
+  var simLog  = document.getElementById('simLog');
+
+  function pad(s, n){ s = String(s); while(s.length < n){ s += " "; } return s; }
+
+  function pintarSim(){
+    var b = (estado === BLOQ);
+    nBloq.classList.toggle('on', b);
+    nDesb.classList.toggle('on', !b);
+    mkBloq.textContent = b ? "◀ activo" : "";
+    mkDesb.textContent = b ? "" : "◀ activo";
+    simChip.textContent = NOMBRE[estado];
+    simChip.classList.remove('flash');
+    void simChip.offsetWidth;
+    simChip.classList.add('flash');
+    simPass.textContent = 'personas que pasaron: ' + pasadas;
+  }
+
+  function transicion(x){
+    var antes = estado, accion = "-";
+    if(estado === BLOQ){
+      if(x === 'm'){ estado = DESB; accion = "destraba"; }
+      else         { accion = "no cede"; }
+    } else {
+      if(x === 'e'){ estado = BLOQ; accion = "pasa y traba"; pasadas++; }
+      else         { accion = "devuelve moneda"; }
+    }
+    fila++;
+    if(fila === 1){
+      simLog.textContent = pad("#",3) + pad("ENTRADA",8) + pad("ESTADO ANTES",13) + pad("ESTADO DESPUES",13) + "ACCION";
+    }
+    simLog.textContent += "\n" + pad(fila,3) + pad(x,8) + pad(NOMBRE[antes],13) + pad(NOMBRE[estado],13) + accion;
+    simLog.scrollTop = simLog.scrollHeight;
+    pintarSim();
+  }
+
+  document.getElementById('btnM').addEventListener('click', function(){ transicion('m'); });
+  document.getElementById('btnE').addEventListener('click', function(){ transicion('e'); });
+  document.getElementById('btnR').addEventListener('click', function(){
+    estado = BLOQ; pasadas = 0; fila = 0;
+    simLog.innerHTML = '<span class="dim">estado inicial: BLOQUEADO</span>';
+    pintarSim();
+  });
+
+  /* ---- autoevaluación ---- */
+  Array.prototype.forEach.call(document.querySelectorAll('.q button'), function(b){
+    b.addEventListener('click', function(){
+      var q = b.parentNode;
+      var open = q.classList.toggle('open');
+      b.textContent = open ? 'Ocultar respuesta' : 'Ver respuesta';
+    });
+  });
+
+  paintTrace(false);
+  pintarSim();
+  show(0);
+})();
+</script>

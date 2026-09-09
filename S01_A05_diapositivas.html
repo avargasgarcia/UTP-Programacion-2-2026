@@ -1,0 +1,1008 @@
+<meta charset="utf-8">
+<title>El Entorno de Desarrollo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F2F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#EBEDF3;
+  --line:#D6D9E4;
+  --ink:#141828;
+  --muted:#5B6278;
+  --accent:#4557C9;
+  --accent-soft:#E3E6F8;
+  --fn:#0B7C71;
+  --fn-soft:#DCF0ED;
+  --imp:#A2620E;
+  --imp-soft:#F6E8D3;
+  --shadow:0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.08);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1120;
+    --surface:#171B2C;
+    --surface-2:#1F2438;
+    --line:#2E3448;
+    --ink:#E8EAF4;
+    --muted:#98A0BA;
+    --accent:#8494F2;
+    --accent-soft:#232A48;
+    --fn:#3FC7B4;
+    --fn-soft:#12312F;
+    --imp:#E9A94A;
+    --imp-soft:#33270F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1120;
+  --surface:#171B2C;
+  --surface-2:#1F2438;
+  --line:#2E3448;
+  --ink:#E8EAF4;
+  --muted:#98A0BA;
+  --accent:#8494F2;
+  --accent-soft:#232A48;
+  --fn:#3FC7B4;
+  --fn-soft:#12312F;
+  --imp:#E9A94A;
+  --imp-soft:#33270F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:"IBM Plex Serif", Georgia, "Times New Roman", serif;font-weight:600}
+p{margin:0}
+code,pre,.mono{font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace}
+
+/* ============ CHROME ============ */
+.rail{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  font-size:12px;
+}
+.rail .id{font-family:"IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rail .id b{color:var(--ink);font-weight:600}
+.rail .spacer{flex:1}
+.btn{
+  font:inherit;font-size:12px;
+  background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.counter{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.counter b{color:var(--ink)}
+
+.progress{height:3px;background:var(--surface-2);position:relative}
+.progress span{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .25s ease}
+
+/* ============ STAGE ============ */
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px}
+.stage{
+  width:min(100%,1180px);
+  aspect-ratio:16/9;
+  max-height:calc(100vh - 150px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  container-type:inline-size;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;
+  padding:4.4cqi 5cqi 4cqi;
+  display:none;
+  flex-direction:column;
+  gap:2.2cqi;
+  overflow-y:auto;
+}
+.slide.on{display:flex}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:1.25cqi;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:1cqi;
+}
+.eyebrow .tick{width:2.6cqi;height:1px;background:var(--line)}
+h2.title{font-size:3.9cqi;line-height:1.12;letter-spacing:-.01em}
+h3.sub{font-size:2.05cqi;line-height:1.25}
+.lead{font-size:1.95cqi;line-height:1.5;color:var(--ink);max-width:62ch}
+.note{font-size:1.5cqi;line-height:1.5;color:var(--muted);max-width:70ch}
+.slide ul{margin:0;padding-left:2.2cqi;display:flex;flex-direction:column;gap:1.1cqi}
+.slide li{font-size:1.8cqi;line-height:1.42}
+.slide li::marker{color:var(--accent)}
+
+/* two-world grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;align-items:start}
+.panel{
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+  padding:2cqi 2.2cqi;
+  display:flex;flex-direction:column;gap:1.2cqi;
+  min-width:0;
+}
+.panel.fn{border-top:3px solid var(--fn)}
+.panel.imp{border-top:3px solid var(--imp)}
+.tag{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+.tag.fn{color:var(--fn)}
+.tag.imp{color:var(--imp)}
+.panel h4{margin:0;font-size:1.85cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.panel p{font-size:1.5cqi;line-height:1.45;color:var(--muted)}
+.panel ul{padding-left:2cqi;gap:.7cqi}
+.panel li{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1.4cqi 1.6cqi;font-size:1.42cqi;line-height:1.55;
+  overflow-x:auto;white-space:pre;
+}
+pre .k{color:var(--accent);font-weight:500}
+pre .c{color:var(--muted);font-style:italic}
+pre .n{color:var(--imp)}
+pre .s{color:var(--fn)}
+.filename{
+  font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted);
+  display:flex;justify-content:space-between;gap:1cqi;
+}
+.filename em{font-style:normal;color:var(--fn)}
+
+/* trace machine */
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqi;align-items:stretch}
+.cell{
+  display:flex;gap:1.2cqi;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+}
+.box{
+  border:2px solid var(--imp);border-radius:6px;background:var(--imp-soft);
+  padding:.8cqi 1.6cqi;font-size:2.4cqi;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;min-width:7cqi;text-align:center;
+}
+.box.flash{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.expr{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;line-height:1.7;
+  color:var(--ink);word-break:break-word;
+}
+.expr .old{color:var(--muted)}
+.steps{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:1cqi;align-items:center;flex-wrap:wrap}
+.ctl{
+  font-family:"IBM Plex Sans",sans-serif;font-size:1.4cqi;
+  padding:.8cqi 1.6cqi;border-radius:6px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;cursor:pointer;
+}
+.ctl.ghost{background:transparent;color:var(--accent)}
+.ctl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctl:disabled{opacity:.45;cursor:default}
+
+/* comparison table */
+table{border-collapse:collapse;width:100%;font-size:1.5cqi}
+th,td{text-align:left;padding:1cqi 1.2cqi;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+thead th.cfn{color:var(--fn)}
+thead th.cimp{color:var(--imp)}
+tbody th{font-weight:500;color:var(--muted);font-family:"IBM Plex Sans",sans-serif}
+
+/* cover */
+.cover{justify-content:center;gap:1.6cqi;background:
+  linear-gradient(105deg, var(--fn-soft) 0%, transparent 42%),
+  linear-gradient(255deg, var(--imp-soft) 0%, transparent 42%);}
+.cover .inst{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);line-height:1.7;letter-spacing:.04em}
+.cover h1{font-size:5.4cqi;line-height:1.05;letter-spacing:-.02em;max-width:20ch}
+.cover .course{font-size:2cqi;color:var(--accent);font-weight:600}
+.cover .who{display:flex;gap:3cqi;flex-wrap:wrap;font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+.cover .who b{display:block;color:var(--ink);font-weight:600;font-size:1.75cqi}
+
+/* q&a */
+.qa{display:flex;flex-direction:column;gap:1.4cqi}
+.q{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi}
+.q p{font-size:1.6cqi;line-height:1.4}
+.q .ans{font-size:1.45cqi;color:var(--fn);line-height:1.45;display:none}
+.q.open .ans{display:block}
+.q button{align-self:flex-start;font:inherit;font-size:1.25cqi;background:none;border:1px solid var(--line);border-radius:5px;padding:.5cqi 1.1cqi;color:var(--muted);cursor:pointer}
+.q button:hover{color:var(--accent);border-color:var(--accent)}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:1.4cqi 1.8cqi;border-radius:0 7px 7px 0;font-size:1.55cqi;line-height:1.45;
+}
+.refs{font-size:1.3cqi;line-height:1.6;color:var(--muted)}
+.refs b{color:var(--ink);font-weight:500}
+
+/* notes drawer */
+.notes{
+  width:min(100%,1180px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);padding:14px 18px;
+  font-size:14px;line-height:1.55;color:var(--ink);
+  display:none;
+}
+.notes.on{display:block}
+.notes h5{margin:0 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notes p{color:var(--muted)}
+.notes .time{color:var(--accent);font-family:"IBM Plex Mono",monospace}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+@media (max-width:720px){
+  .duo,.trace{grid-template-columns:1fr}
+  .stage{aspect-ratio:auto;height:auto;min-height:520px}
+  .slide{position:relative;padding:22px}
+  .slide:not(.on){display:none}
+}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.3 — componentes que no existían en la 1.1.
+   No se modificó ningún token de color ni ningún tamaño anterior.
+   ====================================================================== */
+
+/* retícula de tres columnas (los tres intercambios) */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.6cqi;align-items:start}
+.trio .panel{padding:1.5cqi 1.6cqi;gap:.9cqi}
+.trio pre{font-size:1.24cqi;padding:1.1cqi 1.2cqi}
+.trio li{font-size:1.35cqi}
+.trio .tag{font-size:1.05cqi}
+
+/* retícula de dos columnas desiguales */
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:2.2cqi;align-items:start}
+.split-r{display:grid;grid-template-columns:.85fr 1.15fr;gap:2.2cqi;align-items:start}
+
+/* celdas de memoria con desvanecimiento del valor anterior */
+.mem{display:flex;gap:2.6cqi;align-items:flex-end;flex-wrap:wrap}
+.memcell{display:flex;flex-direction:column;align-items:center;gap:.5cqi;position:relative}
+.memcell .name{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--imp);font-weight:600}
+.memcell .addr{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;color:var(--muted)}
+.memcell .box{min-width:8.4cqi}
+.memcell .box.empty{color:var(--muted);border-style:dashed;background:transparent}
+.memcell .gone{
+  position:absolute;left:0;right:0;top:2.1cqi;
+  font-family:"IBM Plex Mono",monospace;font-size:2.4cqi;font-weight:600;
+  color:var(--muted);text-align:center;pointer-events:none;
+  text-decoration:line-through;
+  animation:vanish 1.1s ease forwards;
+}
+@keyframes vanish{
+  0%{opacity:.9;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-3.2cqi) scale(.8)}
+}
+
+/* registro de transiciones del simulador */
+.log{
+  font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;line-height:1.6;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1cqi 1.2cqi;height:15cqi;overflow:auto;color:var(--ink);
+  white-space:pre;
+}
+.log .dim{color:var(--muted)}
+
+/* indicador de estado actual */
+.statebar{display:flex;align-items:center;gap:1.2cqi;flex-wrap:wrap}
+.statebar .lab{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:1.7cqi;font-weight:600;
+  border:2px solid var(--imp);background:var(--imp-soft);color:var(--ink);
+  border-radius:999px;padding:.5cqi 1.6cqi;
+}
+.chip.flash{animation:pop .35s ease}
+
+/* diagramas de estados en SVG */
+.fsm{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fsm .node{fill:var(--dsurf);stroke:var(--dimp);stroke-width:2.5}
+.fsm .node.on{fill:var(--dimps);stroke-width:6}
+.fsm .inner{fill:none;stroke:var(--dfn);stroke-width:2}
+.fsm .lbl{fill:var(--dink);font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;text-anchor:middle}
+.fsm .edge{fill:none;stroke:var(--dmut);stroke-width:2}
+.fsm .elbl{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:15px;text-anchor:middle}
+.fsm .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fsm .cap.acc{fill:var(--dfn)}
+.fsm marker path{fill:var(--dmut)}
+.fsm.big .lbl{font-size:21px}
+.fsm.big .elbl{font-size:17px}
+.fsm.big .cap{font-size:15px}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.4 — componentes que no existían en la 1.3.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* las tres caras de un tipo (diapositiva 3) */
+.faces{display:flex;flex-direction:column;gap:1.2cqi}
+.face{display:flex;gap:1.3cqi;align-items:baseline}
+.face .num{font-family:"IBM Plex Mono",monospace;font-size:1.6cqi;font-weight:600;color:var(--accent);min-width:2.4cqi}
+.face .txt{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+.face .txt b{display:block;font-size:1.65cqi}
+.face .txt span{color:var(--muted);font-size:1.32cqi}
+
+/* matriz 2 × 2 del tipado (diapositiva 4) */
+.matrix{display:grid;grid-template-columns:4.6cqi 1fr 1fr;gap:.9cqi;align-items:stretch}
+.axis{
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);line-height:1.35;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+}
+.axis.side{writing-mode:vertical-rl;transform:rotate(180deg)}
+.mcell{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1.2cqi 1.3cqi;display:flex;flex-direction:column;gap:.45cqi;min-width:0;
+}
+.mcell:hover{border-color:var(--accent)}
+.mcell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mcell .lang{font-family:"IBM Plex Mono",monospace;font-size:1.75cqi;font-weight:600;color:var(--ink)}
+.mcell.c .lang{color:var(--imp)}
+.mcell.r .lang{color:var(--fn)}
+.mcell .kind{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.mcell .mk{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);visibility:hidden}
+.mcell[aria-pressed="true"]{background:var(--accent-soft);border:3px solid var(--accent);padding:1cqi 1.1cqi}
+.mcell[aria-pressed="true"] .mk{visibility:visible}
+
+/* explorador de tipos y barra de bytes (diapositiva 7) */
+.tbtns{display:flex;flex-wrap:wrap;gap:.6cqi}
+.tbtn{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.55cqi 1.05cqi;cursor:pointer;
+}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.bytebar{display:flex;gap:.35cqi;flex-wrap:wrap;align-items:center}
+.byte{
+  width:2.5cqi;height:2.5cqi;border-radius:4px;
+  border:1px solid var(--imp);background:var(--imp-soft);
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.bignum{font-family:"IBM Plex Mono",monospace;font-size:3.2cqi;font-weight:600;color:var(--imp);line-height:1}
+.bignum small{font-size:1.4cqi;color:var(--muted);font-weight:400;margin-left:.6cqi}
+
+/* banda de la advertencia intencional (diapositiva 6) */
+.warnband{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.2cqi 1.6cqi;
+  display:flex;flex-direction:column;gap:.55cqi;
+}
+.warnband .hd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.1cqi;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--imp);font-weight:600;
+}
+.warnband .msg{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;line-height:1.5;color:var(--ink);word-break:break-word}
+.warnband .why{font-size:1.32cqi;line-height:1.45;color:var(--muted)}
+
+/* predictor de conversiones (diapositiva 9) */
+.opts{display:flex;gap:.9cqi;flex-wrap:wrap}
+.opt{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.75cqi 1.5cqi;cursor:pointer;
+}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt.good{background:var(--fn-soft);border:2px solid var(--fn);font-weight:600;padding:.65cqi 1.4cqi}
+.opt.bad{background:var(--surface-2);border-color:var(--muted);color:var(--muted);text-decoration:line-through}
+.opt:disabled{cursor:default}
+.verdict{font-size:1.4cqi;line-height:1.45;color:var(--ink);min-height:7cqi}
+.verdict .head{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:.5cqi}
+.verdict .head.ok{color:var(--fn)}
+.verdict .head.no{color:var(--imp)}
+
+/* columna que difiere entre modelos de datos (diapositiva 10) */
+th.diff,td.diff{background:var(--imp-soft)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.5 — componentes que no existían en la 1.4.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* cadena de las cinco piezas (diapositiva 3) */
+.chain{display:flex;align-items:stretch;gap:.8cqi;flex-wrap:nowrap}
+.link{
+  flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface-2);padding:1.1cqi 1cqi;
+  display:flex;flex-direction:column;gap:.5cqi;text-align:center;
+}
+.link .n{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.link .w{font-size:1.42cqi;font-weight:600;line-height:1.2;color:var(--ink)}
+.link .d{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.link.hot{border-color:var(--imp);background:var(--imp-soft)}
+.arrowmini{display:flex;align-items:center;color:var(--muted);font-size:1.6cqi;flex:0 0 auto}
+
+/* comparación de las dos versiones (diapositiva 5) */
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:2cqi;align-items:stretch}
+.vcard{
+  border:1px solid var(--line);border-radius:8px;padding:1.6cqi 1.8cqi;
+  display:flex;flex-direction:column;gap:.9cqi;background:var(--surface-2);
+}
+.vcard.bad{border:2px solid var(--muted);opacity:.82}
+.vcard.good{border:2px solid var(--fn);background:var(--fn-soft)}
+.vcard .vh{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.vcard.bad .vh{color:var(--muted)}
+.vcard.good .vh{color:var(--fn)}
+.vcard h4{margin:0;font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif}
+.vrow{display:flex;justify-content:space-between;gap:1cqi;font-size:1.3cqi;line-height:1.4;border-bottom:1px solid var(--line);padding-bottom:.5cqi}
+.vrow:last-of-type{border-bottom:0}
+.vrow span:first-child{color:var(--muted)}
+.vrow span:last-child{text-align:right;font-family:"IBM Plex Mono",monospace;color:var(--ink)}
+.vcard.good .vrow span:last-child{font-weight:600}
+
+/* selector de ruta por sistema operativo (diapositiva 6) */
+.osbtns{display:flex;gap:.8cqi;flex-wrap:wrap}
+.osbtn{
+  font:inherit;font-family:"IBM Plex Sans",sans-serif;font-size:1.45cqi;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);padding:.85cqi 1.6cqi;cursor:pointer;
+  display:flex;align-items:center;gap:.7cqi;
+}
+.osbtn:hover{border-color:var(--accent);color:var(--accent)}
+.osbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.osbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ospanel{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:1cqi;min-height:26cqi;
+}
+.ospanel .oh{font-size:1.9cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;color:var(--ink)}
+.ospanel .ol{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.ospanel ol{margin:0;padding-left:2.4cqi;display:flex;flex-direction:column;gap:.7cqi}
+.ospanel li{font-size:1.42cqi;line-height:1.4}
+.ospanel .nope{font-size:1.28cqi;line-height:1.45;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.2cqi}
+
+/* teclas (diapositiva 8) */
+.kbd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.35cqi;font-weight:600;
+  border:1px solid var(--line);border-bottom-width:3px;border-radius:5px;
+  background:var(--surface);padding:.35cqi .9cqi;color:var(--ink);white-space:nowrap;
+}
+.keyrow{display:flex;flex-direction:column;gap:1cqi}
+.keyline{display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi}
+.keyline .txt{color:var(--ink)}
+.keyline .txt em{font-style:normal;color:var(--muted);font-size:1.25cqi}
+
+/* lista de verificación pulsable (diapositiva 12) */
+.checks{display:flex;flex-direction:column;gap:.85cqi}
+.chk{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1cqi 1.4cqi;display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi;
+}
+.chk:hover{border-color:var(--accent)}
+.chk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chk .mk{
+  flex:0 0 auto;width:2.2cqi;height:2.2cqi;border-radius:5px;
+  border:2px solid var(--line);display:flex;align-items:center;
+  justify-content:center;font-size:1.3cqi;color:transparent;
+}
+.chk[aria-pressed="true"]{background:var(--fn-soft);border-color:var(--fn)}
+.chk[aria-pressed="true"] .mk{background:var(--fn);border-color:var(--fn);color:#fff}
+.tally{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.tally b{color:var(--fn);font-size:2cqi}
+
+/* modificador de densidad: para las diapositivas cuyo contenido es
+   irreducible sin perder información (la tabla de los cinco tipos de
+   entorno y la comparación de macOS). Solo ajusta espaciados y escala
+   tipográfica dentro de la diapositiva; no toca ningún token. */
+.dense{gap:1.6cqi}
+.dense table{font-size:1.36cqi}
+.dense th,.dense td{padding:.6cqi 1cqi}
+.dense .alert{font-size:1.36cqi;padding:1cqi 1.4cqi}
+.dense .note{font-size:1.34cqi}
+.dense .lead{font-size:1.78cqi}
+.dense .panel li{font-size:1.38cqi}
+.dense .panel p{font-size:1.38cqi}
+.dense pre{font-size:1.3cqi}
+
+/* banda de advertencia sobria (varias diapositivas) */
+.alert{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.3cqi 1.7cqi;
+  font-size:1.5cqi;line-height:1.45;
+}
+.alert b{color:var(--imp)}
+</style>
+
+<div class="rail">
+  <span class="id"><b>IS284</b> · Programación II</span>
+  <span class="id">Semana 1 · Cápsula 1.5</span>
+  <span class="spacer"></span>
+  <span class="counter"><b id="cur">1</b> / 12</span>
+  <button class="btn" id="prev" type="button">← Anterior</button>
+  <button class="btn" id="next" type="button">Siguiente →</button>
+  <button class="btn" id="toggleNotes" type="button" aria-pressed="false">Notas (N)</button>
+</div>
+<div class="progress"><span id="bar" style="width:8.33%"></span></div>
+
+<div class="wrap">
+<div class="stage" id="stage">
+
+<!-- 1 ............................................................. -->
+<section class="slide cover on" data-t="Guía § 0">
+  <p class="inst">UNIVERSIDAD TECNOLÓGICA DE PEREIRA<br>Facultad de Ingenierías · Ingeniería de Sistemas y Computación</p>
+  <p class="course">Programación II · IS284 · Semana 1 · Cápsula 1.5</p>
+  <h1>El entorno de desarrollo</h1>
+  <div class="who">
+    <span>Docente<b>Ing. Andres Vargas</b></span>
+    <span>Modalidad<b>Guía · sin video</b></span>
+    <span>Duración<b>45 – 60 minutos</b></span>
+    <span>Carácter<b>Instrumental · habilita todo el curso</b></span>
+  </div>
+</section>
+
+<!-- 2 ............................................................. -->
+<section class="slide" data-t="Guía § 0">
+  <p class="eyebrow"><span class="tick"></span> Qué tiene que lograr</p>
+  <h2 class="title">Al terminar, su computador compila C</h2>
+  <p class="lead">Esta cápsula no le enseña a programar. Le entrega la herramienta con la que va a programar durante los tres meses siguientes.</p>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Lo que debe quedar</span>
+      <ul>
+        <li>Un entorno instalado <b>en su equipo</b> que compila y ejecuta C.</li>
+        <li>Saber <b>compilar</b> y <b>ejecutar</b> desde ese entorno.</li>
+        <li>Una <b>captura de pantalla</b> con su nombre impreso por un programa que usted compiló.</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Por qué en la semana 1</span>
+      <p>En la <b>semana 3</b> usted escribe su primer programa real en C (cápsulas 3.1 y 3.2). Quien llegue allí sin compilador queda bloqueado en todo lo que sigue.</p>
+      <p>Instalar ahora le deja <b>dos semanas de margen</b> para resolver cualquier problema por los canales del curso.</p>
+    </div>
+  </div>
+  <div class="callout">La evidencia de esta cápsula no es un examen: es una captura de pantalla de su propia máquina funcionando.</div>
+</section>
+
+<!-- 3 ............................................................. -->
+<section class="slide" data-t="Guía § 1">
+  <p class="eyebrow"><span class="tick"></span> Editor ≠ entorno de desarrollo</p>
+  <h2 class="title">De texto a programa hacen falta cinco piezas</h2>
+  <p class="lead">El Bloc de notas puede escribir un programa en C perfectamente válido. Lo que no puede es convertirlo en algo que la máquina ejecute.</p>
+  <div class="chain">
+    <div class="link"><span class="n">1</span><span class="w">Editor</span><span class="d">Escribe y colorea el código</span></div>
+    <div class="arrowmini">→</div>
+    <div class="link hot"><span class="n">2</span><span class="w">Compilador</span><span class="d">Traduce el <code>.c</code> a instrucciones de máquina</span></div>
+    <div class="arrowmini">→</div>
+    <div class="link hot"><span class="n">3</span><span class="w">Enlazador</span><span class="d">Une su código con las bibliotecas y produce el ejecutable</span></div>
+    <div class="arrowmini">→</div>
+    <div class="link"><span class="n">4</span><span class="w">Depurador</span><span class="d">Detiene el programa y muestra cada variable</span></div>
+    <div class="arrowmini">→</div>
+    <div class="link"><span class="n">5</span><span class="w">Gestor</span><span class="d">Recuerda qué archivos forman el programa</span></div>
+  </div>
+  <div class="callout"><b>Un IDE es esas cinco piezas en una sola ventana, con un botón que las coordina.</b> Sin IDE habría que invocar cada pieza a mano — y en las rutas de macOS y Linux lo haremos al menos una vez, porque entender qué pasa por debajo vale la pena.</div>
+</section>
+
+<!-- 4 ............................................................. -->
+<section class="slide dense" data-t="Guía § 1">
+  <p class="eyebrow"><span class="tick"></span> Los cinco tipos de entorno</p>
+  <h2 class="title">No todos los "entornos" compilan C</h2>
+  <table>
+    <thead><tr><th>Tipo</th><th>Qué implica</th><th>Ejemplos</th></tr></thead>
+    <tbody>
+      <tr><th>(a) IDE con compilador incluido</th><td>Un solo instalador, cero configuración</td><td><b>Dev-C++</b>, Code::Blocks, Visual Studio</td></tr>
+      <tr><th>(b) IDE que exige configurar la cadena</th><td>Viene sin compilador; se instala aparte</td><td>Eclipse CDT, CLion, Xcode</td></tr>
+      <tr><th>(c) Editor extensible + cadena</th><td>Editor liviano + extensión + compilador</td><td>VS Code + GCC / MinGW / clang</td></tr>
+      <tr><th>(d) Entorno en línea</th><td>Se programa en el navegador; compilador en un servidor</td><td>OnlineGDB, Programiz, Replit</td></tr>
+      <tr class="diff"><th>(e) Pseudocódigo y diagramas</th><td><b>No son compiladores de C.</b> Herramientas de aprendizaje</td><td>PSeInt, Flowgorithm</td></tr>
+    </tbody>
+  </table>
+  <div class="alert"><b>Ojo con la fila (e).</b> PSeInt y Flowgorithm llegan en la cápsula 2.2, pero no compilan C: quien instale solo PSeInt <b>no cumplió la 1.5</b>.</div>
+  <p class="note"><b>Criterio del curso —</b> gratuito, liviano, con compilador incluido y sin configuración previa — lo pone en el tipo (a): <b>Dev-C++ de Embarcadero</b>. No por ser el mejor IDE, sino el que menos cosas puede salir mal en la semana 1.</p>
+</section>
+
+<!-- 5 ............................................................. -->
+<section class="slide dense" data-t="Guía § 2">
+  <p class="eyebrow"><span class="tick"></span> Antes de descargar nada</p>
+  <h2 class="title">Hay <em>dos</em> Dev-C++ distintos, y casi nadie lo advierte</h2>
+  <div class="versus">
+    <div class="vcard bad">
+      <span class="vh">✕ No lo use</span>
+      <h4>Dev-C++ de Orwell</h4>
+      <div class="vrow"><span>Última versión</span><span>5.11</span></div>
+      <div class="vrow"><span>Última actualización</span><span>2015</span></div>
+      <div class="vrow"><span>Compilador</span><span>GCC 4.9.2 (2014)</span></div>
+      <div class="vrow"><span>Repositorio</span><span>orwelldevcpp</span></div>
+      <p class="note" style="font-size:1.25cqi">Más de diez años sin mantenimiento. Su compilador es tan viejo que algunos mensajes de error del curso no van a coincidir con los que le muestre.</p>
+    </div>
+    <div class="vcard good">
+      <span class="vh">✓ Este es el del curso</span>
+      <h4>Dev-C++ de Embarcadero</h4>
+      <div class="vrow"><span>Última versión</span><span>6.3</span></div>
+      <div class="vrow"><span>Última actualización</span><span>31 ene 2021</span></div>
+      <div class="vrow"><span>Compilador</span><span>TDM-GCC 9.2.0</span></div>
+      <div class="vrow"><span>Repositorio</span><span>embarcadero-devcpp</span></div>
+      <p class="note" style="font-size:1.25cqi;color:var(--ink)">Archivo a descargar:<br><b>Embarcadero_Dev-Cpp_6.3_<br>TDM-GCC_9.2_Setup.exe</b> (≈ 74 MB)</p>
+    </div>
+  </div>
+  <div class="alert"><b>Verificamos los tutoriales de YouTube más vistos sobre "instalar Dev-C++": la mayoría enlaza al de Orwell</b> — incluidos videos con 245 000 vistas y videos subidos en 2026. Un número alto de vistas no verifica nada.</div>
+</section>
+
+<!-- 6 ............................................................. -->
+<section class="slide" data-t="Guía § 3">
+  <p class="eyebrow"><span class="tick"></span> Elija su ruta · pulse su sistema</p>
+  <h2 class="title">Con una ruta basta</h2>
+  <div class="osbtns">
+    <button class="osbtn" id="osWin" type="button" aria-pressed="true">Windows</button>
+    <button class="osbtn" id="osMac" type="button" aria-pressed="false">macOS</button>
+    <button class="osbtn" id="osLin" type="button" aria-pressed="false">Linux</button>
+    <button class="osbtn" id="osWeb" type="button" aria-pressed="false">Sin instalar nada</button>
+  </div>
+  <div class="ospanel">
+    <span class="ol" id="osLab">Ruta recomendada</span>
+    <span class="oh" id="osHead">—</span>
+    <ol id="osSteps"></ol>
+    <p class="nope" id="osNope"></p>
+  </div>
+</section>
+
+<!-- 7 ............................................................. -->
+<section class="slide" data-t="Guía § 4">
+  <p class="eyebrow"><span class="tick"></span> Windows · ruta recomendada</p>
+  <h2 class="title">Dev-C++ de Embarcadero, en cuatro pasos</h2>
+  <div class="duo">
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">Instalar</span>
+      <ul>
+        <li><b>Descargue</b> de <code>sourceforge.net/projects/embarcadero-devcpp</code> el archivo que dice <b>TDM-GCC_9.2</b>.</li>
+        <li>Si Windows avisa <em>"Windows protegió su PC"</em> → <b>Más información → Ejecutar de todas formas</b>. Es normal.</li>
+        <li>Tipo de instalación: deje <b><code>Full</code></b>. Es la que incluye el compilador.</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Comprobar — el paso que casi todos saltan</span>
+      <p><b>Herramientas → Opciones del compilador.</b> En la lista de arriba debe aparecer:</p>
+      <pre><span class="n">TDM-GCC 9.2.0 64-bit Release</span></pre>
+      <p><b>Si esa lista está vacía</b>, descargó el instalador <code>No_Compiler</code>. Desinstale y vuelva a empezar con el archivo correcto.</p>
+    </div>
+  </div>
+  <div class="callout"><b>Requisitos oficiales: Windows 7, 8.1 y 10.</b> Embarcadero no lista Windows 11 porque la versión 6.3 es anterior a ese sistema. En la práctica funciona sin problemas conocidos; si su equipo se comporta de forma extraña, use VS Code + MinGW, que sí está mantenido al día.</div>
+</section>
+
+<!-- 8 ............................................................. -->
+<section class="slide" data-t="Guía § 4.4 – 4.7">
+  <p class="eyebrow"><span class="tick"></span> Windows · las tres cosas que fallan</p>
+  <h2 class="title">Banderas, extensión y la ventana que se cierra</h2>
+  <div class="trio">
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">1 · Banderas</span>
+      <p><b>Herramientas → Opciones del compilador → General.</b> Marque "Añadir los siguientes comandos" y escriba:</p>
+      <pre><span class="k">-std=c99 -Wall -Wextra</span></pre>
+      <p><code>-std=c99</code> fija la versión del lenguaje. <code>-Wall -Wextra</code> piden advertencias. <b>Las advertencias son material de estudio, no ruido.</b></p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">2 · Extensión</span>
+      <p>Dev-C++ propone <code>.cpp</code> por omisión. <b>Este curso es de C.</b></p>
+      <p>Al guardar, escriba <b><code>entorno.c</code></b> con la extensión a mano, y elija el tipo <em>C source files</em>.</p>
+      <p>El compilador decide qué lenguaje aplicar <b>según la extensión</b>: guardarlo como <code>.cpp</code> produce errores de C++ confusos.</p>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">3 · La ventana negra</span>
+      <div class="keyrow">
+        <div class="keyline"><span class="kbd">F9</span><span class="txt">Compilar</span></div>
+        <div class="keyline"><span class="kbd">F10</span><span class="txt">Ejecutar <em>— se cierra sola</em></span></div>
+        <div class="keyline"><span class="kbd">F11</span><span class="txt">Compilar y ejecutar <em>— use esta</em></span></div>
+      </div>
+      <p><b>No es un error:</b> el programa terminó y la consola se cerró con él. F11 la mantiene abierta.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 ............................................................. -->
+<section class="slide dense" data-t="Guía § 7">
+  <p class="eyebrow"><span class="tick"></span> macOS</p>
+  <h2 class="title">Tres de las cuatro respuestas "obvias" ya no existen</h2>
+  <div class="split">
+    <div class="panel fn">
+      <span class="tag fn">La ruta que sí funciona</span>
+      <p>macOS <b>trae</b> el compilador clang, pero sin instalar. En la Terminal:</p>
+      <pre><span class="c"># instala el compilador clang (~1 GB)</span>
+xcode-select --install
+clang --version
+
+<span class="c"># compilar y ejecutar</span>
+clang <span class="k">-std=c99 -Wall -Wextra</span> entorno.c <span class="k">-o</span> entorno
+./entorno</pre>
+      <p>Encima, <b>VS Code</b> + la extensión <b>C/C++</b> de Microsoft. Igual en Intel y en Apple Silicon.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Lo que NO debe intentar</span>
+      <ul>
+        <li><b>Dev-C++</b> — no existe para macOS. Es una aplicación de Windows.</li>
+        <li><b>Code::Blocks</b> — ya no publica binarios para Mac; el último es de la <b>12.11</b>.</li>
+        <li><b>Visual Studio for Mac</b> — Microsoft lo retiró el <b>31 de agosto de 2024</b>.</li>
+        <li><b>Xcode completo</b> — funciona, pero son +10 GB para un programa de consola.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">En macOS la orden <code>gcc</code> existe, pero <b>es un alias de clang</b>. No es un error: para este curso son equivalentes.</p>
+</section>
+
+<!-- 10 ............................................................ -->
+<section class="slide" data-t="Guía § 8">
+  <p class="eyebrow"><span class="tick"></span> Linux</p>
+  <h2 class="title">La ruta más corta de las tres</h2>
+  <div class="split-r">
+    <div class="panel fn">
+      <span class="tag fn">Instalar y comprobar</span>
+      <pre><span class="c"># Ubuntu, Mint, Debian</span>
+sudo apt update
+sudo apt install build-essential
+
+<span class="c"># Fedora, Red Hat</span>
+sudo dnf group install <span class="s">"Development Tools"</span>
+
+<span class="c"># verificar, compilar y ejecutar</span>
+gcc --version
+gcc <span class="k">-std=c99 -Wall -Wextra</span> entorno.c <span class="k">-o</span> entorno
+./entorno</pre>
+    </div>
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">El IDE es opcional</span>
+      <p>Con lo de la izquierda <b>ya cumplió el objetivo de la cápsula</b>. Si además quiere un IDE:</p>
+      <ul>
+        <li><b>Geany</b> — <code>apt install geany</code>. Liviano. <code>F8</code> compila, <code>F5</code> ejecuta.</li>
+        <li><b>Code::Blocks</b> — <code>apt install codeblocks</code>. El más parecido a Dev-C++.</li>
+        <li><b>VS Code</b> — el mismo de las otras rutas.</li>
+      </ul>
+      <p class="note" style="font-size:1.3cqi"><b>Dev-C++ con Wine:</b> se puede, pero añade una capa de emulación que falla de formas difíciles de diagnosticar. En Linux ya tiene GCC nativo — el mismo compilador que Dev-C++ empaqueta.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 ............................................................ -->
+<section class="slide dense" data-t="Guía § 9 – 10">
+  <p class="eyebrow"><span class="tick"></span> Dos casos particulares</p>
+  <h2 class="title">Eclipse CDT · y el plan B que siempre funciona</h2>
+  <div class="duo">
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">Eclipse CDT · tipo (b)</span>
+      <p>Solo tiene sentido si usted <b>ya usa Eclipse para Java</b>. Es de tipo (b): <b>viene sin compilador</b>.</p>
+      <ul>
+        <li><b>Primero el compilador</b> — MinGW, Command Line Tools o build-essential.</li>
+        <li>Paquete <em>Eclipse IDE for C/C++ Developers</em>, o <b>Help → Install New Software</b> → <em>C/C++ Development Tools</em>.</li>
+        <li><b>File → New → Project → C/C++ → C Project</b> → <em>Executable · Empty Project</em>.</li>
+        <li>Ejecutar: <b>Run As → Local C/C++ Application</b>.</li>
+      </ul>
+      <p class="note" style="font-size:1.3cqi"><b>CDT descubre los compiladores recorriendo el <code>PATH</code>.</b> Si la lista de <em>Toolchains</em> sale vacía, verifique con <code>gcc --version</code> <b>antes</b> de culpar a Eclipse.</p>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">OnlineGDB · plan B válido</span>
+      <p>Si su equipo no permite instalar programas o ninguna ruta le funcionó: <b>se acepta al 100 % en la actividad evaluativa.</b></p>
+      <ul>
+        <li><code>onlinegdb.com/online_c_compiler</code></li>
+        <li><b>Verifique que el lenguaje diga <code>C</code></b> — por omisión suele estar en C++.</li>
+        <li><b>Guarde su código en su propio computador.</b> Lo que queda solo en el navegador se pierde.</li>
+      </ul>
+      <p class="note" style="font-size:1.3cqi"><b>Límites:</b> no funciona sin internet y no trabaja con archivos del disco — que se necesitan en la semana 10.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 ............................................................ -->
+<section class="slide" data-t="Guía § 12 – 16">
+  <p class="eyebrow"><span class="tick"></span> Cierre · pulse cada casilla que ya cumplió</p>
+  <h2 class="title">No siga a la cápsula 2.1 sin las cinco</h2>
+  <div class="split">
+    <div class="checks">
+      <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span><span>Tengo un compilador de C instalado (o decidí usar OnlineGDB)</span></button>
+      <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span><span>Si usé Dev-C++, verifiqué que es el de <b>Embarcadero 6.3 con TDM-GCC 9.2</b></span></button>
+      <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span><span>Configuré las banderas <code>-std=c99 -Wall -Wextra</code></span></button>
+      <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span><span>Creé un archivo con extensión <b><code>.c</code></b> y escribí mi nombre en él</span></button>
+      <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span><span><b>Compilé, ejecuté, y vi mi nombre impreso en pantalla</b></span></button>
+      <p class="tally"><b id="tallyN">0</b> de 5 · <span id="tallyMsg">empiece por la primera</span></p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">La entrega</span>
+      <p><b>Una captura</b> del programa corriendo con su nombre, y <b>su archivo <code>.c</code></b> nombrado <code>1_5_apellido_nombre.c</code>. Dos intentos; cierra el domingo de la semana siguiente.</p>
+      <span class="tag imp" style="margin-top:.6cqi">Si nada le funciona</span>
+      <p><b>No se quede atascado en silencio.</b> Use OnlineGDB para no perder el ritmo, y escriba al docente con su sistema operativo, la ruta que intentó y una captura del error.</p>
+      <p class="note" style="font-size:1.3cqi">Respuesta en 24 h hábiles. La <b>cápsula 4.1</b> es el segundo punto de recuperación oficial.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="notes" id="notesBox">
+  <h5>Notas de uso · <span class="time" id="notesTime"></span></h5>
+  <p id="notesText"></p>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var notesBox = document.getElementById('notesBox');
+  var notesText = document.getElementById('notesText');
+  var notesTime = document.getElementById('notesTime');
+
+  /* Esta cápsula NO tiene video ni libreto: las notas no son un guion de
+     narración sino indicaciones de uso, para el estudiante que estudia solo
+     y para el docente que quiera proyectar la presentación en la sesión
+     sincrónica. El campo de tiempo se reemplazó por la sección de la guía
+     que corresponde a cada diapositiva.                                    */
+  var NOTES = [
+    "Presentación de apoyo de la cápsula 1.5. No hay video: la fuente principal es S01_A05_guia_instalacion.md y esta presentación es el resumen visual. Cada diapositiva indica arriba a la derecha la sección de la guía que la desarrolla.",
+    "El objetivo es instrumental, no conceptual. Insista en la razón de la fecha: la semana 3 exige compilador, y quien llegue sin él queda bloqueado en las cápsulas 3.1 y 3.2. Dos semanas de margen es el diseño, no una casualidad.",
+    "Las cinco piezas explican por qué un editor de texto no basta. Las dos resaltadas —compilador y enlazador— son las que producen el ejecutable, y son las que el estudiante va a invocar a mano en las rutas de macOS y de Linux. El error «undefined reference» que verá más adelante es de la pieza 3, no de la 2.",
+    "La fila (e) es la que evita un malentendido caro: cada semestre alguien instala solo PSeInt y cree que cumplió. PSeInt llega en la cápsula 2.2 y es útil, pero no compila C. El criterio de elección del curso está en la nota inferior y es lo que justifica Dev-C++ sin afirmar que sea el mejor IDE.",
+    "Esta es la diapositiva más importante de la cápsula y la que más soporte ahorra. Los dos Dev-C++ no son el mismo programa: el de Orwell se abandonó en 2015. La regla que se lleva el estudiante no es solo «descargue el 6.3», es «verifique la fuente». El dato de los tutoriales fue comprobado video por video; la lista completa está en la sección 14 de la guía.",
+    "Diapositiva interactiva: pulse cada sistema operativo. Sirve para que el estudiante identifique su ruta en diez segundos sin leer la guía entera. Detenga aquí la proyección y deje que cada quien encuentre la suya. La cuarta opción, sin instalar nada, no es un premio de consolación: se acepta al 100 % en la entrega.",
+    "El paso que casi todos saltan es el de la derecha: comprobar que el compilador quedó incluido. Quien descargue el instalador No_Compiler tendrá un editor bonito que no compila nada, y lo descubrirá en la semana 3. La nota sobre Windows 11 es honesta a propósito: Embarcadero no lo lista, y conviene decirlo en vez de fingir que sí.",
+    "Las tres causas del 90 % de las consultas de esta cápsula. La del medio es la más silenciosa: guardar como .cpp produce errores de C++ que el estudiante no puede interpretar en la semana 1. Sobre la ventana negra, insista en que NO es un error: es la consola cerrándose con el programa que terminó.",
+    "Aquí se corrige el plan del curso, que recomendaba Code::Blocks para Mac. Ya no es viable: el último binario para macOS es de la versión 12.11. Las tres opciones tachadas son las tres respuestas que el estudiante encontraría buscando por su cuenta, y las tres le harían perder una tarde. El alias gcc→clang evita otra consulta previsible.",
+    "La ruta más corta. Diga explícitamente que con las órdenes de la izquierda ya cumplió: el estudiante de Linux no necesita IDE y no debe sentir que le falta algo. Wine se menciona solo para cerrarle la puerta con un argumento, no por prohibición.",
+    "Eclipse solo para quien ya lo usa en Java; el resto pierde media hora. El punto crítico es el PATH: si la lista de Toolchains sale vacía, el problema no es Eclipse. OnlineGDB no es un castigo — repita que se acepta al 100 % — pero advierta de sus dos límites reales: sin internet no hay nada, y en la semana 10 se trabajará con archivos del disco.",
+    "Cierre. Las casillas son pulsables: úselas como autodiagnóstico en vivo. La quinta es la única que importa de verdad, porque es la que produce la captura de la entrega. Termine con el mensaje del recuadro ámbar: quien no lo logre debe escribir, no desaparecer. La cápsula 4.1 es la segunda oportunidad, y está prevista en el diseño del curso."
+  ];
+
+  function show(n){
+    if(n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('on');
+    slides[i].scrollTop = 0;
+    cur.textContent = String(i + 1);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    notesText.textContent = NOTES[i];
+    notesTime.textContent = slides[i].getAttribute('data-t');
+  }
+
+  document.getElementById('next').addEventListener('click', function(){ show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function(){ show(i - 1); });
+  var tn = document.getElementById('toggleNotes');
+  tn.addEventListener('click', function(){
+    var on = notesBox.classList.toggle('on');
+    tn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ show(i - 1); }
+    else if(e.key === 'n' || e.key === 'N'){ tn.click(); }
+  });
+
+  /* ========== diapositiva 6 · selector de ruta por sistema operativo ==========
+     Cada ruta es el resumen de la seccion correspondiente de la guia. Los
+     avisos en ambar son hechos verificados contra la fuente oficial, no
+     opiniones: se incluyen porque son las tres respuestas equivocadas que
+     el estudiante encontraria buscando por su cuenta.                       */
+  var RUTAS = {
+    osWin: {
+      lab: "Ruta recomendada · 15 minutos",
+      head: "Dev-C++ de Embarcadero",
+      steps: [
+        "Descargue de sourceforge.net/projects/embarcadero-devcpp el archivo Embarcadero_Dev-Cpp_6.3_TDM-GCC_9.2_Setup.exe",
+        "Instale dejando el tipo Full, que es el que incluye el compilador",
+        "Compruebe en Herramientas → Opciones del compilador que aparece TDM-GCC 9.2.0",
+        "Añada las banderas del curso: -std=c99 -Wall -Wextra",
+        "Guarde su archivo como entorno.c — con la extensión .c a mano — y pulse F11"
+      ],
+      nope: "Alternativas mantenidas al día: VS Code + MinGW-w64 vía MSYS2 (§ 5), o Visual Studio Community con la carga «Desarrollo para el escritorio con C++» (§ 6)."
+    },
+    osMac: {
+      lab: "Ruta recomendada · 20 minutos · Intel y Apple Silicon",
+      head: "Command Line Tools + VS Code",
+      steps: [
+        "En la Terminal: xcode-select --install — instala clang, el compilador de macOS",
+        "Verifique con clang --version",
+        "Compile a mano al menos una vez: clang -std=c99 -Wall -Wextra entorno.c -o entorno",
+        "Ejecute con ./entorno",
+        "Instale VS Code y la extensión C/C++ de Microsoft como editor"
+      ],
+      nope: "No intente Dev-C++ (no existe para Mac), ni Code::Blocks (último binario para macOS: versión 12.11), ni Visual Studio for Mac (Microsoft lo retiró el 31 de agosto de 2024)."
+    },
+    osLin: {
+      lab: "Ruta recomendada · 10 minutos",
+      head: "build-essential + el editor que prefiera",
+      steps: [
+        "Ubuntu, Mint y Debian: sudo apt update && sudo apt install build-essential",
+        "Fedora y Red Hat: sudo dnf group install \"Development Tools\"",
+        "Verifique con gcc --version",
+        "Compile: gcc -std=c99 -Wall -Wextra entorno.c -o entorno, y ejecute con ./entorno",
+        "IDE opcional: Geany, Code::Blocks o VS Code — con lo anterior ya cumplió"
+      ],
+      nope: "Dev-C++ bajo Wine se puede, pero añade una capa de emulación que falla de formas difíciles de diagnosticar. En Linux ya tiene GCC nativo, el mismo compilador que Dev-C++ empaqueta."
+    },
+    osWeb: {
+      lab: "Plan B válido para todo el curso · 2 minutos",
+      head: "OnlineGDB, desde el navegador",
+      steps: [
+        "Abra onlinegdb.com/online_c_compiler",
+        "Verifique que el lenguaje seleccionado sea C — por omisión suele estar en C++",
+        "Escriba el programa y pulse Run",
+        "Guarde su código en un archivo .c en su propio computador",
+        "Cree una cuenta gratuita si va a usarlo todo el semestre"
+      ],
+      nope: "Se acepta al 100 % en la actividad evaluativa. Límites reales: no funciona sin internet y no puede trabajar con archivos del disco, que se necesitan en la semana 10."
+    }
+  };
+  var osIds = ["osWin","osMac","osLin","osWeb"];
+  var osLab = document.getElementById('osLab');
+  var osHead = document.getElementById('osHead');
+  var osSteps = document.getElementById('osSteps');
+  var osNope = document.getElementById('osNope');
+
+  function pintarRuta(id){
+    osIds.forEach(function(k){
+      document.getElementById(k).setAttribute('aria-pressed', k === id ? 'true' : 'false');
+    });
+    var d = RUTAS[id];
+    osLab.textContent = d.lab;
+    osHead.textContent = d.head;
+    osSteps.innerHTML = '';
+    d.steps.forEach(function(s){
+      var li = document.createElement('li');
+      li.textContent = s;
+      osSteps.appendChild(li);
+    });
+    osNope.textContent = d.nope;
+  }
+  osIds.forEach(function(k){
+    document.getElementById(k).addEventListener('click', function(){ pintarRuta(k); });
+  });
+  pintarRuta('osWin');
+
+  /* ========== diapositiva 12 · lista de verificacion pulsable ==========
+     Autodiagnostico. No guarda estado entre sesiones a proposito: la
+     evidencia real de la capsula es la captura de pantalla, no esta lista. */
+  var chks = Array.prototype.slice.call(document.querySelectorAll('.chk'));
+  var tallyN = document.getElementById('tallyN');
+  var tallyMsg = document.getElementById('tallyMsg');
+  var MSGS = [
+    "empiece por la primera",
+    "va bien, siga",
+    "a mitad de camino",
+    "ya casi",
+    "falta la más importante: ejecutar",
+    "listo — puede seguir a la cápsula 2.1"
+  ];
+  function recontar(){
+    var n = chks.filter(function(b){ return b.getAttribute('aria-pressed') === 'true'; }).length;
+    tallyN.textContent = String(n);
+    tallyMsg.textContent = MSGS[n];
+  }
+  chks.forEach(function(b){
+    b.addEventListener('click', function(){
+      b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      recontar();
+    });
+  });
+  recontar();
+
+  show(0);
+})();
+</script>

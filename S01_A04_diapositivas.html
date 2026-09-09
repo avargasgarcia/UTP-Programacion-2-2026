@@ -1,0 +1,1064 @@
+<meta charset="utf-8">
+<title>El Tipado de Datos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F2F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#EBEDF3;
+  --line:#D6D9E4;
+  --ink:#141828;
+  --muted:#5B6278;
+  --accent:#4557C9;
+  --accent-soft:#E3E6F8;
+  --fn:#0B7C71;
+  --fn-soft:#DCF0ED;
+  --imp:#A2620E;
+  --imp-soft:#F6E8D3;
+  --shadow:0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.08);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1120;
+    --surface:#171B2C;
+    --surface-2:#1F2438;
+    --line:#2E3448;
+    --ink:#E8EAF4;
+    --muted:#98A0BA;
+    --accent:#8494F2;
+    --accent-soft:#232A48;
+    --fn:#3FC7B4;
+    --fn-soft:#12312F;
+    --imp:#E9A94A;
+    --imp-soft:#33270F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1120;
+  --surface:#171B2C;
+  --surface-2:#1F2438;
+  --line:#2E3448;
+  --ink:#E8EAF4;
+  --muted:#98A0BA;
+  --accent:#8494F2;
+  --accent-soft:#232A48;
+  --fn:#3FC7B4;
+  --fn-soft:#12312F;
+  --imp:#E9A94A;
+  --imp-soft:#33270F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:"IBM Plex Serif", Georgia, "Times New Roman", serif;font-weight:600}
+p{margin:0}
+code,pre,.mono{font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace}
+
+/* ============ CHROME ============ */
+.rail{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  font-size:12px;
+}
+.rail .id{font-family:"IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rail .id b{color:var(--ink);font-weight:600}
+.rail .spacer{flex:1}
+.btn{
+  font:inherit;font-size:12px;
+  background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.counter{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.counter b{color:var(--ink)}
+
+.progress{height:3px;background:var(--surface-2);position:relative}
+.progress span{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .25s ease}
+
+/* ============ STAGE ============ */
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px}
+.stage{
+  width:min(100%,1180px);
+  aspect-ratio:16/9;
+  max-height:calc(100vh - 150px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  container-type:inline-size;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;
+  padding:4.4cqi 5cqi 4cqi;
+  display:none;
+  flex-direction:column;
+  gap:2.2cqi;
+  overflow-y:auto;
+}
+.slide.on{display:flex}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:1.25cqi;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:1cqi;
+}
+.eyebrow .tick{width:2.6cqi;height:1px;background:var(--line)}
+h2.title{font-size:3.9cqi;line-height:1.12;letter-spacing:-.01em}
+h3.sub{font-size:2.05cqi;line-height:1.25}
+.lead{font-size:1.95cqi;line-height:1.5;color:var(--ink);max-width:62ch}
+.note{font-size:1.5cqi;line-height:1.5;color:var(--muted);max-width:70ch}
+.slide ul{margin:0;padding-left:2.2cqi;display:flex;flex-direction:column;gap:1.1cqi}
+.slide li{font-size:1.8cqi;line-height:1.42}
+.slide li::marker{color:var(--accent)}
+
+/* two-world grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;align-items:start}
+.panel{
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+  padding:2cqi 2.2cqi;
+  display:flex;flex-direction:column;gap:1.2cqi;
+  min-width:0;
+}
+.panel.fn{border-top:3px solid var(--fn)}
+.panel.imp{border-top:3px solid var(--imp)}
+.tag{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+.tag.fn{color:var(--fn)}
+.tag.imp{color:var(--imp)}
+.panel h4{margin:0;font-size:1.85cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.panel p{font-size:1.5cqi;line-height:1.45;color:var(--muted)}
+.panel ul{padding-left:2cqi;gap:.7cqi}
+.panel li{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1.4cqi 1.6cqi;font-size:1.42cqi;line-height:1.55;
+  overflow-x:auto;white-space:pre;
+}
+pre .k{color:var(--accent);font-weight:500}
+pre .c{color:var(--muted);font-style:italic}
+pre .n{color:var(--imp)}
+pre .s{color:var(--fn)}
+.filename{
+  font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted);
+  display:flex;justify-content:space-between;gap:1cqi;
+}
+.filename em{font-style:normal;color:var(--fn)}
+
+/* trace machine */
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqi;align-items:stretch}
+.cell{
+  display:flex;gap:1.2cqi;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+}
+.box{
+  border:2px solid var(--imp);border-radius:6px;background:var(--imp-soft);
+  padding:.8cqi 1.6cqi;font-size:2.4cqi;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;min-width:7cqi;text-align:center;
+}
+.box.flash{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.expr{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;line-height:1.7;
+  color:var(--ink);word-break:break-word;
+}
+.expr .old{color:var(--muted)}
+.steps{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:1cqi;align-items:center;flex-wrap:wrap}
+.ctl{
+  font-family:"IBM Plex Sans",sans-serif;font-size:1.4cqi;
+  padding:.8cqi 1.6cqi;border-radius:6px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;cursor:pointer;
+}
+.ctl.ghost{background:transparent;color:var(--accent)}
+.ctl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctl:disabled{opacity:.45;cursor:default}
+
+/* comparison table */
+table{border-collapse:collapse;width:100%;font-size:1.5cqi}
+th,td{text-align:left;padding:1cqi 1.2cqi;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+thead th.cfn{color:var(--fn)}
+thead th.cimp{color:var(--imp)}
+tbody th{font-weight:500;color:var(--muted);font-family:"IBM Plex Sans",sans-serif}
+
+/* cover */
+.cover{justify-content:center;gap:1.6cqi;background:
+  linear-gradient(105deg, var(--fn-soft) 0%, transparent 42%),
+  linear-gradient(255deg, var(--imp-soft) 0%, transparent 42%);}
+.cover .inst{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);line-height:1.7;letter-spacing:.04em}
+.cover h1{font-size:5.4cqi;line-height:1.05;letter-spacing:-.02em;max-width:20ch}
+.cover .course{font-size:2cqi;color:var(--accent);font-weight:600}
+.cover .who{display:flex;gap:3cqi;flex-wrap:wrap;font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+.cover .who b{display:block;color:var(--ink);font-weight:600;font-size:1.75cqi}
+
+/* q&a */
+.qa{display:flex;flex-direction:column;gap:1.4cqi}
+.q{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi}
+.q p{font-size:1.6cqi;line-height:1.4}
+.q .ans{font-size:1.45cqi;color:var(--fn);line-height:1.45;display:none}
+.q.open .ans{display:block}
+.q button{align-self:flex-start;font:inherit;font-size:1.25cqi;background:none;border:1px solid var(--line);border-radius:5px;padding:.5cqi 1.1cqi;color:var(--muted);cursor:pointer}
+.q button:hover{color:var(--accent);border-color:var(--accent)}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:1.4cqi 1.8cqi;border-radius:0 7px 7px 0;font-size:1.55cqi;line-height:1.45;
+}
+.refs{font-size:1.3cqi;line-height:1.6;color:var(--muted)}
+.refs b{color:var(--ink);font-weight:500}
+
+/* notes drawer */
+.notes{
+  width:min(100%,1180px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);padding:14px 18px;
+  font-size:14px;line-height:1.55;color:var(--ink);
+  display:none;
+}
+.notes.on{display:block}
+.notes h5{margin:0 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notes p{color:var(--muted)}
+.notes .time{color:var(--accent);font-family:"IBM Plex Mono",monospace}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+@media (max-width:720px){
+  .duo,.trace{grid-template-columns:1fr}
+  .stage{aspect-ratio:auto;height:auto;min-height:520px}
+  .slide{position:relative;padding:22px}
+  .slide:not(.on){display:none}
+}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.3 — componentes que no existían en la 1.1.
+   No se modificó ningún token de color ni ningún tamaño anterior.
+   ====================================================================== */
+
+/* retícula de tres columnas (los tres intercambios) */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.6cqi;align-items:start}
+.trio .panel{padding:1.5cqi 1.6cqi;gap:.9cqi}
+.trio pre{font-size:1.24cqi;padding:1.1cqi 1.2cqi}
+.trio li{font-size:1.35cqi}
+.trio .tag{font-size:1.05cqi}
+
+/* retícula de dos columnas desiguales */
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:2.2cqi;align-items:start}
+.split-r{display:grid;grid-template-columns:.85fr 1.15fr;gap:2.2cqi;align-items:start}
+
+/* celdas de memoria con desvanecimiento del valor anterior */
+.mem{display:flex;gap:2.6cqi;align-items:flex-end;flex-wrap:wrap}
+.memcell{display:flex;flex-direction:column;align-items:center;gap:.5cqi;position:relative}
+.memcell .name{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--imp);font-weight:600}
+.memcell .addr{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;color:var(--muted)}
+.memcell .box{min-width:8.4cqi}
+.memcell .box.empty{color:var(--muted);border-style:dashed;background:transparent}
+.memcell .gone{
+  position:absolute;left:0;right:0;top:2.1cqi;
+  font-family:"IBM Plex Mono",monospace;font-size:2.4cqi;font-weight:600;
+  color:var(--muted);text-align:center;pointer-events:none;
+  text-decoration:line-through;
+  animation:vanish 1.1s ease forwards;
+}
+@keyframes vanish{
+  0%{opacity:.9;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-3.2cqi) scale(.8)}
+}
+
+/* registro de transiciones del simulador */
+.log{
+  font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;line-height:1.6;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1cqi 1.2cqi;height:15cqi;overflow:auto;color:var(--ink);
+  white-space:pre;
+}
+.log .dim{color:var(--muted)}
+
+/* indicador de estado actual */
+.statebar{display:flex;align-items:center;gap:1.2cqi;flex-wrap:wrap}
+.statebar .lab{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:1.7cqi;font-weight:600;
+  border:2px solid var(--imp);background:var(--imp-soft);color:var(--ink);
+  border-radius:999px;padding:.5cqi 1.6cqi;
+}
+.chip.flash{animation:pop .35s ease}
+
+/* diagramas de estados en SVG */
+.fsm{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fsm .node{fill:var(--dsurf);stroke:var(--dimp);stroke-width:2.5}
+.fsm .node.on{fill:var(--dimps);stroke-width:6}
+.fsm .inner{fill:none;stroke:var(--dfn);stroke-width:2}
+.fsm .lbl{fill:var(--dink);font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;text-anchor:middle}
+.fsm .edge{fill:none;stroke:var(--dmut);stroke-width:2}
+.fsm .elbl{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:15px;text-anchor:middle}
+.fsm .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fsm .cap.acc{fill:var(--dfn)}
+.fsm marker path{fill:var(--dmut)}
+.fsm.big .lbl{font-size:21px}
+.fsm.big .elbl{font-size:17px}
+.fsm.big .cap{font-size:15px}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.4 — componentes que no existían en la 1.3.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* las tres caras de un tipo (diapositiva 3) */
+.faces{display:flex;flex-direction:column;gap:1.2cqi}
+.face{display:flex;gap:1.3cqi;align-items:baseline}
+.face .num{font-family:"IBM Plex Mono",monospace;font-size:1.6cqi;font-weight:600;color:var(--accent);min-width:2.4cqi}
+.face .txt{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+.face .txt b{display:block;font-size:1.65cqi}
+.face .txt span{color:var(--muted);font-size:1.32cqi}
+
+/* matriz 2 × 2 del tipado (diapositiva 4) */
+.matrix{display:grid;grid-template-columns:4.6cqi 1fr 1fr;gap:.9cqi;align-items:stretch}
+.axis{
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);line-height:1.35;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+}
+.axis.side{writing-mode:vertical-rl;transform:rotate(180deg)}
+.mcell{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1.2cqi 1.3cqi;display:flex;flex-direction:column;gap:.45cqi;min-width:0;
+}
+.mcell:hover{border-color:var(--accent)}
+.mcell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mcell .lang{font-family:"IBM Plex Mono",monospace;font-size:1.75cqi;font-weight:600;color:var(--ink)}
+.mcell.c .lang{color:var(--imp)}
+.mcell.r .lang{color:var(--fn)}
+.mcell .kind{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.mcell .mk{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);visibility:hidden}
+.mcell[aria-pressed="true"]{background:var(--accent-soft);border:3px solid var(--accent);padding:1cqi 1.1cqi}
+.mcell[aria-pressed="true"] .mk{visibility:visible}
+
+/* explorador de tipos y barra de bytes (diapositiva 7) */
+.tbtns{display:flex;flex-wrap:wrap;gap:.6cqi}
+.tbtn{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.55cqi 1.05cqi;cursor:pointer;
+}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.bytebar{display:flex;gap:.35cqi;flex-wrap:wrap;align-items:center}
+.byte{
+  width:2.5cqi;height:2.5cqi;border-radius:4px;
+  border:1px solid var(--imp);background:var(--imp-soft);
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.bignum{font-family:"IBM Plex Mono",monospace;font-size:3.2cqi;font-weight:600;color:var(--imp);line-height:1}
+.bignum small{font-size:1.4cqi;color:var(--muted);font-weight:400;margin-left:.6cqi}
+
+/* banda de la advertencia intencional (diapositiva 6) */
+.warnband{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.2cqi 1.6cqi;
+  display:flex;flex-direction:column;gap:.55cqi;
+}
+.warnband .hd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.1cqi;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--imp);font-weight:600;
+}
+.warnband .msg{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;line-height:1.5;color:var(--ink);word-break:break-word}
+.warnband .why{font-size:1.32cqi;line-height:1.45;color:var(--muted)}
+
+/* predictor de conversiones (diapositiva 9) */
+.opts{display:flex;gap:.9cqi;flex-wrap:wrap}
+.opt{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.75cqi 1.5cqi;cursor:pointer;
+}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt.good{background:var(--fn-soft);border:2px solid var(--fn);font-weight:600;padding:.65cqi 1.4cqi}
+.opt.bad{background:var(--surface-2);border-color:var(--muted);color:var(--muted);text-decoration:line-through}
+.opt:disabled{cursor:default}
+.verdict{font-size:1.4cqi;line-height:1.45;color:var(--ink);min-height:7cqi}
+.verdict .head{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:.5cqi}
+.verdict .head.ok{color:var(--fn)}
+.verdict .head.no{color:var(--imp)}
+
+/* columna que difiere entre modelos de datos (diapositiva 10) */
+th.diff,td.diff{background:var(--imp-soft)}
+</style>
+
+<div class="rail">
+  <span class="id"><b>IS284</b> · Programación II</span>
+  <span class="id">Semana 1 · Cápsula 1.4</span>
+  <span class="spacer"></span>
+  <span class="counter"><b id="cur">1</b> / 12</span>
+  <button class="btn" id="prev" type="button">← Anterior</button>
+  <button class="btn" id="next" type="button">Siguiente →</button>
+  <button class="btn" id="toggleNotes" type="button" aria-pressed="false">Notas (N)</button>
+</div>
+<div class="progress"><span id="bar" style="width:8.33%"></span></div>
+
+<div class="wrap">
+<div class="stage" id="stage">
+
+<!-- 1 ............................................................. -->
+<section class="slide cover on" data-t="0:22">
+  <p class="inst">UNIVERSIDAD TECNOLÓGICA DE PEREIRA<br>Facultad de Ingenierías · Ingeniería de Sistemas y Computación</p>
+  <p class="course">Programación II · IS284 · Semana 1 · Cápsula 1.4</p>
+  <h1>El tipado de datos</h1>
+  <div class="who">
+    <span>Docente<b>Ing. Andres Vargas</b></span>
+    <span>Duración<b>7 minutos</b></span>
+    <span>Requisito<b>Cápsulas 1.1 a 1.3</b></span>
+    <span>Carácter<b>Base de toda declaración</b></span>
+  </div>
+</section>
+
+<!-- 2 ............................................................. -->
+<section class="slide" data-t="0:34">
+  <p class="eyebrow"><span class="tick"></span> De dónde viene · a dónde vamos</p>
+  <h2 class="title">La celda ya la tiene. Falta la etiqueta que lleva pegada</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Lo que ya tiene</span>
+      <ul>
+        <li>De la 1.3: la variable como <b>celda de memoria con nombre</b></li>
+        <li>De la 1.3: la asignación, que escribe encima y <b>destruye</b> lo anterior</li>
+        <li>De la 1.2: el pseudocódigo del curso, con <span class="mono">entero</span> y <span class="mono">real</span></li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Lo que construye hoy</span>
+      <ul>
+        <li>El <b>tipo</b>: dominio, operaciones y representación</li>
+        <li>Las dos dimensiones: <b>estático o dinámico</b>, <b>fuerte o débil</b></li>
+        <li>La tabla de tipos de <b>C99</b> con su tamaño <b>medido</b></li>
+        <li>La <b>conversión</b> implícita y la explícita, y sus trampas</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout"><b>Objetivo de esta cápsula, en dos mitades:</b> al terminar, usted <b>explica por qué</b> unos lenguajes son estrictos con los tipos y otros no, como decisión de diseño con costos y beneficios; y <b>lee la tabla de tipos de C99</b> distinguiendo lo que la norma garantiza de lo que solo se cumple en una máquina concreta.</div>
+  <p class="note"><b>Sobre la notación.</b> Esta semana usted escribe <b>pseudocódigo</b>. El código en C de esta cápsula es demostración del docente: lo ejecuta usted mismo a partir de la cápsula 1.5, y escribe el suyo en la 3.1.</p>
+</section>
+
+<!-- 3 ............................................................. -->
+<section class="slide" data-t="0:33">
+  <p class="eyebrow"><span class="tick"></span> Idea 1 de 8 · la definición</p>
+  <h2 class="title">Un tipo son tres cosas a la vez, no solo un tamaño</h2>
+  <div class="split">
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">Las tres caras de todo tipo</span>
+      <div class="faces">
+        <div class="face"><span class="num">1</span><span class="txt"><b>Dominio</b><span>¿Qué valores admite? — el conjunto de valores posibles y sus límites</span></span></div>
+        <div class="face"><span class="num">2</span><span class="txt"><b>Operaciones</b><span>¿Qué tiene sentido hacer con ellos? — la cara que casi nadie nombra</span></span></div>
+        <div class="face"><span class="num">3</span><span class="txt"><b>Representación</b><span>¿Cuántos bytes ocupa y cómo se interpretan? — lo que se mide</span></span></div>
+      </div>
+      <p>El compilador necesita las tres antes de generar una sola instrucción: sin el tamaño no sabe cuánta memoria reservar, y sin las operaciones no sabe qué instrucción de la máquina emitir.</p>
+    </div>
+    <div class="panel imp">
+      <div class="filename"><span>las tres caras de <span class="mono">int</span> y de <span class="mono">double</span></span><em>tamaños medidos</em></div>
+      <table>
+        <thead><tr><th>Cara</th><th class="cimp">int</th><th class="cimp">double</th></tr></thead>
+        <tbody>
+          <tr><th>Dominio</th><td>enteros de −2 147 483 648 a 2 147 483 647</td><td>reales, 15 dígitos significativos</td></tr>
+          <tr><th>Operaciones</th><td><span class="mono">+ − * /</span> y también <span class="mono">%</span></td><td><span class="mono">+ − * /</span>, <b>nunca</b> <span class="mono">%</span></td></tr>
+          <tr><th>Representación</th><td>4 bytes · 32 bits</td><td>8 bytes · 64 bits</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="note">La fila del medio es el mejor argumento de que un tipo no es solo un tamaño: <span class="mono">7 % 2</span> vale 1, pero <span class="mono">7.0 % 2.0</span> no vale nada. No es que el compilador no quiera; es que <b>la pregunta «resto de una división real» no significa nada</b>. El tipo decide qué preguntas son formulables.</p>
+</section>
+
+<!-- 4 ............................................................. -->
+<section class="slide" data-t="0:36">
+  <p class="eyebrow"><span class="tick"></span> Idea 2 de 8 · interactiva · pulse una casilla</p>
+  <h2 class="title">Dos preguntas independientes que todo el mundo confunde</h2>
+  <div class="split">
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">Cuándo se comprueba × cuánto se permite mezclar</span>
+      <div class="matrix">
+        <div></div>
+        <div class="axis">Fuerte<br>poco se permite mezclar</div>
+        <div class="axis">Débil<br>mucho se permite mezclar</div>
+
+        <div class="axis side">Estático<br>al compilar</div>
+        <button class="mcell" type="button" id="mA" aria-pressed="false">
+          <span class="lang">Java</span>
+          <span class="kind">estático · fuerte</span>
+          <span class="mk">◀ activa</span>
+        </button>
+        <button class="mcell c" type="button" id="mB" aria-pressed="true">
+          <span class="lang">C</span>
+          <span class="kind">estático · relativamente débil</span>
+          <span class="mk">◀ activa</span>
+        </button>
+
+        <div class="axis side">Dinámico<br>al ejecutar</div>
+        <button class="mcell r" type="button" id="mC" aria-pressed="false">
+          <span class="lang">Racket</span>
+          <span class="kind">dinámico · fuerte</span>
+          <span class="mk">◀ activa</span>
+        </button>
+        <button class="mcell" type="button" id="mD" aria-pressed="false">
+          <span class="lang">JavaScript</span>
+          <span class="kind">dinámico · débil</span>
+          <span class="mk">◀ activa</span>
+        </button>
+      </div>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp" id="mxTag">Casilla activa</span>
+      <p class="expr" id="mxWhat">—</p>
+      <div class="filename"><span>evidencia ejecutada por el curso</span></div>
+      <pre id="mxEv">—</pre>
+      <p id="mxTrade">—</p>
+    </div>
+  </div>
+  <p class="note"><b>C y Racket están en la diagonal</b>, y eso es la prueba de que las dos dimensiones son independientes. Por eso la frase «C es de tipado fuerte porque hay que declarar el tipo» es un error: declarar es una consecuencia de ser <b>estático</b>, no de ser fuerte.</p>
+</section>
+
+<!-- 5 ............................................................. -->
+<section class="slide" data-t="0:36">
+  <p class="eyebrow"><span class="tick"></span> Idea 3 de 8 · el porqué</p>
+  <h2 class="title">C no es débil por descuido: es débil por encargo</h2>
+  <div class="split">
+    <div class="panel imp">
+      <span class="tag imp">El contexto que explica el diseño</span>
+      <ul>
+        <li>C nació para escribir un <b>sistema operativo</b> sobre una máquina pequeña, un PDP-11.</li>
+        <li>Un sistema operativo tiene que tratar la memoria <b>como lo que es</b>: una secuencia de bytes que a veces hay que reinterpretar.</li>
+        <li>La conversión implícita entre tipos numéricos es la manera de escribir ese código <b>sin ceremonia</b>.</li>
+      </ul>
+      <p>El precio está pagado por adelantado: el compilador deja pasar errores que otro lenguaje habría rechazado.</p>
+    </div>
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">Cada opción gana algo y paga algo</span>
+      <table>
+        <thead><tr><th>Opción</th><th>Gana</th><th>Pierde</th></tr></thead>
+        <tbody>
+          <tr><th>Fuerte y estático</th><td>Error detectado antes de ejecutar; el tipo documenta la intención; permite optimizar</td><td>Más código ceremonial; menos flexibilidad</td></tr>
+          <tr><th>Débil</th><td>Menos ceremonia; código más corto; control total sobre la representación</td><td>Errores silenciosos que aparecen al ejecutar, y a veces solo con ciertos datos</td></tr>
+          <tr><th>Dinámico</th><td>Prototipado rápido; código genérico sin esfuerzo</td><td>El error aparece tarde; hay que cargar información de tipos en ejecución</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="callout"><b>La conclusión que sí hay que aplicar mañana:</b> como C no lo va a proteger, <b>la disciplina de tipos la pone usted</b>. Por eso el curso compila siempre con <span class="mono">-Wall -Wextra</span>: esas banderas convierten en advertencia varias de las conversiones que el lenguaje aceptaría en silencio.</div>
+</section>
+
+<!-- 6 ............................................................. -->
+<section class="slide" data-t="0:45">
+  <p class="eyebrow"><span class="tick"></span> Idea 4 de 8 · demostración · dos ejecuciones reales</p>
+  <h2 class="title">C convierte y sigue; Racket se niega y explica</h2>
+  <div class="duo">
+    <div class="panel imp">
+      <div class="filename"><span>tipado.c</span><em>salida real · verificada</em></div>
+      <pre>int    entero = <span class="n">3.9</span>;   <span class="c">/* cabe? C decide que si */</span>
+double real   = <span class="n">7</span> / <span class="n">2</span>;   <span class="c">/* la division ya se hizo */</span>
+char   letra  = <span class="n">65</span>;</pre>
+      <pre>int entero = 3.9;   -&gt; 3
+double real = 7/2;  -&gt; 3.000000
+char letra = 65;    -&gt; A</pre>
+      <p>Tres conversiones, ninguna pregunta. El <span class="mono">3.9</span> se <b>trunca</b>, no se redondea; la división ya era entera antes de llegar al <span class="mono">double</span>.</p>
+    </div>
+    <div class="panel fn">
+      <div class="filename"><span>tipado.rkt</span><em>salida real · verificada</em></div>
+      <pre>(+ <span class="n">1</span> <span class="s">"2"</span>)</pre>
+      <pre>Intento sumar un numero y una cadena:
++: contract violation
+  expected: number?
+  given: "2"
+
+Conversion EXPLICITA, que si funciona:
+3</pre>
+      <p>Racket detiene la operación y dice <b>qué esperaba</b> y <b>qué recibió</b>. Con <span class="mono">string-&gt;number</span> la conversión explícita sí funciona: lo que rechaza es que ocurra <b>a sus espaldas</b>.</p>
+    </div>
+  </div>
+  <div class="warnband">
+    <span class="hd">Advertencia intencional · la única del curso</span>
+    <span class="msg">tipado.c:18:42: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]</span>
+    <span class="why"><b>Está puesta a propósito y la advertencia es la lección.</b> C compila igual y produce un resultado que casi nadie predice; lo verá en la diapositiva 9. Ninguno de los dos lenguajes está equivocado: responden a propósitos distintos.</span>
+  </div>
+</section>
+
+<!-- 7 ............................................................. -->
+<section class="slide" data-t="0:46">
+  <p class="eyebrow"><span class="tick"></span> Idea 5 de 8 · interactiva · pulse un tipo</p>
+  <h2 class="title">Los once tipos primitivos de C99, medidos</h2>
+  <div class="split">
+    <div class="panel imp">
+      <span class="tag imp">Elija un tipo</span>
+      <div class="tbtns" id="tbtns"></div>
+      <div class="bytebar" id="bytebar"></div>
+      <p class="steps" id="byteLegend">cada bloque es un byte · numerados para poder contarlos</p>
+    </div>
+    <div class="panel imp">
+      <div class="filename"><span id="tName">int</span><em>salida real de tipos.c</em></div>
+      <p class="bignum"><span id="tBytes">4</span> <small>bytes</small> · <span id="tBits">32</span> <small>bits</small></p>
+      <p class="expr" id="tRange">−2147483648 .. 2147483647</p>
+      <p id="tNote">Es el tipo entero por omisión del lenguaje.</p>
+    </div>
+  </div>
+  <p class="note"><b>Estos números están medidos, no están en la norma.</b> Provienen de ejecutar <span class="mono">tipos.c</span> con <span class="mono">gcc 13.3</span> sobre Linux x86-64, modelo LP64. En su máquina algunos van a cambiar, y la diapositiva siguiente explica exactamente cuáles y por qué.</p>
+</section>
+
+<!-- 8 ............................................................. -->
+<section class="slide" data-t="0:32">
+  <p class="eyebrow"><span class="tick"></span> Idea 6 de 8 · la corrección importante</p>
+  <h2 class="title">C99 no fija bytes: fija rangos mínimos</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Lo que la norma sí garantiza</span>
+      <pre>sizeof(char) == 1   <span class="c">/* por definición */</span>
+
+sizeof(char)
+  <= sizeof(short)
+  <= sizeof(int)
+  <= sizeof(long)
+  <= sizeof(long long)</pre>
+      <ul>
+        <li>Un <b>rango mínimo</b> por cada tipo, declarado en <span class="mono">&lt;limits.h&gt;</span> y <span class="mono">&lt;float.h&gt;</span></li>
+        <li>Que los tamaños <b>no decrecen</b> al subir por la cadena</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Lo que la norma no garantiza</span>
+      <ul>
+        <li>Cuántos bytes ocupa un <span class="mono">int</span>, un <span class="mono">long</span> o un <span class="mono">long double</span></li>
+        <li>Que dos de esos tipos tengan tamaños <b>distintos</b>: aquí <span class="mono">long</span> y <span class="mono">long long</span> miden los dos 8 bytes</li>
+        <li>Que su máquina dé los mismos números que el video</li>
+      </ul>
+      <p>No es un descuido de la norma: es lo que le permite a C existir en un microcontrolador de 8 bits y en un servidor de 64 con el mismo texto de lenguaje.</p>
+    </div>
+  </div>
+  <div class="callout"><b>La pregunta de examen:</b> ¿cuánto ocupa un <span class="mono">int</span> en C? La única respuesta correcta es <b>«depende de la implementación; la norma solo garantiza un rango mínimo, y en el compilador de referencia del curso mide 4 bytes»</b>. Decir «4 bytes» a secas es el error que comete casi todo el material sobre este tema.</div>
+</section>
+
+<!-- 9 ............................................................. -->
+<section class="slide" data-t="0:45">
+  <p class="eyebrow"><span class="tick"></span> Idea 7 de 8 · interactiva · prediga antes de pulsar</p>
+  <h2 class="title">Cinco expresiones, cinco reglas de conversión</h2>
+  <div class="split">
+    <div class="panel imp">
+      <div class="filename"><span id="pSrc">precision.c</span><em><span id="pIdx">expresión 1 de 5</span></em></div>
+      <pre id="pExpr">7 / 2</pre>
+      <p class="steps" id="pAsk">¿Qué imprime? Elija y compruebe.</p>
+      <div class="opts" id="pOpts"></div>
+      <div class="controls">
+        <button class="ctl ghost" id="pPrev" type="button">← Anterior</button>
+        <button class="ctl" id="pNext" type="button">Siguiente →</button>
+        <button class="ctl ghost" id="pReset" type="button">Reiniciar</button>
+      </div>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Salida real del programa</span>
+      <pre id="pOut">(elija una respuesta para revelar la salida real)</pre>
+      <p class="verdict" id="pWhy"></p>
+    </div>
+  </div>
+  <p class="note">Las cinco salidas provienen de <span class="mono">precision.c</span> y de <span class="mono">tipado.c</span>, compilados con <span class="mono">gcc -std=c99 -Wall -Wextra -pedantic</span>. La quinta expresión es exactamente la línea que produce la advertencia de la diapositiva 6.</p>
+</section>
+
+<!-- 10 ............................................................ -->
+<section class="slide" data-t="0:30">
+  <p class="eyebrow"><span class="tick"></span> Idea 8 de 8 · la consecuencia práctica</p>
+  <h2 class="title">El mismo programa, dos resultados: Windows y Linux</h2>
+  <div class="split">
+    <div class="panel imp">
+      <span class="tag imp">Modelos de datos · la columna que difiere va marcada</span>
+      <table>
+        <thead><tr><th>Modelo</th><th>Dónde</th><th>int</th><th class="diff cimp">long · difiere</th><th>long long</th><th>puntero</th></tr></thead>
+        <tbody>
+          <tr><th>LP64</th><td>Linux y UNIX de 64 bits</td><td>4 B</td><td class="diff"><b>8 B</b></td><td>8 B</td><td>64 bits</td></tr>
+          <tr><th>LLP64</th><td><b>Windows de 64 bits (Dev-C++)</b></td><td>4 B</td><td class="diff"><b>4 B</b></td><td>8 B</td><td>64 bits</td></tr>
+          <tr><th>ILP32</th><td>Sistemas de 32 bits</td><td>4 B</td><td class="diff">4 B</td><td>8 B</td><td>32 bits</td></tr>
+        </tbody>
+      </table>
+      <p>Cuando usted ejecute <span class="mono">tipos.c</span> en su portátil con Dev-C++ y obtenga <span class="mono">long = 4</span>, <b>no está mal</b>: es exactamente lo que enseña esta diapositiva.</p>
+    </div>
+    <div class="panel fn">
+      <div class="filename"><span>exactos.c</span><em>salida real · verificada</em></div>
+      <pre>TIPO         BYTES  VALOR MAXIMO QUE GUARDA
+int8_t           1  127
+int16_t          2  32767
+int32_t          4  2147483647
+int64_t          8  9223372036854775807
+uint8_t          1  255
+uint32_t         4  4294967295
+
+Estos tamanos son IGUALES en Windows, macOS y Linux.
+Los de int, long y long double NO lo son.</pre>
+      <p>La respuesta práctica: cuando el tamaño <b>sí</b> importa —un formato de archivo, un protocolo de red, un registro de hardware— no se usa <span class="mono">int</span> ni <span class="mono">long</span>, se usa <span class="mono">&lt;stdint.h&gt;</span>. Ahí el tamaño está escrito en el nombre.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 ............................................................ -->
+<section class="slide" data-t="0:29">
+  <p class="eyebrow"><span class="tick"></span> Síntesis · dos vocabularios, una frontera</p>
+  <h2 class="title">Del pseudocódigo del curso a los tipos de C99</h2>
+  <table>
+    <thead><tr><th class="cfn">Pseudocódigo del curso</th><th class="cimp">Tipo de C99</th><th class="cimp">Tamaño medido</th><th>Qué añade el tipo de C99</th></tr></thead>
+    <tbody>
+      <tr><th><span class="mono">entero</span></th><td><span class="mono">int</span></td><td>4 bytes</td><td>Un rango cerrado: de −2 147 483 648 a 2 147 483 647. Fuera de él, desborda en silencio.</td></tr>
+      <tr><th><span class="mono">real</span></th><td><span class="mono">double</span></td><td>8 bytes</td><td>Precisión finita: 15 dígitos significativos. <span class="mono">0.1 + 0.2</span> no es exactamente <span class="mono">0.3</span>.</td></tr>
+      <tr><th><span class="mono">carácter</span></th><td><span class="mono">char</span></td><td>1 byte</td><td>Es también un número pequeño: <span class="mono">'A'</span> vale 65 y admite aritmética.</td></tr>
+      <tr><th><span class="mono">lógico</span></th><td><span class="mono">_Bool</span> · <span class="mono">bool</span></td><td>1 byte</td><td>Guarda solo 0 o 1: cualquier valor distinto de cero se convierte en 1.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><b>La frontera, y no la cruce:</b> <span class="mono">entero</span>, <span class="mono">real</span>, <span class="mono">carácter</span> y <span class="mono">lógico</span> son nombres del <b>pseudocódigo del curso</b> y dicen únicamente de qué clase es el dato. <span class="mono">int</span>, <span class="mono">double</span>, <span class="mono">char</span> y <span class="mono">_Bool</span> son tipos de <b>C99</b> y además comprometen un tamaño y un rango. No son sinónimos y no se mezclan: en pseudocódigo, use los de la izquierda.</div>
+</section>
+
+<!-- 12 ............................................................ -->
+<section class="slide" data-t="0:32">
+  <p class="eyebrow"><span class="tick"></span> Cierre · qué aprendimos</p>
+  <h2 class="title">Tres ideas y tres preguntas</h2>
+  <div class="duo">
+    <div class="panel">
+      <span class="tag" style="color:var(--accent)">Qué aprendimos</span>
+      <ul>
+        <li>Un tipo son <b>tres cosas</b>: dominio, operaciones y representación — no solo un tamaño</li>
+        <li><b>Estático o dinámico</b> es cuándo se comprueba; <b>fuerte o débil</b> es cuánto se permite mezclar. Son preguntas independientes</li>
+        <li>C99 <b>no fija bytes</b>: fija rangos mínimos. Los tamaños se miden, y quien necesite uno exacto usa <span class="mono">&lt;stdint.h&gt;</span></li>
+      </ul>
+    </div>
+    <div class="panel qa">
+      <span class="tag" style="color:var(--accent)">Autoevaluación</span>
+      <div class="q">
+        <p>1 · ¿Cuántos bytes ocupa un <span class="mono">int</span> según la norma C99?</p>
+        <button type="button">Ver respuesta</button>
+        <p class="ans">La norma no lo dice. Solo garantiza un <b>rango mínimo</b> y que <span class="mono">sizeof(int)</span> no sea menor que <span class="mono">sizeof(short)</span> ni mayor que <span class="mono">sizeof(long)</span>. En el compilador de referencia del curso mide 4 bytes, y eso es una <b>medición</b>, no una garantía.</p>
+      </div>
+      <div class="q">
+        <p>2 · Un compañero dice: «C es de tipado fuerte, porque obliga a declarar el tipo de cada variable». ¿Qué está confundiendo?</p>
+        <button type="button">Ver respuesta</button>
+        <p class="ans">Las dos dimensiones. Declarar es consecuencia de que C sea <b>estático</b> —el tipo se comprueba al compilar—, no de que sea fuerte. C es estático y relativamente <b>débil</b>: acepta <span class="mono">int entero = 3.9;</span> y lo trunca sin protestar.</p>
+      </div>
+      <div class="q">
+        <p>3 · ¿Por qué <span class="mono">7 / 2</span> da 3 y <span class="mono">7 / 2.0</span> da 3.5, si es el mismo operador?</p>
+        <button type="button">Ver respuesta</button>
+        <p class="ans">Porque el operador <span class="mono">/</span> se comporta según el <b>tipo de sus operandos</b>. Con dos enteros hace división entera y descarta la parte decimal. Basta con que un operando sea real para que el otro se convierta y la división pase a ser real. Las <b>operaciones</b> son la segunda cara del tipo.</p>
+      </div>
+    </div>
+  </div>
+  <p class="refs"><b>Lecturas recomendadas.</b> Ritchie, D. M. (1993). <i>The Development of the C Language</i>. <i>Second ACM SIGPLAN Conference on History of Programming Languages (HOPL-II)</i>, abril de 1993. · ISO/IEC 9899:1999. <i>Information technology — Programming languages — C</i> (norma C99). · Kernighan, B. W. y Ritchie, D. M. <i>El lenguaje de programación C</i>. · Schildt, H. <i>C: Manual de referencia</i>, McGraw Hill. · Joyanes Aguilar, L. <i>Programación en C</i>, McGraw Hill.</p>
+</section>
+
+</div>
+
+<div class="notes" id="notesBox">
+  <h5>Notas del presentador · <span class="time" id="notesTime"></span></h5>
+  <p id="notesText"></p>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var notesBox = document.getElementById('notesBox');
+  var notesText = document.getElementById('notesText');
+  var notesTime = document.getElementById('notesTime');
+
+  var NOTES = [
+    "Preséntese y enlace en una frase con la cápsula 1.3: allí abrimos la celda, hoy vemos qué cabe dentro. Es la portada más corta de la semana; no la alargue, porque el tiempo se necesita en las diapositivas 6, 7 y 9.",
+    "Enlace con la 1.3 en una frase y lea el objetivo marcando con la voz sus dos mitades: «explicar por qué» y «leer la tabla». La actividad evaluativa pregunta exactamente esas dos cosas.",
+    "Diga las tres caras contando con los dedos y deje la representación para el final: el estudiante llega creyendo que un tipo es solo un tamaño. El residuo de la división es el mejor argumento de la segunda cara; no lo salte.",
+    "Pulse primero la casilla de C y después la de Racket, que son las dos que el curso demuestra ejecutando. Insista en que están en la diagonal: eso prueba que las dos dimensiones son independientes. No convierta la matriz en un ranking.",
+    "Cuente el contexto histórico como historia, en pasado y sin moraleja. Termine en el recuadro, que es lo único que el estudiante tiene que aplicar mañana: si el compilador no lo protege, la disciplina la pone él, y por eso el curso usa -Wall -Wextra.",
+    "Lea la advertencia de gcc completa y en voz alta, incluido el nombre -Wsign-compare, para que el estudiante le pierda el miedo. Diga con todas las letras que es el único programa del curso que no compila limpio y que está así a propósito.",
+    "Pulse char, int, long y long double, en ese orden, y deje que la barra de bytes crezca. Diga «medido» cada vez que nombre un tamaño: la diapositiva siguiente depende de que esa palabra haya quedado dicha. Deje el explorador en int.",
+    "Es la diapositiva conceptual de la segunda mitad. Diga la cadena de desigualdades despacio y entera. Si va con retraso, no recorte aquí: recorte en la 11.",
+    "Deje dos segundos de silencio después de mostrar cada expresión, antes de pulsar. Ese silencio es la actividad. Pulse a propósito la respuesta equivocada en la primera, para que el estudiante vea que el error se explica en vez de solo señalarse.",
+    "Diga explícitamente que el estudiante va a obtener un número distinto al del video cuando ejecute tipos.c con Dev-C++, y que eso no es un error: es la lección. Es la frase que más consultas evita en el foro.",
+    "No lea la tabla entera. Diga la primera fila y la frase del recuadro. Si va con retraso, esta es la diapositiva donde se recorta.",
+    "Cierre con las tres ideas, deje las respuestas ocultas y anuncie la entrega con precisión: diez preguntas, dos intentos, cierre el domingo de la semana siguiente. Anuncie la 1.5, donde por fin instalan el compilador y miden en su propia máquina."
+  ];
+
+  function show(n){
+    if(n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('on');
+    slides[i].scrollTop = 0;
+    cur.textContent = String(i + 1);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    notesText.textContent = NOTES[i];
+    notesTime.textContent = slides[i].getAttribute('data-t');
+  }
+
+  document.getElementById('next').addEventListener('click', function(){ show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function(){ show(i - 1); });
+  var tn = document.getElementById('toggleNotes');
+  tn.addEventListener('click', function(){
+    var on = notesBox.classList.toggle('on');
+    tn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ show(i - 1); }
+    else if(e.key === 'n' || e.key === 'N'){ tn.click(); }
+  });
+
+  /* ============ diapositiva 4 · matriz 2 x 2 del tipado ============
+     Cada casilla lleva una linea de evidencia EJECUTADA por el curso,
+     con la herramienta y la version anotadas. Ninguna casilla afirma
+     que un lenguaje sea mejor que otro.                             */
+  var MX = {
+    mA: {
+      tag: "Estático y fuerte",
+      what: "El tipo se comprueba al compilar, y el compilador no acepta que se mezclen tipos sin decirlo.",
+      ev: "$ javac Probe.java\nProbe.java:3: error: incompatible types:\n  possible lossy conversion from double to int\n        int entero = 3.9;\n                     ^\n1 error\n\n(javac 21.0.10 · la MISMA linea que C acepta)",
+      trade: "Gana: el error aparece antes de ejecutar y el tipo documenta la intención. Paga: más código ceremonial y menos flexibilidad."
+    },
+    mB: {
+      tag: "Estático y relativamente débil · aquí está C",
+      what: "El tipo se comprueba al compilar, pero el compilador convierte por su cuenta entre tipos numéricos y sigue adelante.",
+      ev: "$ gcc -std=c99 -Wall -Wextra -pedantic tipado.c\n$ ./tipado\nint entero = 3.9;   -> 3\ndouble real = 7/2;  -> 3.000000\nchar letra = 65;    -> A\n\n(gcc 13.3 · truncó y no preguntó)",
+      trade: "Gana: menos ceremonia, código más corto y control total sobre la representación. Paga: errores silenciosos que solo aparecen al ejecutar, y a veces solo con ciertos datos."
+    },
+    mC: {
+      tag: "Dinámico y fuerte · aquí está Racket",
+      what: "El tipo se comprueba al ejecutar, y al encontrar una mezcla la operación se detiene y se explica.",
+      ev: "$ racket tipado.rkt\n+: contract violation\n  expected: number?\n  given: \"2\"\n\nConversion EXPLICITA, que si funciona:\n3\n\n(Racket v8.10 · se negó y explicó)",
+      trade: "Gana: prototipado rápido y código genérico sin esfuerzo, sin renunciar a que la mezcla se detecte. Paga: el error aparece tarde, al ejecutar esa línea concreta."
+    },
+    mD: {
+      tag: "Dinámico y débil",
+      what: "El tipo se comprueba al ejecutar y, ante una mezcla, el lenguaje elige una conversión y continúa sin error.",
+      ev: "$ node -e 'console.log(typeof (1 + \"2\"), 1 + \"2\")'\nstring 12\n\n(Node v22.22.2 · convirtió el numero a texto\n y devolvio la cadena \"12\", sin avisar)",
+      trade: "Gana: nada que declarar y nada que convertir a mano. Paga: el error no aparece nunca como error, sino como un resultado equivocado más adelante."
+    }
+  };
+  var mxIds = ["mA","mB","mC","mD"];
+  var mxTag   = document.getElementById('mxTag');
+  var mxWhat  = document.getElementById('mxWhat');
+  var mxEv    = document.getElementById('mxEv');
+  var mxTrade = document.getElementById('mxTrade');
+
+  function pintarMatriz(id){
+    mxIds.forEach(function(k){
+      document.getElementById(k).setAttribute('aria-pressed', k === id ? 'true' : 'false');
+    });
+    var d = MX[id];
+    mxTag.textContent   = d.tag;
+    mxWhat.textContent  = d.what;
+    mxEv.textContent    = d.ev;
+    mxTrade.textContent = d.trade;
+  }
+  mxIds.forEach(function(k){
+    document.getElementById(k).addEventListener('click', function(){ pintarMatriz(k); });
+  });
+
+  /* ========== diapositiva 7 · explorador de tipos de C99 ==========
+     Los once tipos, sus tamanos y sus rangos son la salida literal de
+     tipos.c en gcc 13.3 sobre Linux x86-64 (modelo LP64). Donde
+     tipos.c no imprime un rango, la ficha lo dice en vez de inventarlo. */
+  var TIPOS = [
+    { n:"char", b:1, bits:8, r:"−128 .. 127",
+      nota:"Un byte, por definición de la norma: sizeof(char) vale 1 siempre y en todas partes. Guarda un carácter y también un número pequeño." },
+    { n:"signed char", b:1, bits:8, r:null,
+      nota:"Variante con signo explícito. tipos.c mide su tamaño pero no imprime su rango; mídalo usted con SCHAR_MIN y SCHAR_MAX de <limits.h>." },
+    { n:"unsigned char", b:1, bits:8, r:null,
+      nota:"Variante sin signo. tipos.c mide su tamaño pero no imprime su rango; mídalo usted con UCHAR_MAX de <limits.h>." },
+    { n:"short", b:2, bits:16, r:"−32768 .. 32767",
+      nota:"El entero pequeño. Un short que llega a 32767 y recibe una unidad más pasa a −32768, y C no avisa: es el desbordamiento silencioso de tipado.c." },
+    { n:"int", b:4, bits:32, r:"−2147483648 .. 2147483647",
+      nota:"El tipo entero por omisión del lenguaje. Su variante unsigned int ocupa lo mismo y cubre de 0 a 4294967295, dato que tipos.c también imprime." },
+    { n:"long", b:8, bits:64, r:"−9223372036854775808 .. 9223372036854775807",
+      nota:"El tipo que NO mide lo mismo en todas partes: 8 bytes aquí (modelo LP64) y 4 en Windows de 64 bits (modelo LLP64). Véalo en la diapositiva 10." },
+    { n:"long long", b:8, bits:64, r:"−9223372036854775808 .. 9223372036854775807",
+      nota:"Aquí mide lo mismo que long, y eso está permitido: la norma exige que no sea menor, no que sea mayor." },
+    { n:"float", b:4, bits:32, r:"1.17549e−38 .. 3.40282e+38",
+      nota:"Real de precisión sencilla: 6 dígitos significativos. En precision.c, 0.1+0.2 en float se imprime como 0.3000000119." },
+    { n:"double", b:8, bits:64, r:"2.22507e−308 .. 1.79769e+308",
+      nota:"Real de doble precisión: 15 dígitos significativos. Es el tipo real por omisión del curso. Aun así, 0.1+0.2 no es exactamente 0.3." },
+    { n:"long double", b:16, bits:128, r:null,
+      nota:"El más grande de la tabla: 16 bytes en esta máquina. tipos.c mide su tamaño pero no imprime su rango. Su tamaño tampoco es igual en todas las plataformas." },
+    { n:"_Bool", b:1, bits:8, r:null,
+      nota:"El tipo lógico de C99; con <stdbool.h> se escribe bool. Guarda solo 0 o 1: en tipado.c, _Bool b1 = 5 se imprime como 1 y bool b3 = −3 también." }
+  ];
+  var tbtns   = document.getElementById('tbtns');
+  var bytebar = document.getElementById('bytebar');
+  var tName   = document.getElementById('tName');
+  var tBytes  = document.getElementById('tBytes');
+  var tBits   = document.getElementById('tBits');
+  var tRange  = document.getElementById('tRange');
+  var tNote   = document.getElementById('tNote');
+
+  function pintarTipo(k){
+    var t = TIPOS[k];
+    Array.prototype.forEach.call(tbtns.children, function(b, j){
+      b.setAttribute('aria-pressed', j === k ? 'true' : 'false');
+    });
+    bytebar.textContent = '';
+    for(var j = 0; j < t.b; j++){
+      var d = document.createElement('span');
+      d.className = 'byte';
+      d.textContent = String(j + 1);
+      bytebar.appendChild(d);
+    }
+    tName.textContent  = t.n;
+    tBytes.textContent = String(t.b);
+    tBits.textContent  = String(t.bits);
+    tRange.textContent = t.r
+      ? ('rango medido: ' + t.r)
+      : 'rango: tipos.c no lo imprime para este tipo, y este material no lo inventa.';
+    tNote.textContent  = t.nota;
+  }
+  TIPOS.forEach(function(t, k){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tbtn';
+    b.textContent = t.n;
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', function(){ pintarTipo(k); });
+    tbtns.appendChild(b);
+  });
+
+  /* ======== diapositiva 9 · predictor de conversiones ========
+     Los cinco resultados son la salida real de precision.c y de
+     tipado.c, compilados con las banderas del curso.          */
+  var PRED = [
+    { src:"precision.c", expr:"int a = 7, b = 2;\na / b",
+      opts:["3", "3.5", "4"], ok:0,
+      out:"division entera   7 / 2   = 3",
+      why:"Con los dos operandos enteros, / es la <b>división entera</b>: el resultado se trunca hacia cero. No se redondea, porque redondear 3.5 daría 4." },
+    { src:"precision.c", expr:"a % b",
+      opts:["1", "0", "3.5"], ok:0,
+      out:"residuo           7 % 2   = 1",
+      why:"El operador % solo existe entre enteros. Es la <b>segunda cara</b> del tipo: qué operaciones tienen sentido. Con reales no es que dé otro valor, es que no compila." },
+    { src:"precision.c", expr:"a / 2.0",
+      opts:["3.000000", "3.500000", "no compila"], ok:1,
+      out:"mezcla            7 / 2.0 = 3.500000",
+      why:"Basta con que <b>uno</b> de los dos operandos sea real: el otro se convierte y la división pasa a ser real. Esa conversión automática es el tipado débil de C trabajando a favor." },
+    { src:"tipado.c", expr:"int entero = 3.9;",
+      opts:["3", "4", "error de compilación"], ok:0,
+      out:"int entero = 3.9;   -> 3",
+      why:"C <b>trunca</b> y sigue, sin preguntar y sin advertir. La misma línea en un lenguaje estático y fuerte es un error de compilación: es la casilla de arriba a la izquierda de la matriz de la diapositiva 4." },
+    { src:"tipado.c", expr:"int          negativo = -1;\nunsigned int positivo =  1;\nnegativo < positivo",
+      opts:["verdadero", "FALSO"], ok:1,
+      out:"-1 < 1u  ?  FALSO\n   porque -1 convertido a unsigned vale 4294967295",
+      why:"Antes de comparar, C convierte el <span class=\"mono\">int</span> a <span class=\"mono\">unsigned int</span>, y −1 pasa a valer 4 294 967 295. Es <b>la línea que produce la advertencia</b> -Wsign-compare de la diapositiva 6: el compilador avisa precisamente porque el resultado sorprende." }
+  ];
+  var p = 0, pDone = [];
+  var pSrc = document.getElementById('pSrc');
+  var pIdx = document.getElementById('pIdx');
+  var pExpr = document.getElementById('pExpr');
+  var pAsk = document.getElementById('pAsk');
+  var pOpts = document.getElementById('pOpts');
+  var pOut = document.getElementById('pOut');
+  var pWhy = document.getElementById('pWhy');
+
+  function pintarPred(){
+    var d = PRED[p];
+    pSrc.textContent = d.src;
+    pIdx.textContent = 'expresión ' + (p + 1) + ' de ' + PRED.length;
+    pExpr.textContent = d.expr;
+    pOpts.textContent = '';
+    d.opts.forEach(function(o, j){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt';
+      b.textContent = o;
+      b.addEventListener('click', function(){ responder(j); });
+      pOpts.appendChild(b);
+    });
+    var r = pDone[p];
+    if(r === undefined){
+      pAsk.textContent = '¿Qué imprime? Elija y compruebe.';
+      pOut.textContent = '(elija una respuesta para revelar la salida real)';
+      pWhy.textContent = '';
+    } else {
+      marcar(r);
+    }
+    document.getElementById('pPrev').disabled = (p === 0);
+    document.getElementById('pNext').disabled = (p === PRED.length - 1);
+  }
+
+  function marcar(elegida){
+    var d = PRED[p];
+    Array.prototype.forEach.call(pOpts.children, function(b, j){
+      b.disabled = true;
+      if(j === d.ok){ b.className = 'opt good'; }
+      else if(j === elegida){ b.className = 'opt bad'; }
+    });
+    var acerto = (elegida === d.ok);
+    pAsk.textContent = acerto
+      ? 'Acertó. La respuesta correcta va resaltada.'
+      : 'No era esa. La respuesta correcta va resaltada, y abajo está la regla.';
+    pOut.textContent = d.out;
+    pWhy.innerHTML = '<span class="head ' + (acerto ? 'ok' : 'no') + '">'
+      + (acerto ? 'Correcto · por qué' : 'La regla que hay que aprender')
+      + '</span>' + d.why;
+  }
+
+  function responder(j){
+    if(pDone[p] === undefined){ pDone[p] = j; }
+    marcar(pDone[p]);
+  }
+
+  document.getElementById('pNext').addEventListener('click', function(){
+    if(p < PRED.length - 1){ p++; pintarPred(); }
+  });
+  document.getElementById('pPrev').addEventListener('click', function(){
+    if(p > 0){ p--; pintarPred(); }
+  });
+  document.getElementById('pReset').addEventListener('click', function(){
+    p = 0; pDone = []; pintarPred();
+  });
+
+  /* ---- autoevaluación ---- */
+  Array.prototype.forEach.call(document.querySelectorAll('.q button'), function(b){
+    b.addEventListener('click', function(){
+      var q = b.parentNode;
+      var open = q.classList.toggle('open');
+      b.textContent = open ? 'Ocultar respuesta' : 'Ver respuesta';
+    });
+  });
+
+  pintarMatriz('mB');
+  pintarTipo(4);
+  pintarPred();
+  show(0);
+})();
+</script>
