@@ -1,0 +1,975 @@
+<title>Funciones de Agregación</title>
+ <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f8;
+  --surface:#ffffff;
+  --surface-2:#eceef3;
+  --ink:#1a2130;
+  --ink-soft:#525b6b;
+  --line:#d7dbe4;
+  --accent:#0e7c86;
+  --accent-ink:#ffffff;
+  --amber:#c9791a;
+  --amber-soft:#fbeedd;
+  --good:#1f7a4d;
+  --bad:#b5342d;
+  --code-bg:#0f1720;
+  --code-fg:#e6edf3;
+  --code-key:#f2b846;
+  --code-str:#7fd0c9;
+  --code-com:#7c8899;
+  --shadow: 0 1px 2px rgba(20,25,40,.04), 0 8px 24px rgba(20,25,40,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1319;
+    --surface:#161f28;
+    --surface-2:#1d2733;
+    --ink:#e7ecf2;
+    --ink-soft:#9aa7b6;
+    --line:#2b3745;
+    --accent:#43c2c7;
+    --accent-ink:#08181a;
+    --amber:#e7a94a;
+    --amber-soft:#2a2013;
+    --good:#4fbd85;
+    --bad:#e2695f;
+    --code-bg:#080d12;
+    --code-fg:#e6edf3;
+    --code-key:#f2b846;
+    --code-str:#7fd0c9;
+    --code-com:#6b7684;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1319;
+  --surface:#161f28;
+  --surface-2:#1d2733;
+  --ink:#e7ecf2;
+  --ink-soft:#9aa7b6;
+  --line:#2b3745;
+  --accent:#43c2c7;
+  --accent-ink:#08181a;
+  --amber:#e7a94a;
+  --amber-soft:#2a2013;
+  --good:#4fbd85;
+  --bad:#e2695f;
+  --code-bg:#080d12;
+  --code-fg:#e6edf3;
+  --code-key:#f2b846;
+  --code-str:#7fd0c9;
+  --code-com:#6b7684;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  overscroll-behavior:none;
+}
+h1,h2,h3{font-family:"IBM Plex Serif", Georgia, serif; text-wrap:balance; margin:0;}
+code, .mono{font-family:"IBM Plex Mono", ui-monospace, Consolas, monospace;}
+.hidden{display:none!important;}
+
+/* ---------- Deck shell ---------- */
+#deck{
+  position:relative;
+  height:100vh;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+#topbar{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  flex:0 0 auto;
+}
+#topbar .brand{
+  font-family:"IBM Plex Mono";
+  font-size:12.5px;
+  letter-spacing:.04em;
+  color:var(--ink-soft);
+  white-space:nowrap;
+}
+#progress-track{
+  flex:1 1 auto;
+  height:5px;
+  background:var(--surface-2);
+  border-radius:99px;
+  overflow:hidden;
+}
+#progress-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg, var(--accent), var(--amber));
+  transition:width .35s ease;
+}
+#counter{
+  font-family:"IBM Plex Mono";
+  font-size:12.5px;
+  color:var(--ink-soft);
+  white-space:nowrap;
+  min-width:52px;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+#viewport{
+  flex:1 1 auto;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:clamp(20px,4vw,56px) clamp(16px,6vw,96px);
+  opacity:0;
+  transform:translateX(24px);
+  pointer-events:none;
+  transition:opacity .38s ease, transform .38s ease;
+  overflow-y:auto;
+}
+.slide.active{
+  opacity:1;
+  transform:translateX(0);
+  pointer-events:auto;
+}
+.slide.leaving{
+  transform:translateX(-24px);
+}
+@media (prefers-reduced-motion: reduce){
+  .slide{transition:opacity .01s linear; transform:none;}
+}
+.slide-inner{
+  width:100%;
+  max-width:920px;
+  margin:auto;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.eyebrow{
+  font-family:"IBM Plex Mono";
+  font-size:12.5px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--accent);
+  font-weight:600;
+}
+.slide h2{
+  font-size:clamp(26px,4vw,40px);
+  font-weight:600;
+  color:var(--ink);
+  line-height:1.15;
+}
+.slide .lede{
+  font-size:17px;
+  line-height:1.6;
+  color:var(--ink-soft);
+  max-width:70ch;
+}
+.slide p{font-size:16px; line-height:1.65; color:var(--ink); max-width:70ch;}
+
+/* nav controls */
+#navbar{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 18px;
+  border-top:1px solid var(--line);
+  background:var(--surface);
+}
+.navbtn{
+  font-family:"IBM Plex Sans";
+  font-weight:600;
+  font-size:14px;
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  color:var(--ink);
+  border-radius:10px;
+  padding:9px 16px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.navbtn:hover{border-color:var(--accent);}
+.navbtn:focus-visible, .choice:focus-visible, .tab:focus-visible, button:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px;
+}
+.navbtn:disabled{opacity:.35; cursor:default;}
+.navbtn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+#dots{
+  display:flex;
+  gap:5px;
+  flex-wrap:wrap;
+  justify-content:center;
+  max-width:46vw;
+}
+.dot{
+  width:7px;height:7px;border-radius:99px;background:var(--line);
+  border:none; padding:0; cursor:pointer; flex:0 0 auto;
+}
+.dot.active{background:var(--accent); width:18px; border-radius:99px;}
+.dot.section{background:var(--amber);}
+
+/* ---------- content components ---------- */
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:clamp(16px,2.4vw,26px);
+}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:680px){.grid2{grid-template-columns:1fr;}}
+
+pre.code{
+  background:var(--code-bg);
+  color:var(--code-fg);
+  border-radius:12px;
+  padding:16px 18px;
+  overflow-x:auto;
+  font-size:14.5px;
+  line-height:1.65;
+  margin:0;
+  box-shadow:var(--shadow);
+}
+pre.code .k{color:var(--code-key); font-weight:600;}
+pre.code .s{color:var(--code-str);}
+pre.code .c{color:var(--code-com); font-style:italic;}
+
+table.data{border-collapse:collapse; width:100%; font-size:14.5px;}
+table.data caption{caption-side:top; text-align:left; font-family:"IBM Plex Mono"; font-size:12px; color:var(--ink-soft); padding-bottom:6px;}
+table.data th, table.data td{
+  border:1px solid var(--line);
+  padding:7px 10px;
+  text-align:left;
+  font-variant-numeric:tabular-nums;
+}
+table.data th{background:var(--surface-2); font-family:"IBM Plex Mono"; font-weight:600; font-size:13px;}
+table.data tr:nth-child(even) td{background:var(--surface-2);}
+.table-wrap{overflow-x:auto; border-radius:10px;}
+
+.pill{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:"IBM Plex Mono"; font-size:12px; font-weight:600;
+  padding:3px 10px; border-radius:99px;
+  background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line);
+}
+.pill.accent{background:color-mix(in srgb, var(--accent) 15%, var(--surface)); color:var(--accent); border-color:var(--accent);}
+
+.fn-row{display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;}
+.fn-tag{
+  font-family:"IBM Plex Mono"; font-weight:600; font-size:15px;
+  color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border:1px solid var(--accent); border-radius:8px; padding:4px 10px; white-space:nowrap;
+}
+
+/* reveal button */
+.reveal-btn{
+  align-self:flex-start;
+  font-family:"IBM Plex Mono"; font-size:13.5px; font-weight:600;
+  background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber);
+  border-radius:8px; padding:8px 14px; cursor:pointer;
+}
+.reveal-btn:hover{filter:brightness(1.05);}
+.reveal-box{
+  border-left:3px solid var(--amber);
+  background:var(--surface-2);
+  border-radius:0 10px 10px 0;
+  padding:12px 16px;
+  font-size:15px;
+  display:none;
+}
+.reveal-box.show{display:block;}
+
+/* tabs */
+.tabs{display:flex; gap:8px; flex-wrap:wrap;}
+.tab{
+  font-family:"IBM Plex Sans"; font-weight:600; font-size:14px;
+  padding:8px 14px; border-radius:9px 9px 0 0; cursor:pointer;
+  background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line); border-bottom:none;
+}
+.tab.active{background:var(--surface); color:var(--accent); border-color:var(--accent);}
+.tabpanel{display:none; border:1px solid var(--line); border-radius:0 10px 10px 10px; padding:18px; background:var(--surface);}
+.tabpanel.active{display:block;}
+
+/* quiz */
+.choice-list{display:flex; flex-direction:column; gap:8px;}
+.choice{
+  text-align:left;
+  font-family:"IBM Plex Sans"; font-size:15px;
+  border:1px solid var(--line); background:var(--surface);
+  border-radius:10px; padding:11px 14px; cursor:pointer;
+  display:flex; align-items:center; gap:10px;
+}
+.choice:hover{border-color:var(--accent);}
+.choice .box{
+  width:18px;height:18px;border-radius:5px;border:1.5px solid var(--ink-soft); flex:0 0 auto;
+}
+.choice.correct{border-color:var(--good); background:color-mix(in srgb, var(--good) 10%, var(--surface));}
+.choice.correct .box{background:var(--good); border-color:var(--good);}
+.choice.wrong{border-color:var(--bad); background:color-mix(in srgb, var(--bad) 10%, var(--surface));}
+.choice.wrong .box{background:var(--bad); border-color:var(--bad);}
+.choice[disabled]{cursor:default;}
+.feedback{font-size:14.5px; font-weight:600; display:none; padding:10px 14px; border-radius:8px;}
+.feedback.show{display:block;}
+.feedback.ok{color:var(--good); background:color-mix(in srgb, var(--good) 12%, var(--surface));}
+.feedback.no{color:var(--bad); background:color-mix(in srgb, var(--bad) 12%, var(--surface));}
+
+.step-track{display:flex; flex-direction:column; gap:10px;}
+.step{
+  border:1px solid var(--line); border-radius:10px; background:var(--surface);
+  padding:12px 14px; cursor:pointer; transition:border-color .2s;
+}
+.step .step-head{display:flex; align-items:center; gap:10px; font-family:"IBM Plex Mono"; font-weight:600; font-size:13px; color:var(--ink-soft);}
+.step .step-num{
+  width:22px;height:22px;border-radius:99px;background:var(--surface-2); color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center; font-size:12px;
+}
+.step.active{border-color:var(--accent);}
+.step.active .step-num{background:var(--accent); color:var(--accent-ink);}
+.step-body{display:none; margin-top:8px; font-size:14.5px; color:var(--ink-soft);}
+.step.active .step-body{display:block;}
+
+ul.bullets{margin:0; padding-left:1.15em; display:flex; flex-direction:column; gap:8px; font-size:15.5px; line-height:1.55;}
+ul.bullets li::marker{color:var(--accent);}
+
+.kbd{
+  font-family:"IBM Plex Mono"; font-size:11.5px; border:1px solid var(--line); border-bottom-width:2px;
+  border-radius:5px; padding:1px 6px; background:var(--surface-2); color:var(--ink-soft);
+}
+.center-note{
+  font-size:13.5px; color:var(--ink-soft); text-align:center; font-family:"IBM Plex Mono";
+}
+footer.slide-foot{margin-top:auto; padding-top:6px;}
+
+@media (max-width:560px){
+  #dots{display:none;}
+  .navbtn span.label{display:none;}
+}
+</style>
+
+<div id="deck">
+  <div id="topbar">
+    <span class="brand">IMPLEMENTACIÓN DE BASES DE DATOS · SEMANA 1</span>
+    <div id="progress-track"><div id="progress-fill"></div></div>
+    <span id="counter" class="mono">01/01</span>
+  </div>
+
+  <div id="viewport"></div>
+
+  <div id="navbar">
+    <button class="navbtn" id="btn-prev" aria-label="Diapositiva anterior">‹ <span class="label">Anterior</span></button>
+    <div id="dots" role="tablist" aria-label="Ir a diapositiva"></div>
+    <button class="navbtn primary" id="btn-next" aria-label="Siguiente diapositiva"><span class="label">Siguiente</span> ›</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+// tiny SQL highlighter
+const SQL_KEYWORDS = ["SELECT","FROM","WHERE","GROUP BY","HAVING","ORDER BY","AS","AND","OR","NOT","BY",
+  "COUNT","SUM","AVG","MAX","MIN","ROUND","LIMIT","DESC","ASC","NULL","INSERT","INTO","VALUES","UPDATE","SET","DELETE","JOIN"];
+function highlightSql(line){
+  let out = esc(line);
+  // comments
+  const commentMatch = out.match(/(--.*)$/);
+  let comment = "";
+  if(commentMatch){
+    comment = commentMatch[1];
+    out = out.slice(0, commentMatch.index);
+  }
+  // strings
+  out = out.replace(/('([^']*)')/g, '<span class="s">$1</span>');
+  // keywords (word-boundary, longest first)
+  const kws = [...SQL_KEYWORDS].sort((a,b)=>b.length-a.length);
+  kws.forEach(k=>{
+    const re = new RegExp('\\b' + k.replace(' ', '\\s+') + '\\b', 'gi');
+    out = out.replace(re, m => '<span class="k">' + m.toUpperCase() + '</span>');
+  });
+  if(comment) out += '<span class="c">' + esc(comment) + '</span>';
+  return out;
+}
+function codeBlock(lines){
+  return '<pre class="code">' + lines.map(highlightSql).join('\n') + '</pre>';
+}
+
+const DATA_TABLE_HTML = `
+<div class="table-wrap"><table class="data">
+<caption>tabla: aplicaciones — base de datos TiendaApp</caption>
+<thead><tr><th>id</th><th>nombre</th><th>categoria</th><th>precio</th><th>calificacion</th><th>descargas</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>PixelRun</td><td>Juegos</td><td>0</td><td>4.6</td><td>15000</td></tr>
+<tr><td>2</td><td>FocoStudy</td><td>Productividad</td><td>2.99</td><td>4.2</td><td>3200</td></tr>
+<tr><td>3</td><td>ChatNova</td><td>Social</td><td>0</td><td>3.8</td><td>42000</td></tr>
+<tr><td>4</td><td>MapaFacil</td><td>Navegacion</td><td>1.99</td><td>4.7</td><td>8700</td></tr>
+<tr><td>5</td><td>SkyBattle</td><td>Juegos</td><td>0</td><td>4.1</td><td>27000</td></tr>
+<tr><td>6</td><td>NotasPlus</td><td>Productividad</td><td>0</td><td>4.4</td><td>5100</td></tr>
+</tbody></table></div>`;
+
+let uid = 0;
+function nextId(prefix){ uid++; return prefix + uid; }
+
+// ---------- Reveal component ----------
+function reveal(label, html){
+  const id = nextId('rv');
+  return `
+  <div>
+    <button class="reveal-btn" data-reveal="${id}" data-show="${label}" data-hide="Ocultar resultado">${label}</button>
+    <div class="reveal-box" id="${id}">${html}</div>
+  </div>`;
+}
+
+// ---------- Tabs component ----------
+function tabs(groupId, items){
+  const tabBtns = items.map((it,i)=>`<button class="tab ${i===0?'active':''}" data-tabgroup="${groupId}" data-tabidx="${i}">${it.label}</button>`).join('');
+  const panels = items.map((it,i)=>`<div class="tabpanel ${i===0?'active':''}" data-tabgroup="${groupId}" data-tabidx="${i}">${it.body}</div>`).join('');
+  return `<div class="tabs">${tabBtns}</div>${panels}`;
+}
+
+// ---------- Quiz component ----------
+function quiz(qid, question, choices, correctIdx, okMsg, noMsg){
+  const items = choices.map((c,i)=>`<button class="choice" data-quiz="${qid}" data-idx="${i}"><span class="box"></span><span>${c}</span></button>`).join('');
+  return `
+  <div class="card" data-quizroot="${qid}" data-correct="${correctIdx}">
+    <p style="margin-top:0;font-weight:600;">${question}</p>
+    <div class="choice-list">${items}</div>
+    <div class="feedback" id="fb-${qid}"></div>
+  </div>`;
+}
+
+// =========================================================
+// SLIDE DEFINITIONS
+// each slide: {kind:'section'|'normal', eyebrow, title, body(html)}
+// =========================================================
+const slides = [];
+
+slides.push({section:true, eyebrow:"Semana 1", title:"Funciones de agregación y agrupamiento",
+  body:`
+  <p class="lede">Implementación de Bases de Datos · Programa Desarrollo de Aplicaciones Móviles</p>
+  <div class="card" style="margin-top:8px;">
+    <p style="margin:0 0 10px;">Esta semana aprenderás a resumir información con SQL: contar, sumar, promediar y agrupar filas de una tabla.</p>
+    <div class="fn-row">
+      <span class="pill accent">COUNT</span><span class="pill accent">SUM</span><span class="pill accent">AVG</span>
+      <span class="pill accent">MAX / MIN</span><span class="pill accent">GROUP BY</span><span class="pill accent">HAVING</span>
+    </div>
+  </div>
+  <p class="center-note">Usa las flechas del teclado o los botones inferiores para navegar</p>
+  `});
+
+slides.push({title:"Bienvenida: cómo trabajar este material",
+  body:`
+  <p class="lede">Este material se estudia de forma autónoma, a tu propio ritmo.</p>
+  <div class="grid2">
+    <div class="card">
+      <p style="margin:0 0 6px;font-weight:600;color:var(--accent);">1. Presentación (esto)</p>
+      <p style="margin:0;font-size:14.5px;">Recorre las diapositivas, prueba los ejemplos interactivos y los mini-quiz de autoevaluación.</p>
+    </div>
+    <div class="card">
+      <p style="margin:0 0 6px;font-weight:600;color:var(--accent);">2. Documento de apoyo</p>
+      <p style="margin:0;font-size:14.5px;">Lectura complementaria con más detalle, ejercicios propuestos y glosario.</p>
+    </div>
+    <div class="card">
+      <p style="margin:0 0 6px;font-weight:600;color:var(--accent);">3. SQL Online</p>
+      <p style="margin:0;font-size:14.5px;">Practica cada consulta de esta presentación en tu entorno de SQL Online.</p>
+    </div>
+    <div class="card">
+      <p style="margin:0 0 6px;font-weight:600;color:var(--accent);">4. Actividad valorativa</p>
+      <p style="margin:0;font-size:14.5px;">Cuestionario individual, autónomo y calificado. Sin video previo obligatorio.</p>
+    </div>
+  </div>
+  <div class="card" style="border-left:3px solid var(--amber);">
+    <p style="margin:0;font-size:14.5px;"><strong>¿Dudas?</strong> Este material no requiere clase magistral previa, pero tienes un espacio de asesoría con el docente para resolver inquietudes puntuales.</p>
+  </div>
+  `});
+
+slides.push({title:"Objetivos de la semana",
+  body:`
+  <p class="lede">Al terminar la semana 1 estarás en capacidad de:</p>
+  <ul class="bullets">
+    <li>Explicar qué es una función de agregación y quÉ resultado produce.</li>
+    <li>Usar COUNT, SUM, AVG, MAX y MIN sobre una tabla.</li>
+    <li>Agrupar resultados con GROUP BY, usando una o varias columnas.</li>
+    <li>Filtrar grupos con HAVING, distinguiéndolo de WHERE.</li>
+    <li>Ordenar resultados agregados con ORDER BY.</li>
+    <li>Reconocer y corregir errores comunes en consultas con agregación.</li>
+  </ul>`});
+
+slides.push({title:"Ruta de la semana",
+  body:`
+  <div class="step-track" id="route-steps">
+    <div class="step active" data-step="0"><div class="step-head"><span class="step-num">1</span> Funciones de agregación</div>
+      <div class="step-body">COUNT, SUM, AVG, MAX, MIN — resumir una tabla completa en valores únicos.</div></div>
+    <div class="step" data-step="1"><div class="step-head"><span class="step-num">2</span> GROUP BY</div>
+      <div class="step-body">Dividir la tabla en grupos y calcular agregados por grupo.</div></div>
+    <div class="step" data-step="2"><div class="step-head"><span class="step-num">3</span> HAVING</div>
+      <div class="step-body">Filtrar grupos según el resultado de una función de agregación.</div></div>
+    <div class="step" data-step="3"><div class="step-head"><span class="step-num">4</span> ORDER BY</div>
+      <div class="step-body">Ordenar el resultado ya agrupado y filtrado.</div></div>
+    <div class="step" data-step="4"><div class="step-head"><span class="step-num">5</span> Taller y actividad valorativa</div>
+      <div class="step-body">Practicar en SQL Online y resolver el cuestionario autónomo.</div></div>
+  </div>
+  <p class="center-note">Haz clic en cada paso para ver de qué trata</p>
+  `});
+
+slides.push({title:"Repaso rápido: lo que ya sabes",
+  body:`
+  <p class="lede">Antes de avanzar, recuerda cómo se ve una consulta básica con WHERE:</p>
+  ${codeBlock([
+    "SELECT nombre, precio",
+    "FROM aplicaciones",
+    "WHERE precio = 0;",
+    "-- Devuelve las apps gratuitas, fila por fila"
+  ])}
+  <p>Esta semana das un paso más: en lugar de ver fila por fila, vas a <strong>resumir</strong> la tabla completa (o por grupos) en unos pocos valores.</p>
+  `});
+
+slides.push({title:"El caso de estudio: TiendaApp",
+  body:`
+  <p class="lede">Toda la semana usamos la misma tabla: el catálogo de una tienda de aplicaciones móviles.</p>
+  ${DATA_TABLE_HTML}
+  <p style="font-size:14px;color:var(--ink-soft);">Este fragmento de 6 filas se usa en todos los ejemplos de esta presentación y del documento de apoyo.</p>
+  `});
+
+slides.push({section:true, eyebrow:"Bloque 1", title:"¿Qué es una función de agregación?",
+  body:`
+  <p class="lede">Una función que toma <strong>muchas filas</strong> y devuelve <strong>un solo valor</strong> que las resume.</p>
+  <div class="fn-row" style="margin-top:6px;">
+    <span class="fn-tag">COUNT()</span><span class="fn-tag">SUM()</span><span class="fn-tag">AVG()</span>
+    <span class="fn-tag">MAX()</span><span class="fn-tag">MIN()</span>
+  </div>
+  `});
+
+slides.push({title:"COUNT() — contar filas",
+  body:`
+  <p class="lede">Cuenta cuántas filas cumplen una condición.</p>
+  ${codeBlock([
+    "SELECT COUNT(*) AS total_apps",
+    "FROM aplicaciones;"
+  ])}
+  ${reveal("Ver resultado", `<table class="data"><tr><th>total_apps</th></tr><tr><td>6</td></tr></table>`)}
+  <p style="margin-top:6px;">COUNT(*) cuenta <strong>todas</strong> las filas, incluso si alguna columna tiene NULL. COUNT(columna) en cambio ignora los NULL de esa columna.</p>
+  `});
+
+slides.push({title:"SUM() — sumar valores",
+  body:`
+  <p class="lede">Suma todos los valores numéricos de una columna.</p>
+  ${codeBlock([
+    "SELECT SUM(descargas) AS total_descargas",
+    "FROM aplicaciones;"
+  ])}
+  ${reveal("Ver resultado", `<table class="data"><tr><th>total_descargas</th></tr><tr><td>100000</td></tr></table>`)}
+  `});
+
+slides.push({title:"AVG() — calcular el promedio",
+  body:`
+  <p class="lede">Calcula el promedio de una columna numérica.</p>
+  ${codeBlock([
+    "SELECT ROUND(AVG(calificacion), 2) AS promedio",
+    "FROM aplicaciones;"
+  ])}
+  ${reveal("Ver resultado", `<table class="data"><tr><th>promedio</th></tr><tr><td>4.30</td></tr></table>`)}
+  <p style="margin-top:6px;">AVG() divide entre el número de valores <strong>no nulos</strong>, no entre el total de filas de la tabla.</p>
+  `});
+
+slides.push({title:"MAX() y MIN() — valores extremos",
+  body:`
+  <p class="lede">Encuentran el valor más alto y más bajo de una columna.</p>
+  ${codeBlock([
+    "SELECT MAX(precio) AS precio_max, MIN(precio) AS precio_min",
+    "FROM aplicaciones;"
+  ])}
+  ${reveal("Ver resultado", `<table class="data"><tr><th>precio_max</th><th>precio_min</th></tr><tr><td>2.99</td><td>0</td></tr></table>`)}
+  `});
+
+slides.push({title:"Combinando varias funciones",
+  body:`
+  <p class="lede">Puedes calcular varias funciones de agregación en un mismo SELECT.</p>
+  ${codeBlock([
+    "SELECT",
+    "  COUNT(*)              AS total_apps,",
+    "  SUM(descargas)         AS total_descargas,",
+    "  ROUND(AVG(precio),2)   AS precio_promedio,",
+    "  MAX(calificacion)      AS mejor_calificacion",
+    "FROM aplicaciones;"
+  ])}
+  ${reveal("Ver resultado", `<div class="table-wrap"><table class="data">
+    <tr><th>total_apps</th><th>total_descargas</th><th>precio_promedio</th><th>mejor_calificacion</th></tr>
+    <tr><td>6</td><td>100000</td><td>0.83</td><td>4.7</td></tr>
+  </table></div>`)}
+  `});
+
+slides.push({title:"Autoevaluación rápida",
+  body:`
+  ${quiz("q1", "¿Qué diferencia hay entre COUNT(*) y COUNT(categoria)?", [
+    "No hay ninguna diferencia",
+    "COUNT(*) cuenta todas las filas; COUNT(categoria) ignora las filas con categoria NULL",
+    "COUNT(categoria) solo funciona con números",
+    "COUNT(*) solo cuenta filas únicas"
+  ], 1)}
+  <p class="center-note">Formativo · no se envía a ningún lado, solo para practicar</p>
+  `});
+
+slides.push({section:true, eyebrow:"Bloque 2", title:"Agrupar resultados con GROUP BY",
+  body:`
+  <p class="lede">En vez de un solo resultado para toda la tabla, obtén <strong>un resultado por grupo</strong>.</p>
+  `});
+
+slides.push({title:"GROUP BY con una columna",
+  body:`
+  <p class="lede">Agrupa las aplicaciones por categoría y calcula un agregado por cada una.</p>
+  ${codeBlock([
+    "SELECT categoria, COUNT(*) AS total,",
+    "       ROUND(AVG(calificacion),2) AS promedio",
+    "FROM aplicaciones",
+    "GROUP BY categoria;"
+  ])}
+  ${reveal("Ver resultado", `<div class="table-wrap"><table class="data">
+    <tr><th>categoria</th><th>total</th><th>promedio</th></tr>
+    <tr><td>Juegos</td><td>2</td><td>4.35</td></tr>
+    <tr><td>Productividad</td><td>2</td><td>4.30</td></tr>
+    <tr><td>Social</td><td>1</td><td>3.80</td></tr>
+    <tr><td>Navegacion</td><td>1</td><td>4.70</td></tr>
+  </table></div>`)}
+  `});
+
+slides.push({title:"GROUP BY con varias columnas",
+  body:`
+  <p class="lede">Cada combinación distinta de valores forma un grupo propio.</p>
+  ${codeBlock([
+    "SELECT categoria, precio, COUNT(*) AS total",
+    "FROM aplicaciones",
+    "GROUP BY categoria, precio;"
+  ])}
+  <p style="font-size:14.5px;">Dos apps de la misma categoría pero con precio distinto quedan en grupos distintos.</p>
+  `});
+
+slides.push({title:"Error común con GROUP BY",
+  body:`
+  ${tabs("errgb", [
+    {label:"❌ Incorrecto", body: codeBlock([
+      "SELECT categoria, nombre, COUNT(*)",
+      "FROM aplicaciones",
+      "GROUP BY categoria;",
+      "-- 'nombre' no está agregada ni está en el GROUP BY"
+    ]) + `<p style="color:var(--bad);font-size:14.5px;margin-top:10px;font-weight:600;">SQL no sabe qué "nombre" mostrar por cada grupo — la consulta es inválida.</p>`},
+    {label:"✅ Correcto", body: codeBlock([
+      "SELECT categoria, COUNT(*)",
+      "FROM aplicaciones",
+      "GROUP BY categoria;"
+    ]) + `<p style="color:var(--good);font-size:14.5px;margin-top:10px;font-weight:600;">Regla: toda columna del SELECT que no esté agregada debe estar en el GROUP BY.</p>`}
+  ])}
+  `});
+
+slides.push({section:true, eyebrow:"Bloque 2", title:"Filtrar grupos con HAVING",
+  body:`<p class="lede">WHERE no puede usar funciones de agregación porque, cuando actúa, los grupos todavía no existen. Para eso está HAVING.</p>`});
+
+slides.push({title:"WHERE vs. HAVING",
+  body:`
+  ${tabs("wh", [
+    {label:"WHERE", body:`
+      <p style="margin-top:0;">Filtra <strong>filas individuales</strong>, antes de agrupar.</p>
+      ${codeBlock(["SELECT * FROM aplicaciones","WHERE categoria = 'Juegos';"])}
+    `},
+    {label:"HAVING", body:`
+      <p style="margin-top:0;">Filtra <strong>grupos ya calculados</strong>, después de GROUP BY.</p>
+      ${codeBlock(["SELECT categoria, COUNT(*) AS total","FROM aplicaciones","GROUP BY categoria","HAVING COUNT(*) > 1;"])}
+    `}
+  ])}
+  ${reveal("Ver tabla comparativa", `
+    <table class="data"><tr><th></th><th>WHERE</th><th>HAVING</th></tr>
+    <tr><td>Actúa sobre</td><td>filas</td><td>grupos</td></tr>
+    <tr><td>Momento</td><td>antes de GROUP BY</td><td>después de GROUP BY</td></tr>
+    <tr><td>Usa funciones de agregación</td><td>No</td><td>Sí</td></tr>
+    </table>`)}
+  `});
+
+slides.push({title:"HAVING en acción",
+  body:`
+  <p class="lede">Solo las categorías con más de una aplicación:</p>
+  ${codeBlock([
+    "SELECT categoria, COUNT(*) AS total",
+    "FROM aplicaciones",
+    "GROUP BY categoria",
+    "HAVING COUNT(*) > 1;"
+  ])}
+  ${reveal("Ver resultado", `<div class="table-wrap"><table class="data">
+    <tr><th>categoria</th><th>total</th></tr>
+    <tr><td>Juegos</td><td>2</td></tr>
+    <tr><td>Productividad</td><td>2</td></tr>
+  </table></div>`)}
+  <p style="font-size:14.5px;">Social y Navegación quedan afuera: tienen solo 1 aplicación cada una.</p>
+  `});
+
+slides.push({section:true, eyebrow:"Bloque 2", title:"Ordenar con ORDER BY",
+  body:`<p class="lede">ORDER BY actúa al final, sobre el resultado ya agrupado (y filtrado por HAVING, si lo hay).</p>`});
+
+slides.push({title:"ORDER BY sobre un resultado agregado",
+  body:`
+  ${codeBlock([
+    "SELECT categoria, SUM(descargas) AS total_descargas",
+    "FROM aplicaciones",
+    "GROUP BY categoria",
+    "ORDER BY total_descargas DESC;"
+  ])}
+  ${reveal("Ver resultado", `<div class="table-wrap"><table class="data">
+    <tr><th>categoria</th><th>total_descargas</th></tr>
+    <tr><td>Social</td><td>42000</td></tr>
+    <tr><td>Juegos</td><td>42000</td></tr>
+    <tr><td>Navegacion</td><td>8700</td></tr>
+    <tr><td>Productividad</td><td>8300</td></tr>
+  </table></div>`)}
+  `});
+
+slides.push({title:"Consulta integradora completa",
+  body:`
+  <p class="lede">SELECT + GROUP BY + HAVING + ORDER BY trabajando juntos:</p>
+  ${codeBlock([
+    "SELECT categoria, ROUND(AVG(calificacion),2) AS promedio",
+    "FROM aplicaciones",
+    "WHERE precio = 0",
+    "GROUP BY categoria",
+    "HAVING AVG(calificacion) > 4",
+    "ORDER BY promedio DESC;"
+  ])}
+  <div class="step-track" id="query-steps">
+    <div class="step active" data-step="0"><div class="step-head"><span class="step-num">1</span> WHERE precio = 0</div>
+      <div class="step-body">Primero se filtran las filas: solo apps gratuitas.</div></div>
+    <div class="step" data-step="1"><div class="step-head"><span class="step-num">2</span> GROUP BY categoria</div>
+      <div class="step-body">Con esas filas ya filtradas, se agrupan por categoría.</div></div>
+    <div class="step" data-step="2"><div class="step-head"><span class="step-num">3</span> HAVING AVG(calificacion) > 4</div>
+      <div class="step-body">Se descartan los grupos cuyo promedio no supera 4.</div></div>
+    <div class="step" data-step="3"><div class="step-head"><span class="step-num">4</span> ORDER BY promedio DESC</div>
+      <div class="step-body">Se ordenan los grupos restantes de mayor a menor promedio.</div></div>
+  </div>
+  `});
+
+slides.push({title:"Autoevaluación: orden lógico",
+  body:`
+  ${quiz("q2", "¿Cuál es el orden lógico real en que el motor procesa una consulta?", [
+    "SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY",
+    "FROM, WHERE, GROUP BY, HAVING, SELECT, ORDER BY",
+    "FROM, SELECT, GROUP BY, WHERE, HAVING, ORDER BY",
+    "WHERE, FROM, GROUP BY, SELECT, HAVING, ORDER BY"
+  ], 1)}
+  <p class="center-note">Formativo · revisa el documento de apoyo si tienes dudas</p>
+  `});
+
+slides.push({title:"Errores comunes de la semana",
+  body:`
+  <ul class="bullets">
+    <li>Usar <code>WHERE</code> con una función de agregación en vez de <code>HAVING</code>.</li>
+    <li>Incluir en el SELECT una columna que no está agregada ni está en el GROUP BY.</li>
+    <li>Confundir COUNT(*) con COUNT(columna) cuando hay valores NULL.</li>
+    <li>Pensar que AVG() divide entre el total de filas (divide entre los valores no nulos).</li>
+    <li>Practicar sin verificar el resultado en SQL Online.</li>
+  </ul>
+  `});
+
+slides.push({title:"Resumen visual de la semana",
+  body:`
+  <div class="grid2">
+    <div class="card"><p style="margin:0 0 4px;font-weight:600;color:var(--accent);">Agregación</p><p style="margin:0;font-size:14.5px;">COUNT · SUM · AVG · MAX · MIN resumen filas en un valor.</p></div>
+    <div class="card"><p style="margin:0 0 4px;font-weight:600;color:var(--accent);">GROUP BY</p><p style="margin:0;font-size:14.5px;">Divide la tabla en grupos antes de agregar.</p></div>
+    <div class="card"><p style="margin:0 0 4px;font-weight:600;color:var(--accent);">HAVING</p><p style="margin:0;font-size:14.5px;">Filtra los grupos ya calculados.</p></div>
+    <div class="card"><p style="margin:0 0 4px;font-weight:600;color:var(--accent);">ORDER BY</p><p style="margin:0;font-size:14.5px;">Ordena el resultado final.</p></div>
+  </div>
+  <p style="font-family:'IBM Plex Mono';font-size:13px;color:var(--ink-soft);text-align:center;margin-top:4px;">FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY</p>
+  `});
+
+slides.push({section:true, eyebrow:"Antes de evaluar", title:"Practica en SQL Online",
+  body:`
+  <p class="lede">Antes de la actividad valorativa, reproduce cada consulta de esta presentación en tu entorno de SQL Online con la tabla aplicaciones. El documento de apoyo trae 4 ejercicios propuestos adicionales con solución.</p>
+  `});
+
+slides.push({title:"Actividad valorativa de la semana",
+  body:`
+  <div class="card">
+    <p style="margin:0 0 10px;"><span class="pill accent">Individual</span> <span class="pill accent">Autónoma</span> <span class="pill accent">Un intento</span></p>
+    <ul class="bullets">
+      <li>Se realiza en el formulario entregado junto a este material — sin intervención del docente durante su desarrollo.</li>
+      <li>No requiere ver ningún video: toda la información está en esta presentación y en el documento de apoyo.</li>
+      <li>Incluye preguntas conceptuales, de cálculo sobre la tabla aplicaciones y una pregunta de reflexión.</li>
+      <li>Al final del formulario hay un espacio para registrar dudas, que se resuelven en el espacio de asesoría.</li>
+    </ul>
+  </div>
+  `});
+
+slides.push({title:"Documento de apoyo",
+  body:`
+  <p class="lede">Complementa esta presentación con lectura más profunda:</p>
+  <ul class="bullets">
+    <li>Explicación extendida de cada función y cláusula, con más ejemplos.</li>
+    <li>El orden lógico de ejecución de una consulta SQL, explicado paso a paso.</li>
+    <li>4 ejercicios propuestos (no evaluados) con solución al final.</li>
+    <li>Glosario de términos y referencias externas para profundizar.</li>
+  </ul>
+  `});
+
+slides.push({title:"Espacio de dudas e inquietudes",
+  body:`
+  <div class="card" style="border-left:3px solid var(--amber);">
+    <p style="margin:0 0 8px;">Este material se estudia de forma autónoma, pero eso no significa que estés solo.</p>
+    <ul class="bullets" style="margin:0;">
+      <li>Registra tus dudas en el espacio habilitado al final del formulario de la actividad valorativa.</li>
+      <li>Llévalas también al espacio de asesoría presencial o virtual definido por el docente.</li>
+      <li>No es necesario esperar a ese espacio para avanzar: puedes seguir practicando en SQL Online mientras tanto.</li>
+    </ul>
+  </div>
+  `});
+
+slides.push({section:true, eyebrow:"Cierre", title:"Nos vemos en la semana 2",
+  body:`
+  <p class="lede">La próxima semana: operadores DML (comparación, aritméticos, lógicos) y operadores de conjuntos — UNION, INTERSECT, EXCEPT.</p>
+  <p class="center-note" style="margin-top:16px;">Fin de la presentación — Semana 1 · Funciones de agregación y agrupamiento</p>
+  `});
+
+// =========================================================
+// RENDER
+// =========================================================
+const viewport = document.getElementById('viewport');
+const dotsEl = document.getElementById('dots');
+let current = 0;
+
+slides.forEach((s, i) => {
+  const el = document.createElement('div');
+  el.className = 'slide' + (s.section ? ' section' : '');
+  el.id = 'slide-' + i;
+  el.innerHTML = `<div class="slide-inner">
+    ${s.eyebrow ? `<div class="eyebrow">${s.eyebrow}</div>` : ''}
+    <h2>${s.title}</h2>
+    ${s.body}
+    <footer class="slide-foot"></footer>
+  </div>`;
+  if (s.section) {
+    el.style.setProperty('--sec', '1');
+  }
+  viewport.appendChild(el);
+
+  const dot = document.createElement('button');
+  dot.className = 'dot' + (s.section ? ' section' : '');
+  dot.setAttribute('aria-label', 'Ir a diapositiva ' + (i + 1));
+  dot.addEventListener('click', () => goTo(i));
+  dotsEl.appendChild(dot);
+});
+
+const total = slides.length;
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function render(){
+  slides.forEach((s,i)=>{
+    const el = document.getElementById('slide-'+i);
+    el.classList.toggle('active', i===current);
+  });
+  const dots = dotsEl.querySelectorAll('.dot');
+  dots.forEach((d,i)=> d.classList.toggle('active', i===current));
+  document.getElementById('counter').textContent = pad(current+1) + '/' + pad(total);
+  document.getElementById('progress-fill').style.width = ((current) / (total-1) * 100) + '%';
+  document.getElementById('btn-prev').disabled = current===0;
+  document.getElementById('btn-next').disabled = current===total-1;
+  document.getElementById('btn-next').classList.toggle('primary', current!==total-1);
+  // scroll active dot into view
+  const activeDot = dots[current];
+  if (activeDot && activeDot.scrollIntoView) activeDot.scrollIntoView({block:'nearest', inline:'center'});
+}
+
+function goTo(i){
+  current = Math.max(0, Math.min(total-1, i));
+  render();
+}
+
+document.getElementById('btn-prev').addEventListener('click', ()=>goTo(current-1));
+document.getElementById('btn-next').addEventListener('click', ()=>goTo(current+1));
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowRight' || e.key===' '){ goTo(current+1); }
+  else if(e.key==='ArrowLeft'){ goTo(current-1); }
+});
+
+// swipe support
+let touchX = null;
+viewport.addEventListener('touchstart', e=>{ touchX = e.touches[0].clientX; }, {passive:true});
+viewport.addEventListener('touchend', e=>{
+  if(touchX===null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if(Math.abs(dx) > 50){ dx < 0 ? goTo(current+1) : goTo(current-1); }
+  touchX = null;
+}, {passive:true});
+
+// ---------- Interactive component wiring (event delegation) ----------
+document.addEventListener('click', (e)=>{
+  // reveal
+  const rv = e.target.closest('[data-reveal]');
+  if(rv){
+    const box = document.getElementById(rv.getAttribute('data-reveal'));
+    const showing = box.classList.toggle('show');
+    rv.textContent = showing ? rv.getAttribute('data-hide') : rv.getAttribute('data-show');
+    return;
+  }
+  // tabs
+  const tabBtn = e.target.closest('.tab');
+  if(tabBtn){
+    const group = tabBtn.getAttribute('data-tabgroup');
+    const idx = tabBtn.getAttribute('data-tabidx');
+    document.querySelectorAll(`.tab[data-tabgroup="${group}"]`).forEach(b=>b.classList.toggle('active', b===tabBtn));
+    document.querySelectorAll(`.tabpanel[data-tabgroup="${group}"]`).forEach(p=>p.classList.toggle('active', p.getAttribute('data-tabidx')===idx));
+    return;
+  }
+  // steps
+  const step = e.target.closest('.step');
+  if(step){
+    const track = step.parentElement;
+    track.querySelectorAll('.step').forEach(s=>s.classList.toggle('active', s===step));
+    return;
+  }
+  // quiz choice
+  const choice = e.target.closest('.choice');
+  if(choice){
+    const root = choice.closest('[data-quizroot]');
+    if(root.hasAttribute('data-answered')) return;
+    root.setAttribute('data-answered','1');
+    const correctIdx = root.getAttribute('data-correct');
+    const idx = choice.getAttribute('data-idx');
+    const all = root.querySelectorAll('.choice');
+    all.forEach(c=>{
+      c.setAttribute('disabled','');
+      if(c.getAttribute('data-idx')===correctIdx) c.classList.add('correct');
+    });
+    const fb = root.querySelector('.feedback');
+    if(idx===correctIdx){
+      fb.textContent = '✓ ¡Correcto!';
+      fb.className = 'feedback show ok';
+    } else {
+      choice.classList.add('wrong');
+      fb.textContent = '✗ No es correcto — se resaltó la respuesta correcta.';
+      fb.className = 'feedback show no';
+    }
+    return;
+  }
+});
+
+render();
+})();
+</script>
