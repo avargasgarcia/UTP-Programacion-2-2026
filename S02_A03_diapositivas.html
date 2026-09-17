@@ -1,0 +1,1649 @@
+<meta charset="utf-8">
+<title>Decisiones y Ciclos en Diagramas de Flujo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F2F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#EBEDF3;
+  --line:#D6D9E4;
+  --ink:#141828;
+  --muted:#5B6278;
+  --accent:#4557C9;
+  --accent-soft:#E3E6F8;
+  --fn:#0B7C71;
+  --fn-soft:#DCF0ED;
+  --imp:#A2620E;
+  --imp-soft:#F6E8D3;
+  --shadow:0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.08);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1120;
+    --surface:#171B2C;
+    --surface-2:#1F2438;
+    --line:#2E3448;
+    --ink:#E8EAF4;
+    --muted:#98A0BA;
+    --accent:#8494F2;
+    --accent-soft:#232A48;
+    --fn:#3FC7B4;
+    --fn-soft:#12312F;
+    --imp:#E9A94A;
+    --imp-soft:#33270F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1120;
+  --surface:#171B2C;
+  --surface-2:#1F2438;
+  --line:#2E3448;
+  --ink:#E8EAF4;
+  --muted:#98A0BA;
+  --accent:#8494F2;
+  --accent-soft:#232A48;
+  --fn:#3FC7B4;
+  --fn-soft:#12312F;
+  --imp:#E9A94A;
+  --imp-soft:#33270F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:"IBM Plex Serif", Georgia, "Times New Roman", serif;font-weight:600}
+p{margin:0}
+code,pre,.mono{font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace}
+
+/* ============ CHROME ============ */
+.rail{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  font-size:12px;
+}
+.rail .id{font-family:"IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rail .id b{color:var(--ink);font-weight:600}
+.rail .spacer{flex:1}
+.btn{
+  font:inherit;font-size:12px;
+  background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.counter{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.counter b{color:var(--ink)}
+
+.progress{height:3px;background:var(--surface-2);position:relative}
+.progress span{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .25s ease}
+
+/* ============ STAGE ============ */
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px}
+.stage{
+  width:min(100%,1180px);
+  aspect-ratio:16/9;
+  max-height:calc(100vh - 150px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  container-type:inline-size;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;
+  padding:4.4cqi 5cqi 4cqi;
+  display:none;
+  flex-direction:column;
+  gap:2.2cqi;
+  overflow-y:auto;
+}
+.slide.on{display:flex}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:1.25cqi;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:1cqi;
+}
+.eyebrow .tick{width:2.6cqi;height:1px;background:var(--line)}
+h2.title{font-size:3.9cqi;line-height:1.12;letter-spacing:-.01em}
+h3.sub{font-size:2.05cqi;line-height:1.25}
+.lead{font-size:1.95cqi;line-height:1.5;color:var(--ink);max-width:62ch}
+.note{font-size:1.5cqi;line-height:1.5;color:var(--muted);max-width:70ch}
+.slide ul{margin:0;padding-left:2.2cqi;display:flex;flex-direction:column;gap:1.1cqi}
+.slide li{font-size:1.8cqi;line-height:1.42}
+.slide li::marker{color:var(--accent)}
+
+/* two-world grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;align-items:start}
+.panel{
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+  padding:2cqi 2.2cqi;
+  display:flex;flex-direction:column;gap:1.2cqi;
+  min-width:0;
+}
+.panel.fn{border-top:3px solid var(--fn)}
+.panel.imp{border-top:3px solid var(--imp)}
+.tag{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+.tag.fn{color:var(--fn)}
+.tag.imp{color:var(--imp)}
+.panel h4{margin:0;font-size:1.85cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.panel p{font-size:1.5cqi;line-height:1.45;color:var(--muted)}
+.panel ul{padding-left:2cqi;gap:.7cqi}
+.panel li{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1.4cqi 1.6cqi;font-size:1.42cqi;line-height:1.55;
+  overflow-x:auto;white-space:pre;
+}
+pre .k{color:var(--accent);font-weight:500}
+pre .c{color:var(--muted);font-style:italic}
+pre .n{color:var(--imp)}
+pre .s{color:var(--fn)}
+.filename{
+  font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted);
+  display:flex;justify-content:space-between;gap:1cqi;
+}
+.filename em{font-style:normal;color:var(--fn)}
+
+/* trace machine */
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqi;align-items:stretch}
+.cell{
+  display:flex;gap:1.2cqi;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+}
+.box{
+  border:2px solid var(--imp);border-radius:6px;background:var(--imp-soft);
+  padding:.8cqi 1.6cqi;font-size:2.4cqi;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;min-width:7cqi;text-align:center;
+}
+.box.flash{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.expr{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;line-height:1.7;
+  color:var(--ink);word-break:break-word;
+}
+.expr .old{color:var(--muted)}
+.steps{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:1cqi;align-items:center;flex-wrap:wrap}
+.ctl{
+  font-family:"IBM Plex Sans",sans-serif;font-size:1.4cqi;
+  padding:.8cqi 1.6cqi;border-radius:6px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;cursor:pointer;
+}
+.ctl.ghost{background:transparent;color:var(--accent)}
+.ctl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctl:disabled{opacity:.45;cursor:default}
+
+/* comparison table */
+table{border-collapse:collapse;width:100%;font-size:1.5cqi}
+th,td{text-align:left;padding:1cqi 1.2cqi;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+thead th.cfn{color:var(--fn)}
+thead th.cimp{color:var(--imp)}
+tbody th{font-weight:500;color:var(--muted);font-family:"IBM Plex Sans",sans-serif}
+
+/* cover */
+.cover{justify-content:center;gap:1.6cqi;background:
+  linear-gradient(105deg, var(--fn-soft) 0%, transparent 42%),
+  linear-gradient(255deg, var(--imp-soft) 0%, transparent 42%);}
+.cover .inst{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);line-height:1.7;letter-spacing:.04em}
+.cover h1{font-size:5.4cqi;line-height:1.05;letter-spacing:-.02em;max-width:20ch}
+.cover .course{font-size:2cqi;color:var(--accent);font-weight:600}
+.cover .who{display:flex;gap:3cqi;flex-wrap:wrap;font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+.cover .who b{display:block;color:var(--ink);font-weight:600;font-size:1.75cqi}
+
+/* q&a */
+.qa{display:flex;flex-direction:column;gap:1.4cqi}
+.q{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi}
+.q p{font-size:1.6cqi;line-height:1.4}
+.q .ans{font-size:1.45cqi;color:var(--fn);line-height:1.45;display:none}
+.q.open .ans{display:block}
+.q button{align-self:flex-start;font:inherit;font-size:1.25cqi;background:none;border:1px solid var(--line);border-radius:5px;padding:.5cqi 1.1cqi;color:var(--muted);cursor:pointer}
+.q button:hover{color:var(--accent);border-color:var(--accent)}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:1.4cqi 1.8cqi;border-radius:0 7px 7px 0;font-size:1.55cqi;line-height:1.45;
+}
+.refs{font-size:1.3cqi;line-height:1.6;color:var(--muted)}
+.refs b{color:var(--ink);font-weight:500}
+
+/* notes drawer */
+.notes{
+  width:min(100%,1180px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);padding:14px 18px;
+  font-size:14px;line-height:1.55;color:var(--ink);
+  display:none;
+}
+.notes.on{display:block}
+.notes h5{margin:0 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notes p{color:var(--muted)}
+.notes .time{color:var(--accent);font-family:"IBM Plex Mono",monospace}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+@media (max-width:720px){
+  .duo,.trace{grid-template-columns:1fr}
+  .stage{aspect-ratio:auto;height:auto;min-height:520px}
+  .slide{position:relative;padding:22px}
+  .slide:not(.on){display:none}
+}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.3 — componentes que no existían en la 1.1.
+   No se modificó ningún token de color ni ningún tamaño anterior.
+   ====================================================================== */
+
+/* retícula de tres columnas (los tres intercambios) */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.6cqi;align-items:start}
+.trio .panel{padding:1.5cqi 1.6cqi;gap:.9cqi}
+.trio pre{font-size:1.24cqi;padding:1.1cqi 1.2cqi}
+.trio li{font-size:1.35cqi}
+.trio .tag{font-size:1.05cqi}
+
+/* retícula de dos columnas desiguales */
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:2.2cqi;align-items:start}
+.split-r{display:grid;grid-template-columns:.85fr 1.15fr;gap:2.2cqi;align-items:start}
+
+/* celdas de memoria con desvanecimiento del valor anterior */
+.mem{display:flex;gap:2.6cqi;align-items:flex-end;flex-wrap:wrap}
+.memcell{display:flex;flex-direction:column;align-items:center;gap:.5cqi;position:relative}
+.memcell .name{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--imp);font-weight:600}
+.memcell .addr{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;color:var(--muted)}
+.memcell .box{min-width:8.4cqi}
+.memcell .box.empty{color:var(--muted);border-style:dashed;background:transparent}
+.memcell .gone{
+  position:absolute;left:0;right:0;top:2.1cqi;
+  font-family:"IBM Plex Mono",monospace;font-size:2.4cqi;font-weight:600;
+  color:var(--muted);text-align:center;pointer-events:none;
+  text-decoration:line-through;
+  animation:vanish 1.1s ease forwards;
+}
+@keyframes vanish{
+  0%{opacity:.9;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-3.2cqi) scale(.8)}
+}
+
+/* registro de transiciones del simulador */
+.log{
+  font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;line-height:1.6;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1cqi 1.2cqi;height:15cqi;overflow:auto;color:var(--ink);
+  white-space:pre;
+}
+.log .dim{color:var(--muted)}
+
+/* indicador de estado actual */
+.statebar{display:flex;align-items:center;gap:1.2cqi;flex-wrap:wrap}
+.statebar .lab{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:1.7cqi;font-weight:600;
+  border:2px solid var(--imp);background:var(--imp-soft);color:var(--ink);
+  border-radius:999px;padding:.5cqi 1.6cqi;
+}
+.chip.flash{animation:pop .35s ease}
+
+/* diagramas de estados en SVG */
+.fsm{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fsm .node{fill:var(--dsurf);stroke:var(--dimp);stroke-width:2.5}
+.fsm .node.on{fill:var(--dimps);stroke-width:6}
+.fsm .inner{fill:none;stroke:var(--dfn);stroke-width:2}
+.fsm .lbl{fill:var(--dink);font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;text-anchor:middle}
+.fsm .edge{fill:none;stroke:var(--dmut);stroke-width:2}
+.fsm .elbl{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:15px;text-anchor:middle}
+.fsm .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fsm .cap.acc{fill:var(--dfn)}
+.fsm marker path{fill:var(--dmut)}
+.fsm.big .lbl{font-size:21px}
+.fsm.big .elbl{font-size:17px}
+.fsm.big .cap{font-size:15px}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.4 — componentes que no existían en la 1.3.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* las tres caras de un tipo (diapositiva 3) */
+.faces{display:flex;flex-direction:column;gap:1.2cqi}
+.face{display:flex;gap:1.3cqi;align-items:baseline}
+.face .num{font-family:"IBM Plex Mono",monospace;font-size:1.6cqi;font-weight:600;color:var(--accent);min-width:2.4cqi}
+.face .txt{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+.face .txt b{display:block;font-size:1.65cqi}
+.face .txt span{color:var(--muted);font-size:1.32cqi}
+
+/* matriz 2 × 2 del tipado (diapositiva 4) */
+.matrix{display:grid;grid-template-columns:4.6cqi 1fr 1fr;gap:.9cqi;align-items:stretch}
+.axis{
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);line-height:1.35;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+}
+.axis.side{writing-mode:vertical-rl;transform:rotate(180deg)}
+.mcell{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1.2cqi 1.3cqi;display:flex;flex-direction:column;gap:.45cqi;min-width:0;
+}
+.mcell:hover{border-color:var(--accent)}
+.mcell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mcell .lang{font-family:"IBM Plex Mono",monospace;font-size:1.75cqi;font-weight:600;color:var(--ink)}
+.mcell.c .lang{color:var(--imp)}
+.mcell.r .lang{color:var(--fn)}
+.mcell .kind{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.mcell .mk{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);visibility:hidden}
+.mcell[aria-pressed="true"]{background:var(--accent-soft);border:3px solid var(--accent);padding:1cqi 1.1cqi}
+.mcell[aria-pressed="true"] .mk{visibility:visible}
+
+/* explorador de tipos y barra de bytes (diapositiva 7) */
+.tbtns{display:flex;flex-wrap:wrap;gap:.6cqi}
+.tbtn{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.55cqi 1.05cqi;cursor:pointer;
+}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.bytebar{display:flex;gap:.35cqi;flex-wrap:wrap;align-items:center}
+.byte{
+  width:2.5cqi;height:2.5cqi;border-radius:4px;
+  border:1px solid var(--imp);background:var(--imp-soft);
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.bignum{font-family:"IBM Plex Mono",monospace;font-size:3.2cqi;font-weight:600;color:var(--imp);line-height:1}
+.bignum small{font-size:1.4cqi;color:var(--muted);font-weight:400;margin-left:.6cqi}
+
+/* banda de la advertencia intencional (diapositiva 6) */
+.warnband{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.2cqi 1.6cqi;
+  display:flex;flex-direction:column;gap:.55cqi;
+}
+.warnband .hd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.1cqi;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--imp);font-weight:600;
+}
+.warnband .msg{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;line-height:1.5;color:var(--ink);word-break:break-word}
+.warnband .why{font-size:1.32cqi;line-height:1.45;color:var(--muted)}
+
+/* predictor de conversiones (diapositiva 9) */
+.opts{display:flex;gap:.9cqi;flex-wrap:wrap}
+.opt{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.75cqi 1.5cqi;cursor:pointer;
+}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt.good{background:var(--fn-soft);border:2px solid var(--fn);font-weight:600;padding:.65cqi 1.4cqi}
+.opt.bad{background:var(--surface-2);border-color:var(--muted);color:var(--muted);text-decoration:line-through}
+.opt:disabled{cursor:default}
+.verdict{font-size:1.4cqi;line-height:1.45;color:var(--ink);min-height:7cqi}
+.verdict .head{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:.5cqi}
+.verdict .head.ok{color:var(--fn)}
+.verdict .head.no{color:var(--imp)}
+
+/* columna que difiere entre modelos de datos (diapositiva 10) */
+th.diff,td.diff{background:var(--imp-soft)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.5 — componentes que no existían en la 1.4.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* cadena de las cinco piezas (diapositiva 3) */
+.chain{display:flex;align-items:stretch;gap:.8cqi;flex-wrap:nowrap}
+.link{
+  flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface-2);padding:1.1cqi 1cqi;
+  display:flex;flex-direction:column;gap:.5cqi;text-align:center;
+}
+.link .n{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.link .w{font-size:1.42cqi;font-weight:600;line-height:1.2;color:var(--ink)}
+.link .d{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.link.hot{border-color:var(--imp);background:var(--imp-soft)}
+.arrowmini{display:flex;align-items:center;color:var(--muted);font-size:1.6cqi;flex:0 0 auto}
+
+/* comparación de las dos versiones (diapositiva 5) */
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:2cqi;align-items:stretch}
+.vcard{
+  border:1px solid var(--line);border-radius:8px;padding:1.6cqi 1.8cqi;
+  display:flex;flex-direction:column;gap:.9cqi;background:var(--surface-2);
+}
+.vcard.bad{border:2px solid var(--muted);opacity:.82}
+.vcard.good{border:2px solid var(--fn);background:var(--fn-soft)}
+.vcard .vh{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.vcard.bad .vh{color:var(--muted)}
+.vcard.good .vh{color:var(--fn)}
+.vcard h4{margin:0;font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif}
+.vrow{display:flex;justify-content:space-between;gap:1cqi;font-size:1.3cqi;line-height:1.4;border-bottom:1px solid var(--line);padding-bottom:.5cqi}
+.vrow:last-of-type{border-bottom:0}
+.vrow span:first-child{color:var(--muted)}
+.vrow span:last-child{text-align:right;font-family:"IBM Plex Mono",monospace;color:var(--ink)}
+.vcard.good .vrow span:last-child{font-weight:600}
+
+/* selector de ruta por sistema operativo (diapositiva 6) */
+.osbtns{display:flex;gap:.8cqi;flex-wrap:wrap}
+.osbtn{
+  font:inherit;font-family:"IBM Plex Sans",sans-serif;font-size:1.45cqi;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);padding:.85cqi 1.6cqi;cursor:pointer;
+  display:flex;align-items:center;gap:.7cqi;
+}
+.osbtn:hover{border-color:var(--accent);color:var(--accent)}
+.osbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.osbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ospanel{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:1cqi;min-height:26cqi;
+}
+.ospanel .oh{font-size:1.9cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;color:var(--ink)}
+.ospanel .ol{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.ospanel ol{margin:0;padding-left:2.4cqi;display:flex;flex-direction:column;gap:.7cqi}
+.ospanel li{font-size:1.42cqi;line-height:1.4}
+.ospanel .nope{font-size:1.28cqi;line-height:1.45;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.2cqi}
+
+/* teclas (diapositiva 8) */
+.kbd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.35cqi;font-weight:600;
+  border:1px solid var(--line);border-bottom-width:3px;border-radius:5px;
+  background:var(--surface);padding:.35cqi .9cqi;color:var(--ink);white-space:nowrap;
+}
+.keyrow{display:flex;flex-direction:column;gap:1cqi}
+.keyline{display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi}
+.keyline .txt{color:var(--ink)}
+.keyline .txt em{font-style:normal;color:var(--muted);font-size:1.25cqi}
+
+/* lista de verificación pulsable (diapositiva 12) */
+.checks{display:flex;flex-direction:column;gap:.85cqi}
+.chk{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1cqi 1.4cqi;display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi;
+}
+.chk:hover{border-color:var(--accent)}
+.chk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chk .mk{
+  flex:0 0 auto;width:2.2cqi;height:2.2cqi;border-radius:5px;
+  border:2px solid var(--line);display:flex;align-items:center;
+  justify-content:center;font-size:1.3cqi;color:transparent;
+}
+.chk[aria-pressed="true"]{background:var(--fn-soft);border-color:var(--fn)}
+.chk[aria-pressed="true"] .mk{background:var(--fn);border-color:var(--fn);color:#fff}
+.tally{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.tally b{color:var(--fn);font-size:2cqi}
+
+/* modificador de densidad: para las diapositivas cuyo contenido es
+   irreducible sin perder información (la tabla de los cinco tipos de
+   entorno y la comparación de macOS). Solo ajusta espaciados y escala
+   tipográfica dentro de la diapositiva; no toca ningún token. */
+.dense{gap:1.6cqi}
+.dense table{font-size:1.36cqi}
+.dense th,.dense td{padding:.6cqi 1cqi}
+.dense .alert{font-size:1.36cqi;padding:1cqi 1.4cqi}
+.dense .note{font-size:1.34cqi}
+.dense .lead{font-size:1.78cqi}
+.dense .panel li{font-size:1.38cqi}
+.dense .panel p{font-size:1.38cqi}
+.dense pre{font-size:1.3cqi}
+
+/* banda de advertencia sobria (varias diapositivas) */
+.alert{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.3cqi 1.7cqi;
+  font-size:1.5cqi;line-height:1.45;
+}
+.alert b{color:var(--imp)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 2.1 / 2.2 — componentes que no existían en la
+   1.5. No se modificó ningún token de color ni ningún tamaño anterior;
+   todo lo que sigue son componentes nuevos que usan los mismos tokens.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos se dibujan en tinta neutra; el ámbar marca «esto es lo
+   que estamos mirando» o «esto está mal», y el verde azulado marca
+   «esto está bien». Siempre acompañado de etiqueta de texto.
+   ====================================================================== */
+
+/* diagramas de flujo en SVG */
+.fc{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fc .sh{fill:var(--dsurf);stroke:var(--dink);stroke-width:2.4}
+.fc .sh.hot{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc .sh.ok{fill:var(--dfns);stroke:var(--dfn);stroke-width:3.4}
+.fc .sh.err{fill:var(--dimps);stroke:var(--dimp);stroke-width:4;stroke-dasharray:7 5}
+.fc .t{
+  fill:var(--dink);font-family:"IBM Plex Mono",monospace;
+  font-size:15px;text-anchor:middle;dominant-baseline:middle;
+}
+.fc .t.sm{font-size:13px}
+.fc .fl{fill:none;stroke:var(--dmut);stroke-width:2.2}
+.fc .fl.err{stroke:var(--dimp);stroke-width:3.2;stroke-dasharray:7 5}
+.fc .fll{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fc .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:12px;text-anchor:middle}
+.fc .spot{cursor:pointer}
+.fc .spot .ring{fill:none;stroke:var(--dimp);stroke-width:3;opacity:0}
+.fc .spot[data-found="1"] .ring{opacity:1}
+.fc .mark{fill:var(--dimp);font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;text-anchor:middle;opacity:0}
+.fc .spot[data-found="1"] .mark{opacity:1}
+#armk path{fill:var(--muted)}
+
+/* vitrina de un solo símbolo (diapositiva 5) */
+.symstage{
+  border:1px solid var(--line);border-radius:8px;background:var(--surface-2);
+  padding:1.2cqi;display:flex;align-items:center;justify-content:center;
+  min-height:19cqi;
+}
+.symstage svg{width:100%;max-height:17cqi}
+
+/* fila de equivalencias pseudocódigo ↔ símbolo */
+.eq{display:flex;flex-direction:column;gap:.7cqi}
+.eqrow{
+  display:grid;grid-template-columns:1.1fr 1.4cqi 1fr;gap:1.1cqi;align-items:center;
+  border-bottom:1px solid var(--line);padding-bottom:.6cqi;
+}
+.eqrow:last-child{border-bottom:0}
+.eqrow .k1{font-family:"IBM Plex Mono",monospace;font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2{font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2 em{font-style:normal;color:var(--muted);font-size:1.2cqi;display:block}
+.eqrow .to{color:var(--muted);font-size:1.3cqi;text-align:center}
+
+/* reglas numeradas de trazado */
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:1.1cqi 2cqi}
+.rule{display:flex;gap:1.1cqi;align-items:flex-start}
+.rule .rn{
+  flex:0 0 auto;width:2.5cqi;height:2.5cqi;border-radius:50%;
+  border:2px solid var(--accent);color:var(--accent);
+  font-family:"IBM Plex Mono",monospace;font-size:1.25cqi;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+}
+.rule .rt{font-size:1.42cqi;line-height:1.38}
+.rule .rt b{display:block;font-size:1.5cqi;margin-bottom:.15cqi}
+.rule .rt span{color:var(--muted);font-size:1.26cqi}
+
+/* marcador del cazador de errores */
+.hunt{display:flex;align-items:center;gap:1.4cqi;flex-wrap:wrap}
+.hunt .score{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.hunt .score b{color:var(--imp);font-size:2.1cqi}
+.huntmsg{font-size:1.38cqi;line-height:1.42;color:var(--ink);min-height:6.4cqi}
+.huntmsg .head{
+  font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.1em;
+  text-transform:uppercase;display:block;margin-bottom:.4cqi;
+}
+.huntmsg .head.no{color:var(--imp)}
+.huntmsg .head.ok{color:var(--fn)}
+
+/* separador de cápsula dentro de la misma presentación */
+.divider{
+  justify-content:center;gap:1.4cqi;
+  background:linear-gradient(115deg, var(--accent-soft) 0%, transparent 55%);
+}
+.divider .big{font-size:4.6cqi;line-height:1.06;letter-spacing:-.02em}
+.divider .kicker{
+  font-family:"IBM Plex Mono",monospace;font-size:1.4cqi;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);font-weight:600;
+}
+
+/* ficha de herramienta (diapositiva 20) */
+.tool{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi;min-height:27cqi;
+}
+.tool .th{font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.tool .tf{font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.tool .tp{font-size:1.4cqi;line-height:1.42;color:var(--ink)}
+.tool .tlim{font-size:1.26cqi;line-height:1.42;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.1cqi}
+.tool .tsrc{font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;color:var(--muted);line-height:1.5}
+
+/* el modificador .dense de la cápsula 1.5, extendido a los componentes
+   nuevos de esta cápsula. Sigue sin tocar ningún token de color. */
+.dense .rules{gap:.8cqi 1.6cqi}
+.dense .rule .rt{font-size:1.32cqi}
+.dense .rule .rt b{font-size:1.4cqi}
+.dense .rule .rt span{font-size:1.18cqi}
+.dense .vrow{font-size:1.22cqi}
+.dense .vcard{padding:1.2cqi 1.4cqi;gap:.7cqi}
+.dense .vcard h4{font-size:1.8cqi}
+.dense .tool{min-height:24cqi;padding:1.2cqi 1.5cqi;gap:.7cqi}
+.dense .tp{font-size:1.3cqi}
+.dense .eqrow .k1,.dense .eqrow .k2{font-size:1.26cqi}
+.dense .callout{font-size:1.38cqi;padding:1.1cqi 1.5cqi}
+.dense .refs{font-size:1.2cqi}
+.dense .fc .t{font-size:14px}
+
+/* el diagrama vertical completo, cuando comparte diapositiva con texto */
+.fc.fit{max-height:40cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LAS CÁPSULAS 2.3 / 2.4 / CICLOS — componentes que no
+   existían en la 2.1-2.2. No se modificó ningún token de color ni ningún
+   tamaño anterior: todo lo que sigue usa los mismos tokens del curso.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos van en tinta neutra; el ámbar marca «esto está mal» y el
+   verde azulado «esto está bien», siempre con etiqueta de texto.
+   ====================================================================== */
+
+/* punto de reunión / de retorno: la unión de dos caminos en uno */
+.fc .jn{fill:var(--dmut);stroke:none}
+
+/* los diagramas de esta cápsula son más altos que los de la 2.1: se
+   limita su altura para que nunca desborden la diapositiva. El ancho
+   sigue mandando; la altura solo recorta cuando el diagrama es vertical. */
+.slide .fc{max-height:34cqi}
+.dense .fc{max-height:32cqi}
+.trio .fc{max-height:28cqi}
+.split .fc, .split-r .fc{max-height:34cqi}
+
+/* tabla compacta para la traza del ciclo (diapositiva 22) */
+table.mini{font-size:1.3cqi;font-variant-numeric:tabular-nums}
+table.mini th, table.mini td{padding:.42cqi .8cqi}
+table.mini thead th{font-size:1.05cqi}
+table.mini td.mono{font-family:"IBM Plex Mono",monospace}
+table.mini tr.on td{background:var(--accent-soft)}
+table.mini tr.out td{color:var(--muted)}
+
+/* reglas numeradas en una sola columna (diapositiva 27) */
+.rules.one{grid-template-columns:1fr;gap:1cqi}
+
+/* ficha de las cinco piezas / los cinco pasos */
+.faces .txt b{margin-bottom:.1cqi}
+
+/* separador de bloque: el mismo de la 2.2, con la variante de ciclos */
+.divider .lead{max-width:56ch}
+
+/* pseudocódigo dentro de una tarjeta de comparación */
+.vcard pre{background:var(--surface);font-size:1.3cqi}
+.vcard .note{font-size:1.32cqi;line-height:1.45}
+.vcard h4{font-size:1.75cqi;line-height:1.25}
+
+/* el panel de la traza no debe estirarse */
+.controls{margin-top:.8cqi}
+
+/* el modificador .dense, extendido a lo nuevo de esta cápsula */
+.dense .faces .txt{font-size:1.36cqi}
+.dense .faces .txt b{font-size:1.46cqi}
+.dense .faces .txt span{font-size:1.24cqi}
+.dense .versus .vcard{padding:1.2cqi 1.4cqi}
+.dense table.mini{font-size:1.22cqi}
+.dense .verdict{font-size:1.3cqi;min-height:5cqi}
+
+/* lista de verificación compacta (diapositiva 29) */
+.dense .checks{gap:.5cqi}
+.dense .chk{padding:.5cqi .85cqi;font-size:1.22cqi;line-height:1.3}
+.dense .chk .mk{width:1.7cqi;height:1.7cqi;font-size:1.05cqi}
+.dense .tally{font-size:1.3cqi}
+.dense .tally b{font-size:1.7cqi}
+.dense .refs{font-size:1.16cqi;line-height:1.5}
+.dense .panel li{line-height:1.34}
+
+/* resaltado de una pieza del diagrama durante la traza (diapositiva 22).
+   Ambar = «esto es lo que estamos mirando», nunca un tipo de símbolo. */
+.fc g.hot .sh{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc g.hot .fl{stroke:var(--dimp);stroke-width:3}
+.fc g.hot .t{font-weight:600}
+
+/* los dos diagramas comparativos de la diapositiva 20 */
+.trio .panel .fc{max-height:28cqi;margin-top:.4cqi}
+.tag em{font-style:normal;color:var(--muted);text-transform:none;letter-spacing:0}
+
+/* el pseudocódigo, un punto más compacto en las diapositivas .dense */
+.dense pre{font-size:1.26cqi;line-height:1.45;padding:1.1cqi 1.3cqi}
+
+/* filas de la traza todavia no alcanzadas: ocupan sitio, no distraen */
+table.mini tr.pend td{color:var(--line)}
+
+/* diapositiva 26: el diagrama mas complejo del curso necesita ancho */
+.split.ancho{grid-template-columns:1.5fr 1fr}
+.split.ancho .fc{max-height:38cqi}
+
+/* .grande: los diagramas casi cuadrados se reducen mucho al caber en la
+   diapositiva, asi que su tipografia interna se dibuja mas grande para que
+   siga leyendose. Solo cambia el tamano del texto dentro del SVG. */
+.fc.grande .t{font-size:21px}
+.fc.grande .t.sm{font-size:19px}
+.fc.grande .fll{font-size:18px}
+.fc.grande .cap{font-size:16px}
+
+/* nota bajo un diagrama (diapositiva 22) */
+.split > div > .note{margin-top:.8cqi;font-size:1.3cqi}
+
+/* diapositiva 22: la traza ocupa alto fijo; el diagrama cede un poco */
+#trzBody + tr, .slide .panel table.mini{margin-bottom:.2cqi}
+.dense .split .fc.ej1, .split .fc.ej1{max-height:26cqi}
+
+/* el mensaje de la traza reserva su alto: la diapositiva no salta al avanzar */
+#trzMsg{min-height:5.6cqi;margin-top:.5cqi}
+
+/* correcciones de herencia sobre componentes de la 1.4/1.5 -------------
+   .face .txt b es display:block en la hoja base (sirve para el titulo de
+   la ficha); los <b> que van DENTRO del parrafo tienen que seguir en
+   linea. Y el texto de una casilla va en un solo elemento, porque .chk es
+   un contenedor flex y cada nodo suelto se separaria del resto. */
+.face .txt span b, .dense .faces .txt span b{display:inline;font-size:inherit}
+.chk .lbl{flex:1 1 auto}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="armk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+</defs></svg>
+
+<div class="rail">
+  <span class="id"><b>IS284</b> · Programación II</span>
+  <span class="id">Semana 2 · Cápsulas 2.3 y 2.4 · Ciclos</span>
+  <span class="spacer"></span>
+  <span class="counter"><b id="cur">1</b> / 29</span>
+  <button class="btn" id="prev" type="button">← Anterior</button>
+  <button class="btn" id="next" type="button">Siguiente →</button>
+  <button class="btn" id="toggleNotes" type="button" aria-pressed="false">Notas (N)</button>
+</div>
+<div class="progress"><span id="bar" style="width:3.45%"></span></div>
+
+<div class="wrap">
+<div class="stage" id="stage">
+
+<!-- 1 ............................................................. -->
+<section class="slide cover on" data-t="2.3 · 0:22">
+  <p class="inst">UNIVERSIDAD TECNOLÓGICA DE PEREIRA<br>Facultad de Ingenierías · Ingeniería de Sistemas y Computación</p>
+  <p class="course">Programación II · IS284 · Semana 2 · Cápsulas 2.3 y 2.4</p>
+  <h1>Decisiones y ciclos en diagramas de flujo</h1>
+  <div class="who">
+    <span>Docente<b>Ing. Andres Vargas</b></span>
+    <span>Contenido<b>2.3 selección · 2.4 anidada y múltiple · ciclos</b></span>
+    <span>Video<b>Tres bloques de 7:00</b></span>
+    <span>Notación de la semana<b>Diagrama de flujo</b></span>
+  </div>
+</section>
+
+<!-- 2 ............................................................. -->
+<section class="slide dense" data-t="2.3 · 0:50">
+  <p class="eyebrow"><span class="tick"></span> Qué tiene que lograr</p>
+  <h2 class="title">Decidir, anidar, repetir — y comprobarlo</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Objetivos observables</span>
+      <ul>
+        <li><b>Dibujar</b> selección simple, doble, anidada y múltiple con las salidas rotuladas y el punto de reunión.</li>
+        <li><b>Escribir</b> la condición que corresponde a un enunciado, con los operadores correctos.</li>
+        <li><b>Modelar con un ciclo</b> lo que se repite, con sus cinco piezas completas.</li>
+        <li><b>Verificar</b> el propio diagrama con una prueba de escritorio antes de entregarlo.</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Evidencia que se evalúa</span>
+      <p><b>Taller evaluativo de 10 ejercicios</b> (<span class="mono">S02_A03_taller_evaluativo.md</span>): 10 diagramas de flujo exportados como imagen o PDF.</p>
+      <p>Se califica con <span class="mono">rubrica_diagramas_flujo_IS284.xlsx</span>, la misma rúbrica de seis criterios de la actividad 2.2.</p>
+    </div>
+  </div>
+  <div class="callout">La <b>selección anidada (2.4)</b> está marcada en el diseño del curso como <b>prerrequisito duro</b>: es una de las cuatro cápsulas que se preguntan en la entrevista oral de la semana 5.</div>
+</section>
+
+<!-- 3 ............................................................. -->
+<section class="slide dense" data-t="2.3 · 0:40">
+  <p class="eyebrow"><span class="tick"></span> 2.3 · Anatomía de la decisión</p>
+  <h2 class="title">Una entrada, dos salidas, un reencuentro</h2>
+  <div class="split">
+    <div><svg class="fc" viewBox="-70 0 800 400" role="img" aria-label="Anatomia de la decision: una entrada, dos salidas rotuladas y un punto de reunion"><line class="fl" x1="340" y1="8" x2="340" y2="56" marker-end="url(#armk)"/><polygon class="sh" points="340,58 465,110 340,162 215,110"/><text class="t" x="340" y="110">nota &gt;= 3.0</text><text class="cap" x="430" y="40">una entrada</text><line class="fl" x1="465" y1="110" x2="556" y2="110" marker-end="url(#armk)"/><text class="fll" x="510" y="98">Sí</text><polygon class="sh" points="533.92,167 713.92,167 666.08,213 486.08,213"/><text class="t" x="600" y="190">Mostrar «aprobó»</text><polyline class="fl" points="556,110 600,110 600,165" marker-end="url(#armk)"/><line class="fl" x1="215" y1="110" x2="124" y2="110" marker-end="url(#armk)"/><text class="fll" x="170" y="98">No</text><polygon class="sh" points="13.92,167 193.92,167 146.08,213 -33.92,213"/><text class="t" x="80" y="190">Mostrar «reprobó»</text><polyline class="fl" points="124,110 80,110 80,165" marker-end="url(#armk)"/><polyline class="fl" points="600,213 600,272 340,272"/><polyline class="fl" points="80,213 80,272 340,272"/><circle class="jn" cx="340" cy="272" r="5"/><text class="cap" x="340" y="254">punto de reunión</text><line class="fl" x1="340" y1="272" x2="340" y2="316" marker-end="url(#armk)"/><rect class="sh" x="260" y="318" width="160" height="44" rx="22"/><text class="t" x="340" y="340">Fin</text></svg></div>
+    <div class="panel fn">
+      <span class="tag fn">Las tres cosas que solo tiene el rombo</span>
+      <ul>
+        <li><b>Entra una sola flecha.</b> Como todos los demás símbolos.</li>
+        <li><b>Salen exactamente dos</b>, y las dos van <b>rotuladas</b>: <span class="mono">Sí</span> y <span class="mono">No</span>. Sin excepción.</li>
+        <li><b>Las dos ramas se vuelven a juntar</b> en un punto de reunión antes de seguir.</li>
+      </ul>
+      <p>La condición se escribe de modo que la respuesta solo pueda ser sí o no. <span class="mono">«nota >= 3.0»</span> sirve; <span class="mono">«la nota»</span> no.</p>
+    </div>
+  </div>
+  <div class="callout">Si las ramas no se reúnen, el diagrama se parte en dos y usted termina con <b>dos «Fin»</b> — justo lo que prohíbe la regla 1 de la cápsula 2.1.</div>
+</section>
+
+<!-- 4 ............................................................. -->
+<section class="slide dense" data-t="2.3 · 0:45">
+  <p class="eyebrow"><span class="tick"></span> 2.3 · Selección simple</p>
+  <h2 class="title"><span class="mono">Si … Entonces</span> — el camino que se salta</h2>
+  <div class="split">
+    <div><svg class="fc" viewBox="0 0 790 600" role="img" aria-label="Seleccion simple: descuento del 10 por ciento si la compra supera cien mil"><rect class="sh" x="145" y="4" width="170" height="44" rx="22"/><text class="t" x="230" y="26">Inicio</text><line class="fl" x1="230" y1="48" x2="230" y2="78" marker-end="url(#armk)"/><polygon class="sh" points="133.92,79 373.92,79 326.08,125 86.08,125"/><text class="t" x="230" y="102">Leer compra</text><line class="fl" x1="230" y1="125" x2="230" y2="155" marker-end="url(#armk)"/><rect class="sh" x="110" y="156" width="240" height="46" rx="3"/><text class="t" x="230" y="179">desc ← 0</text><line class="fl" x1="230" y1="202" x2="230" y2="232" marker-end="url(#armk)"/><polygon class="sh" points="230,232 375,284 230,336 85,284"/><text class="t sm" x="230" y="284">compra &gt; 100000</text><text class="fll" x="430" y="272">Sí</text><polyline class="fl" points="375,284 500,284 500,336" marker-end="url(#armk)"/><rect class="sh" x="375" y="337" width="250" height="46" rx="3"/><text class="t sm" x="500" y="360">desc ← compra * 0.10</text><polyline class="fl" points="500,383 500,440 243,440" marker-end="url(#armk)"/><text class="fll" x="250" y="375">No</text><line class="fl" x1="230" y1="336" x2="230" y2="435" marker-end="url(#armk)"/><circle class="jn" cx="230" cy="440" r="5"/><line class="fl" x1="230" y1="440" x2="230" y2="474" marker-end="url(#armk)"/><polygon class="sh" points="108.92,475 398.92,475 351.08,521 61.08,521"/><text class="t" x="230" y="498">Mostrar compra − desc</text><line class="fl" x1="230" y1="521" x2="230" y2="551" marker-end="url(#armk)"/><rect class="sh" x="145" y="553" width="170" height="44" rx="22"/><text class="t" x="230" y="575">Fin</text><text class="cap" x="660" y="280.5">solo se ejecuta</text><text class="cap" x="660" y="295.5">si la respuesta es Sí</text></svg></div>
+    <div>
+      <div class="panel">
+        <span class="tag">Pseudocódigo equivalente</span>
+        <pre><span class="k">Leer</span> compra
+desc <span class="n">←</span> 0
+<span class="k">Si</span> compra <span class="n">&gt;</span> 100000 <span class="k">Entonces</span>
+   desc <span class="n">←</span> compra <span class="n">*</span> 0.10
+<span class="k">FinSi</span>
+<span class="k">Mostrar</span> compra <span class="n">−</span> desc</pre>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Los dos detalles que se cobran</span>
+        <ul>
+          <li>La rama <b>No no lleva instrucciones, pero sí lleva flecha</b>.</li>
+          <li><b><span class="mono">desc ← 0</span> va ANTES del rombo</b>, o por la rama No llega al final una variable sin valor.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 ............................................................. -->
+<section class="slide dense" data-t="2.3 · 0:41">
+  <p class="eyebrow"><span class="tick"></span> 2.3 · Selección doble</p>
+  <h2 class="title"><span class="mono">Si … Entonces … Sino</span> — dos caminos, un final</h2>
+  <div class="split-r">
+    <div>
+      <div class="panel">
+        <span class="tag">Pseudocódigo equivalente</span>
+        <pre><span class="k">Leer</span> a, b
+<span class="k">Si</span> a <span class="n">&gt;</span> b <span class="k">Entonces</span>
+   <span class="k">Mostrar</span> a
+<span class="k">Sino</span>
+   <span class="k">Mostrar</span> b
+<span class="k">FinSi</span></pre>
+      </div>
+      <div class="panel fn">
+        <span class="tag fn">Un solo camino por ejecución</span>
+<p>Nunca hay dos ramas activas a la vez: el control entra por arriba, recorre <b>una sola</b> y sale por abajo. Por eso una prueba de escritorio recorre un camino cada vez, y hacen falta <b>varios casos</b> para probarlo entero.</p>
+      </div>
+    </div>
+    <div><svg class="fc" viewBox="0 0 700 480" role="img" aria-label="Seleccion doble: el mayor de dos numeros, con las dos ramas reunidas antes del fin"><rect class="sh" x="265" y="4" width="170" height="44" rx="22"/><text class="t" x="350" y="26">Inicio</text><line class="fl" x1="350" y1="48" x2="350" y2="78" marker-end="url(#armk)"/><polygon class="sh" points="263.92,79 483.92,79 436.08,125 216.08,125"/><text class="t" x="350" y="102">Leer a, b</text><line class="fl" x1="350" y1="125" x2="350" y2="155" marker-end="url(#armk)"/><polygon class="sh" points="350,155 455,202 350,249 245,202"/><text class="t" x="350" y="202">a &gt; b</text><text class="fll" x="505" y="190">Sí</text><text class="fll" x="195" y="190">No</text><polyline class="fl" points="455,202 560,202 560,254" marker-end="url(#armk)"/><polygon class="sh" points="498.92,255 668.92,255 621.08,301 451.08,301"/><text class="t" x="560" y="278">Mostrar a</text><polyline class="fl" points="245,202 140,202 140,254" marker-end="url(#armk)"/><polygon class="sh" points="78.92,255 248.92,255 201.08,301 31.08,301"/><text class="t" x="140" y="278">Mostrar b</text><polyline class="fl" points="560,301 560,360 350,360"/><polyline class="fl" points="140,301 140,360 350,360"/><circle class="jn" cx="350" cy="360" r="5"/><line class="fl" x1="350" y1="360" x2="350" y2="404" marker-end="url(#armk)"/><rect class="sh" x="265" y="406" width="170" height="44" rx="22"/><text class="t" x="350" y="428">Fin</text></svg></div>
+  </div>
+</section>
+
+<!-- 6 ............................................................. -->
+<section class="slide dense" data-t="2.3 · 0:47">
+  <p class="eyebrow"><span class="tick"></span> 2.3 · Lo que va dentro del rombo</p>
+  <h2 class="title">La condición: verdadero o falso, nada más</h2>
+  <div class="split">
+    <div>
+      <table>
+        <thead><tr><th>Operador</th><th>Se lee</th><th>Ejemplo</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">&gt;&nbsp;&nbsp;&lt;</td><td>mayor que · menor que</td><td class="mono">edad &gt; 18</td></tr>
+          <tr><td class="mono">&gt;=&nbsp;&lt;=</td><td>mayor o igual · menor o igual</td><td class="mono">nota &gt;= 3.0</td></tr>
+          <tr><td class="mono">=</td><td>igual a <em>(comparar, no asignar)</em></td><td class="mono">op = 1</td></tr>
+          <tr><td class="mono">&lt;&gt;</td><td>distinto de</td><td class="mono">x &lt;&gt; −1</td></tr>
+          <tr><td class="mono">Y&nbsp;&nbsp;O</td><td>las dos · alguna de las dos</td><td class="mono">n &gt; 0 Y n &lt; 100</td></tr>
+          <tr><td class="mono">NO</td><td>lo contrario de</td><td class="mono">NO (x = 0)</td></tr>
+        </tbody>
+      </table>
+      <p class="note"><b>Negar no es invertir el símbolo a ojo.</b> Lo contrario de <span class="mono">nota &gt;= 3.0</span> es <span class="mono">nota &lt; 3.0</span>, no <span class="mono">nota &lt;= 3.0</span>.</p>
+    </div>
+    <div class="panel">
+      <span class="tag">Pruébelo · <span class="mono">nota &gt;= 3.0</span></span>
+      <div class="opts" id="condOpts">
+        <button class="opt" id="c29" type="button" aria-pressed="false">nota = 2.9</button>
+        <button class="opt" id="c30" type="button" aria-pressed="false">nota = 3.0</button>
+        <button class="opt" id="c48" type="button" aria-pressed="false">nota = 4.8</button>
+      </div>
+      <p class="verdict" id="condOut"><span class="head">elija un valor</span>Los tres valores de arriba son los casos que hay que probar en cualquier decisión: uno por cada rama y <b>el de la frontera exacta</b>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 ............................................................. -->
+<section class="slide" data-t="2.3 · 0:41">
+  <p class="eyebrow"><span class="tick"></span> 2.3 · El error más frecuente</p>
+  <h2 class="title">El mismo algoritmo, bien y mal dibujado</h2>
+  <div class="split">
+    <div id="swapDiag">
+      <div id="dgOk"><svg class="fc" viewBox="0 0 700 480" role="img" aria-label="Seleccion doble: el mayor de dos numeros, con las dos ramas reunidas antes del fin"><rect class="sh" x="265" y="4" width="170" height="44" rx="22"/><text class="t" x="350" y="26">Inicio</text><line class="fl" x1="350" y1="48" x2="350" y2="78" marker-end="url(#armk)"/><polygon class="sh" points="263.92,79 483.92,79 436.08,125 216.08,125"/><text class="t" x="350" y="102">Leer a, b</text><line class="fl" x1="350" y1="125" x2="350" y2="155" marker-end="url(#armk)"/><polygon class="sh" points="350,155 455,202 350,249 245,202"/><text class="t" x="350" y="202">a &gt; b</text><text class="fll" x="505" y="190">Sí</text><text class="fll" x="195" y="190">No</text><polyline class="fl" points="455,202 560,202 560,254" marker-end="url(#armk)"/><polygon class="sh" points="498.92,255 668.92,255 621.08,301 451.08,301"/><text class="t" x="560" y="278">Mostrar a</text><polyline class="fl" points="245,202 140,202 140,254" marker-end="url(#armk)"/><polygon class="sh" points="78.92,255 248.92,255 201.08,301 31.08,301"/><text class="t" x="140" y="278">Mostrar b</text><polyline class="fl" points="560,301 560,360 350,360"/><polyline class="fl" points="140,301 140,360 350,360"/><circle class="jn" cx="350" cy="360" r="5"/><line class="fl" x1="350" y1="360" x2="350" y2="404" marker-end="url(#armk)"/><rect class="sh" x="265" y="406" width="170" height="44" rx="22"/><text class="t" x="350" y="428">Fin</text></svg></div>
+      <div id="dgBad" hidden><svg class="fc" viewBox="0 0 700 480" role="img" aria-label="El mismo diagrama mal dibujado: salidas sin etiqueta y un Fin en cada rama"><rect class="sh" x="265" y="4" width="170" height="44" rx="22"/><text class="t" x="350" y="26">Inicio</text><line class="fl" x1="350" y1="48" x2="350" y2="78" marker-end="url(#armk)"/><polygon class="sh" points="263.92,79 483.92,79 436.08,125 216.08,125"/><text class="t" x="350" y="102">Leer a, b</text><line class="fl" x1="350" y1="125" x2="350" y2="155" marker-end="url(#armk)"/><polygon class="sh err" points="350,155 455,202 350,249 245,202"/><text class="t" x="350" y="202">a &gt; b</text><polyline class="fl err" points="455,202 560,202 560,254" marker-end="url(#armk)"/><polygon class="sh" points="498.92,255 668.92,255 621.08,301 451.08,301"/><text class="t" x="560" y="278">Mostrar a</text><polyline class="fl err" points="245,202 140,202 140,254" marker-end="url(#armk)"/><polygon class="sh" points="78.92,255 248.92,255 201.08,301 31.08,301"/><text class="t" x="140" y="278">Mostrar b</text><line class="fl err" x1="560" y1="301" x2="560" y2="346" marker-end="url(#armk)"/><line class="fl err" x1="140" y1="301" x2="140" y2="346" marker-end="url(#armk)"/><rect class="sh err" x="475" y="348" width="170" height="44" rx="22"/><text class="t" x="560" y="370">Fin</text><rect class="sh err" x="55" y="348" width="170" height="44" rx="22"/><text class="t" x="140" y="370">Fin</text><text class="cap" x="560" y="158">✕ salidas sin etiqueta</text><text class="cap" x="350" y="350">✕ dos «Fin»</text><text class="cap" x="350" y="392.5">✕ las ramas nunca</text><text class="cap" x="350" y="407.5">se reúnen</text></svg></div>
+    </div>
+    <div>
+      <div class="tbtns">
+        <button class="tbtn" id="swOk" type="button" aria-pressed="true">Correcto</button>
+        <button class="tbtn" id="swBad" type="button" aria-pressed="false">Con los tres defectos</button>
+      </div>
+      <div class="panel imp" id="swapPanel">
+        <span class="tag imp" id="swapTag">Qué mirar</span>
+        <p id="swapTxt">Las dos salidas del rombo están rotuladas, las dos ramas se reúnen en un punto y hay <b>un solo «Fin»</b>. Pulse «Con los tres defectos» para ver la versión que más llega en las entregas.</p>
+      </div>
+      <div class="callout">Con dos «Fin» usted ya no puede añadir <b>nada</b> después de la decisión sin duplicarlo en las dos ramas.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ............................................................. -->
+<section class="slide dense" data-t="2.3 · 0:47">
+  <p class="eyebrow"><span class="tick"></span> 2.3 · Verificación</p>
+  <h2 class="title">Prueba de escritorio: tres familias de casos</h2>
+  <p class="lead">Elegir casos no es elegir números al azar. Para <span class="mono">Si nota &gt;= 3.0 Entonces «aprobó» Sino «reprobó»</span>:</p>
+  <table>
+    <thead><tr><th>Familia</th><th>Para qué</th><th>Caso</th><th>Recorrido esperado</th></tr></thead>
+    <tbody>
+      <tr><td><b>Una por rama</b></td><td>Que ninguna rama quede sin recorrer</td><td class="mono">nota = 4.8</td><td>rama Sí → «aprobó»</td></tr>
+      <tr><td></td><td></td><td class="mono">nota = 2.0</td><td>rama No → «reprobó»</td></tr>
+      <tr><td><b>Frontera</b></td><td>Donde se esconden casi todos los errores</td><td class="mono">nota = 3.0</td><td>rama Sí → «aprobó»</td></tr>
+      <tr><td><b>Inválido</b></td><td>Ver qué hace el algoritmo con basura</td><td class="mono">nota = 7.5</td><td>rama Sí → «aprobó» <em>(¿debería?)</em></td></tr>
+    </tbody>
+  </table>
+  <div class="callout">El caso inválido casi siempre <b>destapa una decisión que faltaba</b>: si 7.5 no es una nota válida, al algoritmo le falta un rombo de validación. Eso es lo que resuelven los ciclos del tercer bloque.</div>
+</section>
+
+<!-- 9 ............................................................. -->
+<section class="slide dense" data-t="2.3 · 0:58">
+  <p class="eyebrow"><span class="tick"></span> 2.3 · Lo que se busca al calificar</p>
+  <h2 class="title">Los cinco defectos de una decisión</h2>
+  <div class="rules">
+    <div class="rule"><span class="rn">1</span><span class="rt"><b>Condición invertida</b>El algoritmo hace lo contrario de lo que pide el enunciado. <span>Se detecta con la prueba de frontera, no leyendo.</span></span></div>
+    <div class="rule"><span class="rn">2</span><span class="rt"><b>Rama sin flecha</b>Una de las dos salidas no lleva a ninguna parte. <span>El control se pierde: el diagrama no se puede recorrer.</span></span></div>
+    <div class="rule"><span class="rn">3</span><span class="rt"><b>Salidas sin etiqueta</b>Salen dos flechas, pero no dice cuál es Sí y cuál es No. <span>Quien lo lee tiene que adivinar.</span></span></div>
+    <div class="rule"><span class="rn">4</span><span class="rt"><b>Ramas que no se reúnen</b>Cada rama termina en su propio «Fin». <span>Incumple la regla 1 y duplica todo lo que venga después.</span></span></div>
+    <div class="rule"><span class="rn">5</span><span class="rt"><b>Un rombo que sobra</b>Las dos ramas hacen lo mismo. <span>No es error de dibujo: es error de lectura del enunciado.</span></span></div>
+  </div>
+  <div class="callout">Los cinco se ven <b>en el dibujo</b>, sin ejecutar nada y sin computador. Por eso el diagrama se hace antes del código, no después.</div>
+</section>
+
+<!-- 10 ............................................................ -->
+<section class="slide" data-t="2.3 · 0:34">
+  <p class="eyebrow"><span class="tick"></span> Cierre de la cápsula 2.3</p>
+  <h2 class="title">Una decisión, completa</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Lo que ya sabe hacer</span>
+      <ul>
+        <li>Un rombo = <b>una pregunta</b> de sí o no.</li>
+        <li><b>Dos salidas rotuladas</b>, siempre.</li>
+        <li>Un <b>punto de reunión</b> antes de seguir.</li>
+        <li>Una <b>prueba de escritorio</b> con el caso de frontera antes de entregar.</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Lo que todavía no</span>
+      <p>Qué hacer cuando las decisiones son <b>varias</b>, cuando unas <b>dependen</b> de otras, o cuando en vez de dos caminos hay <b>seis</b>.</p>
+      <p>Y qué hacer cuando el problema no se resuelve leyendo <b>un solo dato</b>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 ............................................................ -->
+<section class="slide divider" data-t="2.4 · 0:40">
+  <p class="kicker">Cápsula 2.4</p>
+  <h2 class="big">Selección anidada<br>y selección múltiple</h2>
+  <p class="lead">Un rombo parte el camino en dos. ¿Y si el problema tiene tres salidas, o seis? No hace falta un símbolo nuevo: hacen falta <b>rombos dentro de rombos</b> — y saber cuándo eso deja de ser razonable.</p>
+</section>
+
+<!-- 12 ............................................................ -->
+<section class="slide" data-t="2.4 · 0:51">
+  <p class="eyebrow"><span class="tick"></span> 2.4 · Anidamiento</p>
+  <h2 class="title">Un rombo dentro de la rama de otro rombo</h2>
+  <div class="split">
+    <div><svg class="fc" viewBox="-30 0 1010 580" role="img" aria-label="Seleccion anidada: el mayor de tres numeros con un rombo dentro de cada rama"><rect class="sh" x="365" y="2" width="170" height="44" rx="22"/><text class="t" x="450" y="24">Inicio</text><line class="fl" x1="450" y1="46" x2="450" y2="74" marker-end="url(#armk)"/><polygon class="sh" points="358.92,75 588.92,75 541.08,121 311.08,121"/><text class="t" x="450" y="98">Leer a, b, c</text><line class="fl" x1="450" y1="121" x2="450" y2="149" marker-end="url(#armk)"/><polygon class="sh" points="450,150 550,196 450,242 350,196"/><text class="t" x="450" y="196">a &gt; b</text><text class="fll" x="600" y="184">Sí</text><text class="fll" x="300" y="184">No</text><polyline class="fl" points="550,196 680,196 680,242" marker-end="url(#armk)"/><polyline class="fl" points="350,196 220,196 220,242" marker-end="url(#armk)"/><polygon class="sh" points="680,246 770,290 680,334 590,290"/><text class="t" x="680" y="290">a &gt; c</text><polygon class="sh" points="220,246 310,290 220,334 130,290"/><text class="t" x="220" y="290">b &gt; c</text><text class="fll" x="802" y="278">Sí</text><text class="fll" x="560" y="278">No</text><text class="fll" x="342" y="278">No</text><text class="fll" x="102" y="278">Sí</text><polyline class="fl" points="770,290 820,290 820,376" marker-end="url(#armk)"/><polyline class="fl" points="590,290 560,290 560,376" marker-end="url(#armk)"/><polyline class="fl" points="310,290 360,290 360,376" marker-end="url(#armk)"/><polyline class="fl" points="130,290 100,290 100,376" marker-end="url(#armk)"/><polygon class="sh" points="768.92,377 918.92,377 871.08,423 721.08,423"/><text class="t" x="820" y="400">Mostrar a</text><polygon class="sh" points="508.92,377 658.92,377 611.08,423 461.08,423"/><text class="t" x="560" y="400">Mostrar c</text><polygon class="sh" points="308.92,377 458.92,377 411.08,423 261.08,423"/><text class="t" x="360" y="400">Mostrar c</text><polygon class="sh" points="48.92,377 198.92,377 151.08,423 1.08,423"/><text class="t" x="100" y="400">Mostrar b</text><polyline class="fl" points="820,423 820,470 450,470"/><polyline class="fl" points="560,423 560,470 450,470"/><polyline class="fl" points="360,423 360,470 450,470"/><polyline class="fl" points="100,423 100,470 450,470"/><circle class="jn" cx="450" cy="470" r="5"/><line class="fl" x1="450" y1="470" x2="450" y2="506" marker-end="url(#armk)"/><rect class="sh" x="365" y="508" width="170" height="44" rx="22"/><text class="t" x="450" y="530">Fin</text></svg></div>
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">El mayor de tres números</span>
+        <p>La primera pregunta <b>no da la respuesta</b>: dice cuál de los dos sigue vivo. La segunda pregunta decide.</p>
+        <p><b>Tres rombos · cuatro caminos · un solo punto de reunión.</b></p>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Por qué es prerrequisito duro</span>
+        <p>Con <b>n</b> preguntas de sí o no se distinguen hasta <b>2<sup>n</sup></b> casos. Toda la lógica de menús, validaciones y rangos del resto del curso es esto mismo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 ............................................................ -->
+<section class="slide dense" data-t="2.4 · 0:55">
+  <p class="eyebrow"><span class="tick"></span> 2.4 · El «sino» colgante</p>
+  <h2 class="title">El texto admite la ambigüedad; el dibujo no</h2>
+  <div class="versus">
+    <div class="vcard bad">
+      <span class="vh">En texto · ambiguo</span>
+      <pre><span class="k">Si</span> a <span class="n">&gt;</span> 0 <span class="k">Entonces</span>
+   <span class="k">Si</span> b <span class="n">&gt;</span> 0 <span class="k">Entonces</span>
+      <span class="k">Mostrar</span> «los dos»
+<span class="k">Sino</span>
+   <span class="k">Mostrar</span> «¿de cuál Si?»</pre>
+      <p class="note">¿El <span class="mono">Sino</span> pertenece al primer <span class="mono">Si</span> o al segundo? <b>En C se pega al más cercano</b>, que casi nunca es el que el programador tenía en la cabeza.</p>
+    </div>
+    <div class="vcard good">
+      <span class="vh">En diagrama · imposible dudar</span>
+      <p class="note">La flecha <b>sale de un rombo concreto</b> y entra en otro concreto. No hay regla que memorizar ni sangría que interpretar: se ve de dónde sale.</p>
+      <p class="note">Este es el mejor argumento a favor de dibujar antes de programar — y la razón de que la Entrega 3 del proyecto pida diagramas, no código.</p>
+      <p class="note"><b>Consejo para la semana 4:</b> cuando traduzca a C, ponga siempre las llaves <span class="mono">{ }</span> aunque el bloque tenga una sola línea. El <span class="mono">else</span> colgante desaparece.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 14 ............................................................ -->
+<section class="slide dense" data-t="2.4 · 0:57">
+  <p class="eyebrow"><span class="tick"></span> 2.4 · Escalera</p>
+  <h2 class="title">Varios casos excluyentes: crecer hacia abajo</h2>
+  <div class="split-r">
+    <div>
+      <div class="panel">
+        <span class="tag">Pseudocódigo equivalente</span>
+        <pre><span class="k">Si</span> nota <span class="n">&gt;=</span> 4.5 <span class="k">Entonces Mostrar</span> «A»
+<span class="k">Sino Si</span> nota <span class="n">&gt;=</span> 4.0 <span class="k">Entonces Mostrar</span> «B»
+<span class="k">Sino Si</span> nota <span class="n">&gt;=</span> 3.0 <span class="k">Entonces Mostrar</span> «C»
+<span class="k">Sino Mostrar</span> «F»
+<span class="k">FinSi</span></pre>
+      </div>
+      <div class="panel fn">
+        <span class="tag fn">Dos cosas que ahorran dibujo</span>
+        <ul>
+          <li>La escalera <b>crece hacia abajo</b>, no hacia la derecha: se lee como una lista de casos.</li>
+          <li>La <b>última salida no lleva rombo</b>. Si llegó ahí, ya no cumplió ninguna condición anterior.</li>
+        </ul>
+      </div>
+    </div>
+    <div><svg class="fc" viewBox="0 0 860 780" role="img" aria-label="Escalera si-sino-si: clasificacion de una nota en A, B, C o F"><rect class="sh" x="115" y="4" width="170" height="44" rx="22"/><text class="t" x="200" y="26">Inicio</text><line class="fl" x1="200" y1="48" x2="200" y2="78" marker-end="url(#armk)"/><polygon class="sh" points="113.92,79 333.92,79 286.08,125 66.08,125"/><text class="t" x="200" y="102">Leer nota</text><line class="fl" x1="200" y1="125" x2="200" y2="153" marker-end="url(#armk)"/><polygon class="sh" points="200,153 325,200 200,247 75,200"/><text class="t sm" x="200" y="200">nota &gt;= 4.5</text><text class="fll" x="400" y="188">Sí</text><text class="fll" x="218" y="262">No</text><line class="fl" x1="325" y1="200" x2="496" y2="200" marker-end="url(#armk)"/><polygon class="sh" points="543.92,177 703.92,177 656.08,223 496.08,223"/><text class="t" x="600" y="200">Mostrar «A»</text><line class="fl" x1="200" y1="247" x2="200" y2="293" marker-end="url(#armk)"/><polygon class="sh" points="200,293 325,340 200,387 75,340"/><text class="t sm" x="200" y="340">nota &gt;= 4.0</text><text class="fll" x="400" y="328">Sí</text><text class="fll" x="218" y="402">No</text><line class="fl" x1="325" y1="340" x2="496" y2="340" marker-end="url(#armk)"/><polygon class="sh" points="543.92,317 703.92,317 656.08,363 496.08,363"/><text class="t" x="600" y="340">Mostrar «B»</text><line class="fl" x1="200" y1="387" x2="200" y2="433" marker-end="url(#armk)"/><polygon class="sh" points="200,433 325,480 200,527 75,480"/><text class="t sm" x="200" y="480">nota &gt;= 3.0</text><text class="fll" x="400" y="468">Sí</text><text class="fll" x="218" y="542">No</text><line class="fl" x1="325" y1="480" x2="496" y2="480" marker-end="url(#armk)"/><polygon class="sh" points="543.92,457 703.92,457 656.08,503 496.08,503"/><text class="t" x="600" y="480">Mostrar «C»</text><line class="fl" x1="200" y1="527" x2="200" y2="573" marker-end="url(#armk)"/><polygon class="sh" points="123.92,577 323.92,577 276.08,623 76.08,623"/><text class="t" x="200" y="600">Mostrar «F»</text><text class="cap" x="645" y="556">el «sino» final no lleva rombo:</text><text class="cap" x="645" y="576">es todo lo que no cumplió ninguna condición</text><polyline class="fl" points="600,223 790,223 790,680"/><polyline class="fl" points="600,363 790,363"/><polyline class="fl" points="600,503 790,503"/><polyline class="fl" points="790,680 430,680"/><polyline class="fl" points="200,623 200,680 420,680" marker-end="url(#armk)"/><circle class="jn" cx="425" cy="680" r="5"/><line class="fl" x1="425" y1="680" x2="425" y2="716" marker-end="url(#armk)"/><rect class="sh" x="340" y="718" width="170" height="44" rx="22"/><text class="t" x="425" y="740">Fin</text></svg></div>
+  </div>
+</section>
+
+<!-- 15 ............................................................ -->
+<section class="slide dense" data-t="2.4 · 0:52">
+  <p class="eyebrow"><span class="tick"></span> 2.4 · La trampa de la escalera</p>
+  <h2 class="title">El orden de las condiciones decide el resultado</h2>
+  <div class="split">
+    <div class="panel">
+      <span class="tag">Pruebe una nota en los dos órdenes</span>
+      <div class="tbtns" id="notaBtns">
+        <button class="tbtn" type="button" data-n="5.0">5.0</button>
+        <button class="tbtn" type="button" data-n="4.5" aria-pressed="true">4.5</button>
+        <button class="tbtn" type="button" data-n="4.0">4.0</button>
+        <button class="tbtn" type="button" data-n="3.4">3.4</button>
+        <button class="tbtn" type="button" data-n="3.0">3.0</button>
+        <button class="tbtn" type="button" data-n="2.9">2.9</button>
+      </div>
+      <div class="versus">
+        <div class="vcard good" id="ordOkCard">
+          <span class="vh">De mayor a menor · correcto</span>
+          <div class="vrow"><span>4.5 → 4.0 → 3.0</span><span id="ordOk">A</span></div>
+        </div>
+        <div class="vcard bad" id="ordBadCard">
+          <span class="vh">De menor a mayor · roto</span>
+          <div class="vrow"><span>3.0 → 4.0 → 4.5</span><span id="ordBad">C</span></div>
+        </div>
+      </div>
+      <p class="verdict" id="ordOut"></p>
+    </div>
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Por qué pasa</span>
+        <p>Las condiciones de una escalera se evalúan <b>de arriba abajo</b> y <b>gana la primera que se cumple</b>. Un 5.0 también cumple «≥ 3.0»: si esa pregunta va primero, se lleva una C.</p>
+        <p>El algoritmo no está mal <em>escrito</em>. Está mal <b>ordenado</b>. Es el error que más puntos cuesta en esta cápsula porque el diagrama se ve perfecto.</p>
+      </div>
+      <div class="callout"><b>Regla práctica:</b> en una escalera de rangos, vaya del extremo <b>más exigente al menos exigente</b>, y pruebe siempre los valores de frontera exactos.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 16 ............................................................ -->
+<section class="slide dense" data-t="2.4 · 0:52">
+  <p class="eyebrow"><span class="tick"></span> 2.4 · Selección múltiple</p>
+  <h2 class="title"><span class="mono">Según</span>: un valor exacto de una lista corta</h2>
+  <div class="split">
+    <div><svg class="fc" viewBox="-30 0 880 470" role="img" aria-label="Seleccion multiple segun-caso: una salida rotulada por cada valor"><rect class="sh" x="320" y="2" width="160" height="44" rx="22"/><text class="t" x="400" y="24">Inicio</text><line class="fl" x1="400" y1="46" x2="400" y2="74" marker-end="url(#armk)"/><polygon class="sh" points="323.92,75 523.92,75 476.08,121 276.08,121"/><text class="t" x="400" y="98">Leer op</text><line class="fl" x1="400" y1="121" x2="400" y2="149" marker-end="url(#armk)"/><polygon class="sh" points="400,152 485,200 400,248 315,200"/><text class="t" x="400" y="200">op</text><line class="fl" x1="400" y1="248" x2="400" y2="286" marker-end="url(#armk)"/><line class="fl" x1="110" y1="286" x2="690" y2="286"/><text class="fll" x="126" y="312">1</text><text class="fll" x="319" y="312">2</text><text class="fll" x="513" y="312">3</text><text class="fll" x="721" y="312">otro</text><line class="fl" x1="110" y1="286" x2="110" y2="322" marker-end="url(#armk)"/><line class="fl" x1="303" y1="286" x2="303" y2="322" marker-end="url(#armk)"/><line class="fl" x1="497" y1="286" x2="497" y2="322" marker-end="url(#armk)"/><line class="fl" x1="690" y1="286" x2="690" y2="322" marker-end="url(#armk)"/><rect class="sh" x="27.5" y="323" width="165" height="46" rx="3"/><text class="t" x="110" y="346">r ← a + b</text><rect class="sh" x="220.5" y="323" width="165" height="46" rx="3"/><text class="t" x="303" y="346">r ← a − b</text><rect class="sh" x="414.5" y="323" width="165" height="46" rx="3"/><text class="t" x="497" y="346">r ← a * b</text><polygon class="sh" points="631.42,323 796.42,323 748.58,369 583.58,369"/><text class="t" x="690" y="346">Mostrar error</text><text class="cap" x="660" y="200.5">una salida por cada valor;</text><text class="cap" x="660" y="215.5">la última recoge todo lo demás</text></svg></div>
+    <div>
+      <div class="panel">
+        <span class="tag">Pseudocódigo · <span class="mono">Según</span> ≡ <span class="mono">switch</span> de C</span>
+        <pre><span class="k">Según</span> op <span class="k">Hacer</span>
+   1: r <span class="n">←</span> a <span class="n">+</span> b
+   2: r <span class="n">←</span> a <span class="n">−</span> b
+   3: r <span class="n">←</span> a <span class="n">*</span> b
+   <span class="k">De Otro Modo</span>: <span class="k">Mostrar</span> «error»
+<span class="k">FinSegún</span></pre>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Dos condiciones de uso</span>
+        <ul>
+          <li><b>Solo igualdades</b>, nunca rangos. Para rangos, escalera.</li>
+          <li>El caso <b>«otro» no es opcional</b>: sin él, si el usuario teclea 7 el algoritmo no hace nada y no dice por qué.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 17 ............................................................ -->
+<section class="slide dense" data-t="2.4 · 0:55">
+  <p class="eyebrow"><span class="tick"></span> 2.4 · Diseño</p>
+  <h2 class="title">Aplanar: la misma lógica con un tercio del dibujo</h2>
+  <div class="trio">
+    <div class="panel"><span class="tag">Anidado · 3 niveles</span><svg class="fc" viewBox="0 0 520 610" role="img" aria-label="Tres rombos anidados, uno dentro de otro, para comprobar tres condiciones"><line class="fl" x1="160" y1="8" x2="160" y2="44" marker-end="url(#armk)"/><polygon class="sh" points="160,46 250,90 160,134 70,90"/><text class="t" x="160" y="90">a &gt; 0</text><text class="fll" x="178" y="160">Sí</text><text class="fll" x="300" y="80">No</text><line class="fl" x1="160" y1="134" x2="160" y2="178" marker-end="url(#armk)"/><polyline class="fl" points="250,90 420,90 420,520 172,520" marker-end="url(#armk)"/><polygon class="sh" points="160,180 250,224 160,268 70,224"/><text class="t" x="160" y="224">b &gt; 0</text><text class="fll" x="178" y="294">Sí</text><text class="fll" x="300" y="214">No</text><line class="fl" x1="160" y1="268" x2="160" y2="312" marker-end="url(#armk)"/><polyline class="fl" points="250,224 390,224 390,520 172,520" marker-end="url(#armk)"/><polygon class="sh" points="160,314 250,358 160,402 70,358"/><text class="t" x="160" y="358">c &gt; 0</text><text class="fll" x="178" y="428">Sí</text><text class="fll" x="300" y="348">No</text><line class="fl" x1="160" y1="402" x2="160" y2="446" marker-end="url(#armk)"/><polyline class="fl" points="250,358 360,358 360,520 172,520" marker-end="url(#armk)"/><polygon class="sh" points="78.92,447 288.92,447 241.08,493 31.08,493"/><text class="t sm" x="160" y="470">Mostrar «los tres»</text><line class="fl" x1="160" y1="493" x2="160" y2="516" marker-end="url(#armk)"/><circle class="jn" cx="160" cy="520" r="5"/><line class="fl" x1="160" y1="520" x2="160" y2="556" marker-end="url(#armk)"/><text class="cap" x="260" y="588">tres rombos · tres niveles de anidamiento</text></svg></div>
+    <div class="panel"><span class="tag fn">Aplanado · 1 nivel</span><svg class="fc" viewBox="0 0 520 610" role="img" aria-label="El mismo caso resuelto con un solo rombo y una condicion compuesta con Y"><line class="fl" x1="200" y1="8" x2="200" y2="44" marker-end="url(#armk)"/><polygon class="sh" points="200,48 370,110 200,172 30,110"/><text class="t sm" x="200" y="110">a &gt; 0 Y b &gt; 0 Y c &gt; 0</text><text class="fll" x="218" y="200">Sí</text><text class="fll" x="400" y="100">No</text><line class="fl" x1="200" y1="172" x2="200" y2="216" marker-end="url(#armk)"/><polyline class="fl" points="370,110 450,110 450,520 212,520" marker-end="url(#armk)"/><polygon class="sh" points="118.92,241 328.92,241 281.08,287 71.08,287"/><text class="t sm" x="200" y="264">Mostrar «los tres»</text><line class="fl" x1="200" y1="287" x2="200" y2="516" marker-end="url(#armk)"/><circle class="jn" cx="200" cy="520" r="5"/><line class="fl" x1="200" y1="520" x2="200" y2="556" marker-end="url(#armk)"/><text class="cap" x="300" y="588">un rombo · un nivel · la misma lógica</text></svg></div>
+    <div class="panel imp">
+      <span class="tag imp">Cuándo sí y cuándo no</span>
+      <ul>
+        <li><b>Aplane</b> cuando los rombos anidados <b>no tienen instrucciones propias entre ellos</b>: júntelos con <span class="mono">Y</span>.</li>
+        <li><b>No aplane</b> si cada nivel hace algo distinto: ahí el anidamiento es legítimo.</li>
+        <li>Más de <b>tres niveles</b> casi siempre es una escalera disfrazada.</li>
+      </ul>
+      <p>Cada nivel que quita es <b>un camino menos que probar</b>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 18 ............................................................ -->
+<section class="slide dense" data-t="2.4 · 1:03">
+  <p class="eyebrow"><span class="tick"></span> Cierre de la cápsula 2.4</p>
+  <h2 class="title">Qué estructura usar, en una tabla</h2>
+  <table>
+    <thead><tr><th>Si el problema…</th><th>Use</th><th>Cuidado con</th></tr></thead>
+    <tbody>
+      <tr><td>tiene <b>dos casos</b></td><td>Rombo simple (<span class="mono">Si…Sino</span>)</td><td>que las ramas se reúnan</td></tr>
+      <tr><td>tiene <b>varios rangos excluyentes</b></td><td>Escalera <span class="mono">Si…Sino Si</span></td><td>el <b>orden</b>: del más exigente al menos exigente</td></tr>
+      <tr><td>compara <b>valores exactos</b> de una lista</td><td><span class="mono">Según / caso</span></td><td>que no falte el caso <span class="mono">otro</span></td></tr>
+      <tr><td>tiene condiciones que <b>solo acompañan</b> a otras</td><td>Una condición compuesta con <span class="mono">Y</span></td><td>no aplanar si cada nivel hace algo distinto</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">Todo lo de estos dos bloques <b>decide una vez y termina</b>. El tercer bloque rompe esa suposición: vamos a hacer que el algoritmo <b>vuelva sobre sus pasos</b>.</div>
+</section>
+
+<!-- 19 ............................................................ -->
+<section class="slide divider" data-t="ciclos · 0:27">
+  <p class="kicker">Contenido adicional · se adelanta de la unidad 4</p>
+  <h2 class="big">Ciclos:<br>la flecha que sube</h2>
+  <p class="lead">Casi ningún problema real se resuelve leyendo <b>un solo dato</b>. Y los ciclos obligan a <b>matizar una de las cinco reglas de trazado</b> de la cápsula 2.1.</p>
+</section>
+
+<!-- 20 ............................................................ -->
+<section class="slide dense" data-t="ciclos · 0:33">
+  <p class="eyebrow"><span class="tick"></span> Ciclos · la regla 2, corregida</p>
+  <h2 class="title">Leer 100 notas: dibujarlas 100 veces, o volver</h2>
+  <div class="trio">
+    <div class="panel"><span class="tag imp">Sin ciclo · el flujo solo baja</span><svg class="fc" viewBox="0 0 380 560" role="img" aria-label="Cien lecturas dibujadas una por una, sin ciclo"><rect class="sh" x="115" y="4" width="150" height="44" rx="22"/><text class="t" x="190" y="26">Inicio</text><line class="fl" x1="190" y1="48" x2="190" y2="74" marker-end="url(#armk)"/><polygon class="sh" points="108.92,75 318.92,75 271.08,121 61.08,121"/><text class="t" x="190" y="98">Leer nota 1</text><line class="fl" x1="190" y1="121" x2="190" y2="147" marker-end="url(#armk)"/><polygon class="sh" points="108.92,148 318.92,148 271.08,194 61.08,194"/><text class="t" x="190" y="171">Leer nota 2</text><line class="fl" x1="190" y1="194" x2="190" y2="220" marker-end="url(#armk)"/><polygon class="sh" points="108.92,221 318.92,221 271.08,267 61.08,267"/><text class="t" x="190" y="244">Leer nota 3</text><line class="fl" x1="190" y1="267" x2="190" y2="293" marker-end="url(#armk)"/><text class="cap" x="190" y="318">⋮</text><line class="fl" x1="190" y1="334" x2="190" y2="360" marker-end="url(#armk)"/><polygon class="sh" points="108.92,361 318.92,361 271.08,407 61.08,407"/><text class="t" x="190" y="384">Leer nota 100</text><line class="fl" x1="190" y1="407" x2="190" y2="433" marker-end="url(#armk)"/><rect class="sh" x="115" y="435" width="150" height="44" rx="22"/><text class="t" x="190" y="457">Fin</text><text class="cap" x="190" y="510">100 paralelogramos dibujados a mano</text><text class="cap" x="190" y="532">y 100 oportunidades de equivocarse</text></svg></div>
+    <div class="panel"><span class="tag fn">Con ciclo · una flecha sube</span><svg class="fc" viewBox="0 0 560 560" role="img" aria-label="El mismo trabajo con un ciclo: cinco simbolos recorridos cien veces"><rect class="sh" x="105" y="4" width="150" height="44" rx="22"/><text class="t" x="180" y="26">Inicio</text><line class="fl" x1="180" y1="48" x2="180" y2="74" marker-end="url(#armk)"/><rect class="sh" x="80" y="75" width="200" height="46" rx="3"/><text class="t" x="180" y="98">i ← 1</text><line class="fl" x1="180" y1="121" x2="180" y2="147" marker-end="url(#armk)"/><circle class="jn" cx="180" cy="154" r="5"/><line class="fl" x1="180" y1="154" x2="180" y2="186" marker-end="url(#armk)"/><polygon class="sh" points="180,188 285,238 180,288 75,238"/><text class="t" x="180" y="238">i &lt;= 100</text><text class="fll" x="310" y="226">Sí</text><text class="fll" x="198" y="314">No</text><polyline class="fl" points="285,238 330,238" marker-end="url(#armk)"/><polygon class="sh" points="363.92,215 543.92,215 496.08,261 316.08,261"/><text class="t" x="430" y="238">Leer nota</text><line class="fl" x1="430" y1="261" x2="430" y2="293" marker-end="url(#armk)"/><rect class="sh" x="340" y="294" width="180" height="46" rx="3"/><text class="t" x="430" y="317">i ← i + 1</text><polyline class="fl" points="430,340 430,386 520,386 520,154 188,154" marker-end="url(#armk)"/><line class="fl" x1="180" y1="288" x2="180" y2="412" marker-end="url(#armk)"/><rect class="sh" x="105" y="414" width="150" height="44" rx="22"/><text class="t" x="180" y="436">Fin</text><text class="cap" x="280" y="510">5 símbolos dibujados una vez</text><text class="cap" x="280" y="532">y recorridos 100 veces</text></svg></div>
+    <div class="panel">
+      <span class="tag">La regla 2, reescrita</span>
+      <p><b>Antes:</b> «el flujo baja».</p>
+      <p><b>Desde hoy:</b> «el flujo baja, <b>salvo la flecha de retorno de un ciclo</b>».</p>
+      <ul>
+        <li>Esa flecha <b>sube</b>.</li>
+        <li>Va <b>por fuera</b> del cuerpo.</li>
+        <li><b>No cruza</b> ninguna línea.</li>
+        <li>Hay <b>una sola</b> por ciclo.</li>
+      </ul>
+      <p><b>Repetir sin copiar: eso es un ciclo.</b></p>
+    </div>
+  </div>
+</section>
+
+<!-- 21 ............................................................ -->
+<section class="slide dense" data-t="ciclos · 0:38">
+  <p class="eyebrow"><span class="tick"></span> Ciclos · anatomía</p>
+  <h2 class="title">Las cinco piezas. Si falta una, falla</h2>
+  <div class="split">
+    <div><svg class="fc" viewBox="-30 0 890 620" role="img" aria-label="Anatomia de un ciclo mientras: inicializacion, condicion, cuerpo, actualizacion y flecha de retorno"><rect class="sh" x="155" y="2" width="170" height="44" rx="22"/><text class="t" x="240" y="24">Inicio</text><line class="fl" x1="240" y1="46" x2="240" y2="76" marker-end="url(#armk)"/><rect class="sh" x="130" y="77" width="220" height="46" rx="3"/><text class="t" x="240" y="100">i ← 1</text><text class="cap" x="470" y="96">1 · inicialización</text><line class="fl" x1="240" y1="123" x2="240" y2="155" marker-end="url(#armk)"/><circle class="jn" cx="240" cy="162" r="5"/><text class="cap" x="118" y="158">punto de retorno</text><line class="fl" x1="240" y1="162" x2="240" y2="198" marker-end="url(#armk)"/><polygon class="sh" points="240,198 365,250 240,302 115,250"/><text class="t" x="240" y="250">i &lt;= 10</text><text class="cap" x="60" y="246">2 · condición</text><text class="fll" x="395" y="238">Sí</text><text class="fll" x="258" y="330">No</text><polyline class="fl" points="365,250 415,250" marker-end="url(#armk)"/><polygon class="sh" points="468.92,227 698.92,227 651.08,273 421.08,273"/><text class="t" x="560" y="250">Mostrar i</text><text class="cap" x="560" y="208">3 · cuerpo</text><line class="fl" x1="560" y1="273" x2="560" y2="305" marker-end="url(#armk)"/><rect class="sh" x="445" y="329" width="230" height="46" rx="3"/><text class="t" x="560" y="352">i ← i + 1</text><text class="cap" x="760" y="348">4 · actualización</text><polyline class="fl" points="560,375 560,430 800,430 800,162 248,162" marker-end="url(#armk)"/><text class="cap" x="660" y="418">5 · la flecha que vuelve</text><line class="fl" x1="240" y1="302" x2="240" y2="486" marker-end="url(#armk)"/><rect class="sh" x="155" y="488" width="170" height="44" rx="22"/><text class="t" x="240" y="510">Fin</text><text class="cap" x="150" y="400">se sale cuando</text><text class="cap" x="150" y="420">la condición es No</text></svg></div>
+    <div class="faces">
+      <div class="face"><span class="num">1</span><span class="txt"><b>Inicialización</b><span>Antes de entrar: el primer valor de la variable que controla el ciclo.</span></span></div>
+      <div class="face"><span class="num">2</span><span class="txt"><b>Condición</b><span>En un rombo, evaluada <b>antes</b> de cada vuelta. Mientras sea Sí, se repite.</span></span></div>
+      <div class="face"><span class="num">3</span><span class="txt"><b>Cuerpo</b><span>Lo que se repite. Puede tener decisiones adentro.</span></span></div>
+      <div class="face"><span class="num">4</span><span class="txt"><b>Actualización</b><span>Cambia la variable de la condición. Sin esto, ciclo infinito.</span></span></div>
+      <div class="face"><span class="num">5</span><span class="txt"><b>La flecha que vuelve</b><span>Entra <b>encima</b> del rombo, no dentro, para que la condición se vuelva a evaluar.</span></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 22 ............................................................ -->
+<section class="slide" data-t="ciclos · 0:39">
+  <p class="eyebrow"><span class="tick"></span> Ciclos · ejemplo 1 de 5</p>
+  <h2 class="title"><span class="mono">Mientras</span> con contador: leer n números y sumarlos</h2>
+  <div class="split">
+    <div><svg class="fc ej1" viewBox="0 0 890 665" role="img" aria-label="Ciclo mientras controlado por contador: lee n numeros y muestra su suma"><rect class="sh" x="155" y="2" width="170" height="44" rx="22"/><text class="t" x="240" y="24">Inicio</text><line class="fl" x1="240" y1="46" x2="240" y2="76" marker-end="url(#armk)"/><polygon class="sh" points="138.92,77 388.92,77 341.08,123 91.08,123"/><text class="t" x="240" y="100">Leer n</text><line class="fl" x1="240" y1="123" x2="240" y2="153" marker-end="url(#armk)"/><g id="e1ini"><rect class="sh" x="115" y="154" width="250" height="46" rx="3"/><text class="t" x="240" y="177">suma ← 0</text><line class="fl" x1="240" y1="200" x2="240" y2="230" marker-end="url(#armk)"/><rect class="sh" x="115" y="231" width="250" height="46" rx="3"/><text class="t" x="240" y="254">i ← 1</text></g><line class="fl" x1="240" y1="277" x2="240" y2="305" marker-end="url(#armk)"/><circle class="jn" cx="240" cy="312" r="5"/><line class="fl" x1="240" y1="312" x2="240" y2="348" marker-end="url(#armk)"/><g id="e1cond"><polygon class="sh" points="240,348 365,400 240,452 115,400"/><text class="t" x="240" y="400">i &lt;= n</text></g><text class="fll" x="395" y="388">Sí</text><text class="fll" x="258" y="478">No</text><polyline class="fl" points="365,400 415,400" marker-end="url(#armk)"/><g id="e1cuerpo"><polygon class="sh" points="463.92,377 703.92,377 656.08,423 416.08,423"/><text class="t" x="560" y="400">Leer x</text><line class="fl" x1="560" y1="423" x2="560" y2="455" marker-end="url(#armk)"/><rect class="sh" x="440" y="456" width="240" height="46" rx="3"/><text class="t sm" x="560" y="479">suma ← suma + x</text><line class="fl" x1="560" y1="502" x2="560" y2="534" marker-end="url(#armk)"/><rect class="sh" x="440" y="535" width="240" height="46" rx="3"/><text class="t" x="560" y="558">i ← i + 1</text></g><polyline class="fl" points="560,581 560,620 810,620 810,312 248,312" marker-end="url(#armk)"/><line class="fl" x1="240" y1="452" x2="240" y2="516" marker-end="url(#armk)"/><g id="e1sal"><polygon class="sh" points="138.92,517 388.92,517 341.08,563 91.08,563"/><text class="t" x="240" y="540">Mostrar suma</text></g><line class="fl" x1="240" y1="563" x2="240" y2="593" marker-end="url(#armk)"/><rect class="sh" x="155" y="595" width="170" height="44" rx="22"/><text class="t" x="240" y="617">Fin</text><text class="cap" x="685" y="608">la flecha que vuelve</text></svg>
+      <p class="note"><b>Contador:</b> <span class="mono">i</span> va 1, 2, 3… y cuenta las vueltas. <b>Acumulador:</b> <span class="mono">suma</span> guarda lo que lleva. Los dos se inicializan <b>antes</b> del ciclo, nunca dentro.</p>
+    </div>
+    <div>
+      <div class="panel">
+        <span class="tag">Traza paso a paso · <span class="mono">n = 3</span>, datos 5, 8, 2<br><em>cada paso resalta su símbolo en el diagrama</em></span>
+        <table class="mini">
+          <thead><tr><th>paso</th><th class="mono">i</th><th class="mono">x</th><th class="mono">suma</th></tr></thead>
+          <tbody id="trzBody"></tbody>
+        </table>
+        <p class="steps" id="trzMsg">—</p>
+        <div class="controls">
+          <button class="ctl" id="trzNext" type="button">Siguiente paso</button>
+          <button class="ctl ghost" id="trzReset" type="button">Reiniciar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 23 ............................................................ -->
+<section class="slide" data-t="ciclos · 0:43">
+  <p class="eyebrow"><span class="tick"></span> Ciclos · ejemplo 2 de 5</p>
+  <h2 class="title">Centinela: cuando no se sabe cuántos datos hay</h2>
+  <div class="split">
+    <div><svg class="fc" viewBox="0 0 890 620" role="img" aria-label="Ciclo controlado por centinela: suma numeros hasta que se lee menos uno"><rect class="sh" x="155" y="2" width="170" height="44" rx="22"/><text class="t" x="240" y="24">Inicio</text><line class="fl" x1="240" y1="46" x2="240" y2="76" marker-end="url(#armk)"/><rect class="sh" x="115" y="77" width="250" height="46" rx="3"/><text class="t" x="240" y="100">suma ← 0</text><line class="fl" x1="240" y1="123" x2="240" y2="153" marker-end="url(#armk)"/><polygon class="sh" points="138.92,154 388.92,154 341.08,200 91.08,200"/><text class="t" x="240" y="177">Leer x</text><text class="cap" x="540" y="173">la primera lectura va ANTES</text><line class="fl" x1="240" y1="200" x2="240" y2="228" marker-end="url(#armk)"/><circle class="jn" cx="240" cy="235" r="5"/><line class="fl" x1="240" y1="235" x2="240" y2="271" marker-end="url(#armk)"/><polygon class="sh" points="240,271 365,323 240,375 115,323"/><text class="t" x="240" y="323">x &lt;&gt; −1</text><text class="fll" x="395" y="311">Sí</text><text class="fll" x="258" y="401">No</text><polyline class="fl" points="365,323 415,323" marker-end="url(#armk)"/><rect class="sh" x="440" y="300" width="240" height="46" rx="3"/><text class="t sm" x="560" y="323">suma ← suma + x</text><line class="fl" x1="560" y1="346" x2="560" y2="378" marker-end="url(#armk)"/><polygon class="sh" points="463.92,379 703.92,379 656.08,425 416.08,425"/><text class="t" x="560" y="402">Leer x</text><text class="cap" x="700" y="444.5">y la siguiente,</text><text class="cap" x="700" y="459.5">al final del cuerpo</text><polyline class="fl" points="560,425 560,480 810,480 810,235 248,235" marker-end="url(#armk)"/><line class="fl" x1="240" y1="375" x2="240" y2="439" marker-end="url(#armk)"/><polygon class="sh" points="138.92,440 388.92,440 341.08,486 91.08,486"/><text class="t" x="240" y="463">Mostrar suma</text><line class="fl" x1="240" y1="486" x2="240" y2="516" marker-end="url(#armk)"/><rect class="sh" x="155" y="518" width="170" height="44" rx="22"/><text class="t" x="240" y="540">Fin</text></svg></div>
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Hay DOS lecturas, y las dos hacen falta</span>
+        <ul>
+          <li>Una <b>antes del rombo</b>: para tener algo que preguntar la primera vez.</li>
+          <li>Otra <b>al final del cuerpo</b>: para tener algo que preguntar la vuelta siguiente.</li>
+        </ul>
+        <p>Con una sola lectura dentro del cuerpo, la primera comparación se hace con una <b>variable sin valor</b>.</p>
+      </div>
+      <div class="callout">El centinela (<span class="mono">−1</span>) <b>no se procesa</b>: se lee, la condición da No y se sale. Elija siempre un centinela <b>imposible</b> como dato real.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 24 ............................................................ -->
+<section class="slide dense" data-t="ciclos · 0:43">
+  <p class="eyebrow"><span class="tick"></span> Ciclos · ejemplo 3 de 5</p>
+  <h2 class="title"><span class="mono">Hacer… Mientras</span>: el rombo va abajo</h2>
+  <div class="split-r">
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">La consecuencia de bajar el rombo</span>
+        <p>El cuerpo se ejecuta <b>siempre al menos una vez</b>. Es exactamente lo que se necesita para <b>validar un dato</b>: hay que preguntar la edad una vez antes de saber si sirve.</p>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Cómo elegir dónde va el rombo</span>
+        <ul>
+          <li>El cuerpo <b>tiene</b> que correr al menos una vez → rombo <b>abajo</b> (<span class="mono">Hacer…Mientras</span>).</li>
+          <li>El cuerpo <b>podría no correr ninguna</b> vez → rombo <b>arriba</b> (<span class="mono">Mientras</span>).</li>
+        </ul>
+        <p>Con <span class="mono">n = 0</span>, el ejemplo 1 no da ni una vuelta. Este da una, y por eso sirve para validar.</p>
+      </div>
+    </div>
+    <div><svg class="fc" viewBox="0 0 880 560" role="img" aria-label="Hacer-mientras: la condicion va al final, el cuerpo se ejecuta al menos una vez"><rect class="sh" x="195" y="2" width="170" height="44" rx="22"/><text class="t" x="280" y="24">Inicio</text><line class="fl" x1="280" y1="46" x2="280" y2="82" marker-end="url(#armk)"/><circle class="jn" cx="280" cy="90" r="5"/><line class="fl" x1="280" y1="90" x2="280" y2="126" marker-end="url(#armk)"/><polygon class="sh" points="178.92,127 428.92,127 381.08,173 131.08,173"/><text class="t" x="280" y="150">Leer edad</text><text class="cap" x="505" y="104">el cuerpo se ejecuta SIEMPRE una vez</text><line class="fl" x1="280" y1="173" x2="280" y2="203" marker-end="url(#armk)"/><polygon class="sh" points="280,203 445,262 280,321 115,262"/><text class="t sm" x="280" y="262">edad &lt; 0 O edad &gt; 120</text><text class="fll" x="490" y="250">Sí</text><text class="fll" x="298" y="348">No</text><polyline class="fl" points="445,262 495,262" marker-end="url(#armk)"/><polygon class="sh" points="558.92,239 788.92,239 741.08,285 511.08,285"/><text class="t sm" x="650" y="262">Mostrar «dato inválido»</text><polyline class="fl" points="650,239 650,90 288,90" marker-end="url(#armk)"/><text class="cap" x="776" y="170">y vuelve a preguntar</text><line class="fl" x1="280" y1="321" x2="280" y2="385" marker-end="url(#armk)"/><polygon class="sh" points="178.92,386 428.92,386 381.08,432 131.08,432"/><text class="t" x="280" y="409">Mostrar edad</text><line class="fl" x1="280" y1="432" x2="280" y2="462" marker-end="url(#armk)"/><rect class="sh" x="195" y="464" width="170" height="44" rx="22"/><text class="t" x="280" y="486">Fin</text></svg></div>
+  </div>
+</section>
+
+<!-- 25 ............................................................ -->
+<section class="slide dense" data-t="ciclos · 0:37">
+  <p class="eyebrow"><span class="tick"></span> Ciclos · ejemplo 4 de 5</p>
+  <h2 class="title"><span class="mono">Para</span>: cuando se sabe cuántas vueltas son</h2>
+  <div class="split">
+    <div><svg class="fc" viewBox="0 0 890 665" role="img" aria-label="Ciclo para: calculo del factorial de n"><rect class="sh" x="155" y="2" width="170" height="44" rx="22"/><text class="t" x="240" y="24">Inicio</text><line class="fl" x1="240" y1="46" x2="240" y2="76" marker-end="url(#armk)"/><polygon class="sh" points="138.92,77 388.92,77 341.08,123 91.08,123"/><text class="t" x="240" y="100">Leer n</text><line class="fl" x1="240" y1="123" x2="240" y2="153" marker-end="url(#armk)"/><rect class="sh" x="115" y="154" width="250" height="46" rx="3"/><text class="t" x="240" y="177">fact ← 1</text><line class="fl" x1="240" y1="200" x2="240" y2="230" marker-end="url(#armk)"/><rect class="sh" x="115" y="231" width="250" height="46" rx="3"/><text class="t" x="240" y="254">i ← 1</text><line class="fl" x1="240" y1="277" x2="240" y2="305" marker-end="url(#armk)"/><circle class="jn" cx="240" cy="312" r="5"/><line class="fl" x1="240" y1="312" x2="240" y2="348" marker-end="url(#armk)"/><polygon class="sh" points="240,348 365,400 240,452 115,400"/><text class="t" x="240" y="400">i &lt;= n</text><text class="fll" x="395" y="388">Sí</text><text class="fll" x="258" y="478">No</text><polyline class="fl" points="365,400 415,400" marker-end="url(#armk)"/><rect class="sh" x="440" y="377" width="240" height="46" rx="3"/><text class="t sm" x="560" y="400">fact ← fact * i</text><line class="fl" x1="560" y1="423" x2="560" y2="455" marker-end="url(#armk)"/><rect class="sh" x="440" y="456" width="240" height="46" rx="3"/><text class="t" x="560" y="479">i ← i + 1</text><polyline class="fl" points="560,502 560,545 810,545 810,312 248,312" marker-end="url(#armk)"/><line class="fl" x1="240" y1="452" x2="240" y2="516" marker-end="url(#armk)"/><polygon class="sh" points="138.92,517 388.92,517 341.08,563 91.08,563"/><text class="t" x="240" y="540">Mostrar fact</text><line class="fl" x1="240" y1="563" x2="240" y2="593" marker-end="url(#armk)"/><rect class="sh" x="155" y="595" width="170" height="44" rx="22"/><text class="t" x="240" y="617">Fin</text><text class="cap" x="660" y="512.5">las tres piezas del «para»</text><text class="cap" x="660" y="527.5">siguen ahí</text></svg></div>
+    <div>
+      <div class="panel">
+        <span class="tag">Pseudocódigo · las tres piezas en una línea</span>
+        <pre><span class="k">Leer</span> n
+fact <span class="n">←</span> 1
+<span class="k">Para</span> i <span class="n">←</span> 1 <span class="k">Hasta</span> n <span class="k">Hacer</span>
+   fact <span class="n">←</span> fact <span class="n">*</span> i
+<span class="k">FinPara</span>
+<span class="k">Mostrar</span> fact</pre>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Lo que hay que ver en el dibujo</span>
+<p>Es <b>el mismo diagrama del ejemplo 1</b>: el <span class="mono">Para</span> recoge <b>en una línea</b> la inicialización, la condición y la actualización. En el diagrama siguen separadas, y hay que dibujar las tres.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 26 ............................................................ -->
+<section class="slide dense" data-t="ciclos · 0:42">
+  <p class="eyebrow"><span class="tick"></span> Ciclos · ejemplo 5 de 5 · los tres temas juntos</p>
+  <h2 class="title">Una decisión dentro de un ciclo</h2>
+  <div class="split ancho">
+    <div><svg class="fc grande" viewBox="0 0 1010 1000" role="img" aria-label="Ciclo con una decision dentro: cuenta aprobados y reprobados de n notas"><rect class="sh" x="145" y="2" width="170" height="44" rx="22"/><text class="t" x="230" y="24">Inicio</text><line class="fl" x1="230" y1="46" x2="230" y2="74" marker-end="url(#armk)"/><polygon class="sh" points="133.92,75 373.92,75 326.08,121 86.08,121"/><text class="t" x="230" y="98">Leer n</text><line class="fl" x1="230" y1="121" x2="230" y2="149" marker-end="url(#armk)"/><rect class="sh" x="110" y="150" width="240" height="46" rx="3"/><text class="t" x="230" y="173">apr ← 0</text><line class="fl" x1="230" y1="196" x2="230" y2="224" marker-end="url(#armk)"/><rect class="sh" x="110" y="225" width="240" height="46" rx="3"/><text class="t" x="230" y="248">rep ← 0</text><line class="fl" x1="230" y1="271" x2="230" y2="299" marker-end="url(#armk)"/><rect class="sh" x="110" y="300" width="240" height="46" rx="3"/><text class="t" x="230" y="323">i ← 1</text><line class="fl" x1="230" y1="346" x2="230" y2="374" marker-end="url(#armk)"/><circle class="jn" cx="230" cy="381" r="5"/><line class="fl" x1="230" y1="381" x2="230" y2="415" marker-end="url(#armk)"/><polygon class="sh" points="230,416 345,466 230,516 115,466"/><text class="t" x="230" y="466">i &lt;= n</text><text class="fll" x="390" y="454">Sí</text><text class="fll" x="248" y="542">No</text><polyline class="fl" points="345,466 460,466" marker-end="url(#armk)"/><polygon class="sh" points="513.92,443 733.92,443 686.08,489 466.08,489"/><text class="t" x="600" y="466">Leer nota</text><line class="fl" x1="600" y1="489" x2="600" y2="521" marker-end="url(#armk)"/><polygon class="sh" points="600,523 720,578 600,633 480,578"/><text class="t sm" x="600" y="578">nota &gt;= 3.0</text><text class="fll" x="760" y="566">Sí</text><text class="fll" x="440" y="566">No</text><polyline class="fl" points="720,578 800,578 800,636" marker-end="url(#armk)"/><polyline class="fl" points="480,578 400,578 400,636" marker-end="url(#armk)"/><rect class="sh" x="700" y="637" width="200" height="46" rx="3"/><text class="t sm" x="800" y="660">apr ← apr + 1</text><rect class="sh" x="300" y="637" width="200" height="46" rx="3"/><text class="t sm" x="400" y="660">rep ← rep + 1</text><polyline class="fl" points="800,683 800,740 600,740"/><polyline class="fl" points="400,683 400,740 600,740"/><circle class="jn" cx="600" cy="740" r="5"/><line class="fl" x1="600" y1="740" x2="600" y2="774" marker-end="url(#armk)"/><rect class="sh" x="500" y="775" width="200" height="46" rx="3"/><text class="t" x="600" y="798">i ← i + 1</text><polyline class="fl" points="600,821 600,860 950,860 950,381 238,381" marker-end="url(#armk)"/><text class="cap" x="790" y="848">vuelve al principio del ciclo</text><line class="fl" x1="230" y1="516" x2="230" y2="876" marker-end="url(#armk)"/><polygon class="sh" points="123.92,877 383.92,877 336.08,923 76.08,923"/><text class="t" x="230" y="900">Mostrar apr, rep</text><line class="fl" x1="230" y1="923" x2="230" y2="951" marker-end="url(#armk)"/><rect class="sh" x="145" y="953" width="170" height="44" rx="22"/><text class="t" x="230" y="975">Fin</text></svg></div>
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">Leer n notas y contar aprobados y reprobados</span>
+        <p>Dentro del ciclo, la decisión conserva <b>todo</b> lo de la cápsula 2.3: dos salidas rotuladas y <b>punto de reunión</b>.</p>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">El orden que rompe el ciclo</span>
+        <p>La actualización <span class="mono">i ← i + 1</span> va <b>después</b> del punto de reunión, en el tronco del ciclo.</p>
+        <p>Si la mete dentro de una rama, la otra <b>no la ejecuta</b>: ciclo infinito. Este es el esqueleto de casi todos los ejercicios del taller: <b>ciclo por fuera, decisión por dentro</b>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 27 ............................................................ -->
+<section class="slide" data-t="ciclos · 0:36">
+  <p class="eyebrow"><span class="tick"></span> Ciclos · el fallo estrella</p>
+  <h2 class="title">El ciclo infinito y sus tres causas</h2>
+  <div class="split">
+    <div><svg class="fc" viewBox="0 0 890 560" role="img" aria-label="Ciclo infinito: falta la actualizacion de la variable de control"><rect class="sh" x="155" y="2" width="170" height="44" rx="22"/><text class="t" x="240" y="24">Inicio</text><line class="fl" x1="240" y1="46" x2="240" y2="76" marker-end="url(#armk)"/><rect class="sh" x="125" y="77" width="230" height="46" rx="3"/><text class="t" x="240" y="100">i ← 1</text><line class="fl" x1="240" y1="123" x2="240" y2="155" marker-end="url(#armk)"/><circle class="jn" cx="240" cy="162" r="5"/><line class="fl" x1="240" y1="162" x2="240" y2="198" marker-end="url(#armk)"/><polygon class="sh" points="240,198 365,250 240,302 115,250"/><text class="t" x="240" y="250">i &lt;= 10</text><text class="fll" x="395" y="238">Sí</text><text class="fll" x="258" y="330">No</text><polyline class="fl" points="365,250 415,250" marker-end="url(#armk)"/><polygon class="sh" points="468.92,227 698.92,227 651.08,273 421.08,273"/><text class="t" x="560" y="250">Mostrar i</text><polyline class="fl err" points="560,273 560,400 800,400 800,162 248,162" marker-end="url(#armk)"/><line class="fl" x1="240" y1="302" x2="240" y2="426" marker-end="url(#armk)"/><rect class="sh err" x="155" y="428" width="170" height="44" rx="22"/><text class="t" x="240" y="450">Fin</text><text class="cap" x="560" y="330">✕ falta i ← i + 1</text><text class="cap" x="560" y="352">i vale 1 para siempre</text><text class="cap" x="240" y="500">este «Fin» no se alcanza nunca</text></svg></div>
+    <div>
+      <div class="rules one">
+        <div class="rule"><span class="rn">1</span><span class="rt"><b>Falta la actualización</b><span>La variable de la condición nunca cambia. Es el caso del dibujo: <span class="mono">i</span> vale 1 para siempre.</span></span></div>
+        <div class="rule"><span class="rn">2</span><span class="rt"><b>La actualización no acerca el final</b><span>Resta cuando había que sumar, o cambia una variable que no es la de la condición.</span></span></div>
+        <div class="rule"><span class="rn">3</span><span class="rt"><b>Quedó dentro de una rama</b><span>Se ejecuta solo a veces. El ciclo termina o no según los datos.</span></span></div>
+      </div>
+      <div class="callout">Se detecta <b>antes</b> de programar: haga la traza de <b>tres vueltas</b> a mano y mire si la variable de la condición se mueve. Si no se mueve, no va a terminar.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 28 ............................................................ -->
+<section class="slide dense" data-t="ciclos · 0:40">
+  <p class="eyebrow"><span class="tick"></span> Método</p>
+  <h2 class="title">De un enunciado a un diagrama, en cinco pasos</h2>
+  <div class="split">
+    <div class="faces">
+      <div class="face"><span class="num">1</span><span class="txt"><b>Subraye entradas y salidas</b><span>Qué entra (<span class="mono">Leer</span>) y qué sale (<span class="mono">Mostrar</span>). Con lápiz, sobre el enunciado.</span></span></div>
+      <div class="face"><span class="num">2</span><span class="txt"><b>¿Algo se repite?</b><span>Si se repite, hay ciclo. Qué lo controla: <b>contador</b>, <b>centinela</b> o <b>validación</b>.</span></span></div>
+      <div class="face"><span class="num">3</span><span class="txt"><b>Busque «si», «cuando», «según», «en caso de»</b><span>Cada una de esas palabras del enunciado es un rombo.</span></span></div>
+      <div class="face"><span class="num">4</span><span class="txt"><b>Dibuje el esqueleto vacío</b><span>Inicio, ciclo, decisión, fin — antes de escribir texto dentro de las figuras.</span></span></div>
+      <div class="face"><span class="num">5</span><span class="txt"><b>Recórralo con dos casos y la frontera</b><span>Prueba de escritorio. Si no puede recorrerlo, no está terminado.</span></span></div>
+    </div>
+    <div>
+      <div class="panel">
+        <span class="tag">Aplicado a un enunciado del taller</span>
+        <p class="note">«Leer las notas de un grupo <b>hasta que se digite −1</b> y mostrar <b>cuántas</b> aprobaron.»</p>
+        <ul>
+          <li><b>1 ·</b> entra: notas. Sale: un conteo.</li>
+          <li><b>2 ·</b> «hasta que se digite −1» → ciclo <b>por centinela</b>, con dos lecturas.</li>
+          <li><b>3 ·</b> «aprobaron» → un rombo <span class="mono">nota &gt;= 3.0</span> dentro del ciclo.</li>
+          <li><b>4 ·</b> esqueleto: ciclo por fuera, decisión por dentro (ejemplo 5).</li>
+          <li><b>5 ·</b> pruebe con 4.0, 2.0, 3.0 — y con <span class="mono">−1</span> de primero, que es lo que descubre si el diagrama <b>aguanta cero datos</b>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 29 ............................................................ -->
+<section class="slide dense" data-t="ciclos · 0:37">
+  <p class="eyebrow"><span class="tick"></span> Cierre · la actividad de la semana</p>
+  <h2 class="title">Taller evaluativo: 10 diagramas</h2>
+  <div class="split">
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Qué se entrega</span>
+        <ul>
+          <li><b>10 diagramas</b> en PNG, SVG o PDF: 1–5 con decisiones, 6–10 con ciclos.</li>
+          <li>Archivo <span class="mono">3_apellido_nombre_pN</span> + rótulo <b>dentro</b> del diagrama.</li>
+          <li>Rúbrica <span class="mono">rubrica_diagramas_flujo_IS284.xlsx</span> (6 criterios): <b>léala antes de dibujar</b>.</li>
+        </ul>
+      </div>
+      <p class="refs"><b>Materiales:</b> <span class="mono">S02_A03_lectura.md</span> · <span class="mono">S02_A03_taller_evaluativo.md</span>.</p>
+    </div>
+    <div class="panel">
+      <span class="tag fn">Pase esta lista por CADA uno de los 10</span>
+      <div class="checks" id="lista">
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Un solo <b>Inicio</b> y un solo <b>Fin</b>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Salidas de rombo <b>rotuladas</b> y ramas <b>reunidas</b>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Las <b>cinco piezas</b> del ciclo, actualización incluida.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">La flecha de retorno <b>no cruza</b> ninguna línea.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Probado con <b>dos casos, la frontera y cero datos</b>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Exportación legible: completa, escala 2×, fondo blanco.</span></button>
+      </div>
+      <p class="tally"><b id="tallyN">0</b> / 6 · <span id="tallyMsg">empiece por la primera</span></p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="notes" id="notesBox">
+  <h5>Guion del presentador · <span class="time" id="notesTime"></span></h5>
+  <p id="notesText"></p>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var notesBox = document.getElementById('notesBox');
+  var notesText = document.getElementById('notesText');
+  var notesTime = document.getElementById('notesTime');
+
+  /* El panel de notas SÍ es guion de narración: las tres cápsulas de esta
+     presentación llevan video. El texto que sigue es el mismo del libreto
+     S02_A03_libreto.md, generado desde la misma fuente (guion_data.py) para
+     que no se desincronicen, y el campo de tiempo es la duración de cada
+     diapositiva dentro de su bloque.                                      */
+  var NOTES = [
+  "Cápsula dos punto tres. Hasta ahora todos sus algoritmos han hecho siempre lo mismo, pase lo que pase: una sola línea de instrucciones de arriba abajo. Hoy eso se acaba. Vamos a darle al algoritmo la capacidad de decidir, y a dibujar esa decisión.",
+  "Tres objetivos, y los tres son observables. Uno: dibujar una selección simple y una doble con el rombo correcto y las dos salidas rotuladas. Dos: escribir la condición que corresponde a un enunciado en español, con los operadores adecuados. Y tres: verificar su propio diagrama con una prueba de escritorio antes de entregarlo. La evidencia es el taller de diez ejercicios que cierra esta presentación, y que se califica con la rúbrica del curso. Le aviso desde ya: en el diseño del curso, la selección anidada —que es la cápsula siguiente— está marcada como prerrequisito duro. Si esto le queda flojo, se le atraviesa en las ocho semanas que vienen.",
+  "Este es el rombo, y tiene tres cosas que ningún otro símbolo tiene. Una: entra una sola flecha. Dos: salen exactamente dos, y las dos van rotuladas, Sí y No, sin excepción. Y tres, la que más se olvida: las dos ramas se vuelven a juntar. Ese punto de reunión no es decoración. Si sus dos ramas no se reúnen, el diagrama se le parte en dos y va a terminar con dos Fin, que es exactamente lo que la regla uno prohíbe.",
+  "La primera forma es la selección simple: hay algo que hacer si se cumple la condición, y nada que hacer si no. Mire el ejemplo: si la compra supera cien mil, se calcula un descuento. Si no lo supera, no pasa nada. Dos detalles. El primero: la rama No no lleva instrucciones, pero sí lleva flecha, y va directo al punto de reunión. El segundo, y este es de lógica: fíjese que el descuento se inicializó en cero ANTES del rombo. Si no lo hace, por la rama No llega al final una variable sin valor.",
+  "La segunda forma es la selección doble: hay algo que hacer en cada caso. El mayor de dos números es el ejemplo canónico. Si a es mayor que b, mostramos a; si no, mostramos b. Dos ramas con contenido, y otra vez las dos reuniéndose antes del fin. Y note algo: nunca hay dos caminos activos a la vez. El control entra por arriba, toma uno solo de los dos y sale por abajo. Un diagrama de flujo siempre tiene un único camino recorrido por ejecución.",
+  "Dentro del rombo va una condición, y una condición es una expresión que solo puede valer verdadero o falso. Se arma con los seis operadores relacionales de la tabla, y se combina con Y, O y NO. Dos advertencias que valen puntos. La primera: comparar NUNCA es lo mismo que asignar; en C, confundir el igual con el doble igual es el error clásico del semestre. La segunda: negar. Lo contrario de nota mayor o igual a tres no es nota menor o igual a tres, es nota menor que tres. Pruebe los tres casos del panel.",
+  "Este es el error que más se repite en las entregas de esta semana, y aquí está lado a lado. A la izquierda, el diagrama correcto. A la derecha, el mismo con tres defectos: las salidas del rombo sin rotular, las ramas que nunca se reúnen y, por lo tanto, dos símbolos de Fin. Pulse el botón para alternar entre los dos. Lo importante no es que se vea feo: es que con dos Fin usted ya no puede añadir nada después de la decisión sin duplicarlo.",
+  "Un diagrama con decisiones no se entrega sin probarlo, y probarlo tiene método. Se llama prueba de escritorio: usted elige casos, recorre el diagrama a mano y anota qué sale. Y los casos no se eligen al azar. Tres familias: uno por cada rama, para que ninguna se quede sin recorrer; uno en la frontera exacta de la condición, que es donde se esconden casi todos los errores; y uno inválido, para ver qué hace su algoritmo con basura. Con nota mayor o igual a tres, la frontera es exactamente tres punto cero. Pruebe ese valor, siempre.",
+  "Resumo los cuatro defectos de una decisión, porque son los que voy a buscar al calificar. Condición invertida: el algoritmo hace lo contrario de lo que pide el enunciado; se detecta con la prueba de frontera. Rama sin flecha: el control se pierde. Salidas sin etiqueta: nadie sabe cuál rama es cuál. Y ramas que no se reúnen, con dos Fin. Los cuatro se ven en el dibujo; ninguno requiere ejecutar nada. Por eso el diagrama vale la pena: le deja ver en treinta segundos, sin computador, errores que en código costarían media hora. Y hay un quinto defecto, que no es de dibujo sino de lectura: un rombo donde el enunciado no pedía decisión. Si al recorrerlo las dos ramas hacen lo mismo, sobraba el rombo.",
+  "Cierro la dos punto tres. Un rombo, una pregunta; dos salidas rotuladas; un punto de reunión; y una prueba de escritorio con el caso de la frontera antes de entregar. Con eso ya puede resolver cualquier problema de una sola decisión. Y para muchos problemas eso basta. Lo que sigue es qué hacer cuando las decisiones son varias, cuando dependen unas de otras, o cuando en vez de dos caminos hay seis.",
+  "Cápsula dos punto cuatro: selección anidada y selección múltiple. La pregunta que la motiva es simple. Un rombo parte el camino en dos. ¿Y si el problema tiene tres salidas, o seis? Ahí no hace falta un símbolo nuevo: hace falta poner rombos dentro de rombos, y saber cuándo eso deja de ser razonable. Esta cápsula es prerrequisito duro del curso, y no por capricho: la lógica de menús y de rangos que va a escribir de la semana cuatro en adelante es esta misma, en C.",
+  "Anidar es poner un rombo dentro de una rama de otro rombo. El ejemplo obligatorio es el mayor de tres números. Primero pregunto si a es mayor que b. Eso todavía no me da la respuesta: me dice cuál de los dos sigue vivo. Por la rama Sí pregunto si a es mayor que c, y por la rama No pregunto si b es mayor que c. Cuatro caminos posibles, cuatro salidas, y todas se reúnen en un único punto antes del Fin. Cuente los rombos: son tres, y con tres preguntas de sí o no se distinguen hasta ocho casos. Esa es la potencia del anidamiento.",
+  "Ahora una que le va a servir en la semana cuatro, cuando esto se convierta en código C. En el texto, si usted escribe dos «si» seguidos y un solo «sino», no se sabe a cuál de los dos pertenece el «sino»: es el problema del sino colgante. En C, la regla es que el «sino» se pega al «si» más cercano, y muchos programadores creen que se pega al otro. Ahora mire el diagrama: ahí no hay ambigüedad posible, porque la flecha sale de un rombo concreto y va a donde va. Este es el mejor argumento a favor de dibujar antes de programar: el dibujo no admite la ambigüedad que el texto sí admite.",
+  "Cuando los casos no son dos sino varios y se excluyen entre sí, la forma correcta no es anidar hacia adentro: es la escalera. Mire el clasificador de notas. Rombo, rama No, rombo, rama No, rombo, y al final una salida que recoge todo lo demás. La escalera se lee de arriba abajo como una lista de casos, y crece hacia abajo, no hacia la derecha. Fíjese en la última salida: no lleva rombo. No hace falta preguntar si la nota es menor que tres, porque si llegó hasta ahí es que ya no cumplió ninguna de las anteriores. Dibujar ese último rombo no está mal, pero sobra. Cuente las salidas: tres rombos en escalera dan cuatro resultados, ni uno más.",
+  "La escalera tiene una trampa, y es la que más puntos cuesta. El orden de las condiciones importa, porque se evalúan de arriba abajo y gana la primera que se cumple. Si usted pone primero «nota mayor o igual a tres» y después «nota mayor o igual a cuatro punto cinco», un cinco punto cero cae en la primera y se lleva una C. El algoritmo no está mal escrito: está mal ordenado. Pruebe el clasificador del panel con los dos órdenes y con los valores de frontera exactos. Regla práctica: en una escalera de rangos, vaya del extremo más exigente al menos exigente, y pruebe siempre los bordes.",
+  "Hay una situación en la que ni la escalera es lo más claro: cuando lo que se compara no es un rango, sino un valor exacto de una lista corta. Un menú, por ejemplo. Para eso existe la selección múltiple, el «según» del pseudocódigo y el «switch» de C. En el diagrama, la convención del curso es un rombo con una salida por cada valor, todas rotuladas, más una última que recoge todo lo demás. Esa última no es opcional: si el usuario teclea siete y usted no la puso, su algoritmo no hace nada y no dice por qué. Y ojo: «según» solo sirve para igualdades. Rangos, nunca.",
+  "Última idea de la cápsula, y es de diseño. Compare los dos diagramas. A la izquierda, tres rombos anidados para comprobar que tres números son positivos. A la derecha, exactamente la misma lógica con un solo rombo y una condición compuesta con Y. Misma respuesta, un tercio del dibujo. La regla del curso: si las condiciones anidadas no tienen instrucciones propias entre ellas, júntelas con Y y baje un nivel. Y una advertencia honesta: no siempre se puede: si cada nivel hace algo distinto, el anidamiento es legítimo. Pero más de tres niveles casi siempre es una escalera disfrazada. Y hay un beneficio que no se ve: cada nivel que quita es un camino menos que probar.",
+  "Cierro la dos punto cuatro con la regla de decisión que quiero que recuerde. ¿Dos casos? Rombo simple. ¿Varios rangos excluyentes? Escalera, del extremo más exigente al menos exigente. ¿Valores exactos de una lista? Según, con su caso «otro». ¿Condiciones que solo acompañan a otras? Júntelas con Y y aplane. Y en los cuatro casos, la misma verificación: recorra su diagrama con un caso por rama y con los valores de frontera. Una última cosa antes de seguir. Todo lo que hemos hecho hasta aquí decide una vez y termina. El tercer bloque de esta presentación rompe esa suposición: vamos a hacer que el algoritmo vuelva sobre sus pasos. Es contenido que el plan del curso trae más adelante, y lo adelanto aquí porque sin él no se puede plantear ni la mitad de los ejercicios del taller.",
+  "Tercer bloque, y es contenido que el plan no traía en esta semana: los ciclos. Lo adelantamos por una razón práctica: casi ningún problema real se resuelve leyendo un solo dato. Y porque los ciclos obligan a matizar una de las cinco reglas de trazado que usted aprendió en la dos punto uno.",
+  "La regla dos decía: el flujo baja. A partir de ahora dice: el flujo baja, salvo una flecha —la del ciclo—, que sube y va por fuera del cuerpo, sin cruzar ninguna línea. Esa flecha es todo el asunto. Sin ella, para leer cien notas usted tendría que dibujar cien paralelogramos. Con ella, dibuja uno y lo recorre cien veces. Repetir sin copiar: eso es un ciclo.",
+  "Todo ciclo tiene cinco piezas, y si le falta una, falla. Uno, la inicialización, antes de entrar. Dos, la condición, en un rombo, que se evalúa antes de cada vuelta. Tres, el cuerpo, que es lo que se repite. Cuatro, la actualización, que cambia la variable de la condición. Y cinco, la flecha que vuelve, que entra por ENCIMA del rombo, no dentro de él, para que la condición se vuelva a evaluar en cada vuelta.",
+  "Ejemplo uno, ciclo controlado por contador. Leer n números y sumarlos. Inicializo suma en cero e i en uno; pregunto si i es menor o igual que n; si sí, leo, acumulo, subo i y vuelvo; si no, muestro la suma. Observe los dos patrones que le van a servir todo el semestre: un contador, que va uno, dos, tres, y un acumulador, que guarda lo que llevo sumado. Los dos empiezan en cero o en uno antes del ciclo, nunca dentro.",
+  "Ejemplo dos: y si no sé cuántos datos hay. Entonces no cuento: acuerdo un valor de parada, un centinela. Aquí, menos uno. Y fíjese en la forma del dibujo, porque es la que se equivoca casi todo el mundo: hay dos lecturas. Una antes del rombo, para tener algo que preguntar la primera vez, y otra al final del cuerpo, para la vuelta siguiente. Si solo pone la de adentro, la primera comparación se hace con una variable sin valor. Y el centinela nunca se suma: se lee y se sale.",
+  "Ejemplo tres, y cambia la forma. Aquí el rombo va ABAJO, después del cuerpo. Eso se llama hacer-mientras, y tiene una consecuencia: el cuerpo se ejecuta siempre al menos una vez. Es exactamente lo que se necesita para validar un dato: hay que preguntar la edad por lo menos una vez antes de poder saber si sirve. Mientras la edad sea inválida, aviso y vuelvo a preguntar. Regla práctica: si el cuerpo tiene que correr al menos una vez, el rombo va abajo; si podría no correr ninguna, el rombo va arriba.",
+  "Ejemplo cuatro: el factorial. Aquí sé exactamente cuántas vueltas voy a dar, de uno hasta n, y cuando se sabe el número de vueltas por adelantado, el pseudocódigo lo escribe con «para». Pero mire el diagrama con cuidado: es el mismo dibujo del ejemplo uno. El «para» no es una estructura distinta; es las tres piezas —inicialización, condición y actualización— recogidas en una sola línea. En el diagrama de flujo siguen estando separadas y siguen teniendo que dibujarse.",
+  "Ejemplo cinco, y es donde se juntan los tres temas de hoy. Leer n notas y contar cuántas aprobaron y cuántas no. Dentro del ciclo hay una decisión, y la decisión tiene sus dos ramas, sus etiquetas y su punto de reunión, igual que en la dos punto tres. Después de ese punto viene la actualización, y solo entonces la flecha que vuelve. El orden importa: si usted mete el i más uno dentro de una rama, la otra no lo ejecuta y el ciclo no termina.",
+  "Y ese es el fallo estrella: el ciclo infinito. Tres causas, siempre las mismas. Falta la actualización. La actualización no acerca la condición a ser falsa. O quedó dentro de una rama que a veces no se recorre. Mire el diagrama: falta i más uno, así que i vale uno para siempre. Detectarlo antes de programar es la traza del panel: tres vueltas a mano y se ve si la variable se mueve.",
+  "Y ahora lo que de verdad le van a pedir: pasar de un enunciado a un diagrama. Cinco pasos. Uno: subraye las entradas y las salidas. Dos: pregúntese si algo se repite; si se repite hay ciclo, y decida qué lo controla: contador, centinela o validación. Tres: busque las palabras «si», «cuando», «según»: cada una es un rombo. Cuatro: dibuje el esqueleto antes de escribir texto dentro de las figuras. Y cinco: recorra el dibujo con dos casos y con la frontera.",
+  "Su actividad de esta semana es el taller de diez ejercicios: los cinco primeros con decisiones, los cinco siguientes con ciclos, y el último con un ciclo dentro de otro. Se entrega como imagen o PDF exportado de su herramienta, con la convención de nombre de la semana pasada, y se califica con la rúbrica de seis criterios que ya conoce. Léala antes de dibujar, no después, y pase la lista de la pantalla por cada diagrama."
+];
+
+  function show(n){
+    if(n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('on');
+    slides[i].scrollTop = 0;
+    cur.textContent = String(i + 1);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    notesText.textContent = NOTES[i];
+    notesTime.textContent = slides[i].getAttribute('data-t');
+  }
+
+  document.getElementById('next').addEventListener('click', function(){ show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function(){ show(i - 1); });
+  var tn = document.getElementById('toggleNotes');
+  tn.addEventListener('click', function(){
+    var on = notesBox.classList.toggle('on');
+    tn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ show(i - 1); }
+    else if(e.key === 'n' || e.key === 'N'){ tn.click(); }
+  });
+
+  /* ====== diapositiva 6 · evaluador de la condición nota >= 3.0 ========
+     Los tres valores no son decorativos: son exactamente las tres familias
+     de casos de la prueba de escritorio (una por rama y la frontera).     */
+  var COND = {
+    c29: { v: "2.9", ok: false, head: "rama No",
+           txt: "2.9 >= 3.0 es <b>falso</b>. El control toma la rama <b>No</b> y muestra «reprobó». Este es el caso que prueba la rama negativa." },
+    c30: { v: "3.0", ok: true, head: "rama Sí · frontera",
+           txt: "3.0 >= 3.0 es <b>verdadero</b>: el «o igual» incluye el 3.0 exacto. <b>Este es el caso de frontera</b>, el que destapa si usted escribió &gt; cuando debía escribir &gt;=." },
+    c48: { v: "4.8", ok: true, head: "rama Sí",
+           txt: "4.8 >= 3.0 es <b>verdadero</b>. Rama <b>Sí</b>, muestra «aprobó». Prueba la rama positiva, pero <b>no</b> prueba la frontera: por eso hacen falta los tres." }
+  };
+  var condIds = ["c29", "c30", "c48"];
+  var condOut = document.getElementById('condOut');
+  condIds.forEach(function(k){
+    document.getElementById(k).addEventListener('click', function(){
+      condIds.forEach(function(o){
+        document.getElementById(o).setAttribute('aria-pressed', o === k ? 'true' : 'false');
+      });
+      var d = COND[k];
+      condOut.innerHTML = '<span class="head ' + (d.ok ? 'ok' : 'no') + '">' +
+        d.head + ' · nota = ' + d.v + '</span>' + d.txt;
+    });
+  });
+
+  /* ====== diapositiva 7 · correcto / con los tres defectos ============= */
+  var dgOk = document.getElementById('dgOk');
+  var dgBad = document.getElementById('dgBad');
+  var swOk = document.getElementById('swOk');
+  var swBad = document.getElementById('swBad');
+  var swapTag = document.getElementById('swapTag');
+  var swapTxt = document.getElementById('swapTxt');
+  var swapPanel = document.getElementById('swapPanel');
+  function pintarSwap(malo){
+    dgOk.hidden = malo;
+    dgBad.hidden = !malo;
+    swOk.setAttribute('aria-pressed', malo ? 'false' : 'true');
+    swBad.setAttribute('aria-pressed', malo ? 'true' : 'false');
+    swapPanel.className = malo ? 'panel imp' : 'panel fn';
+    swapTag.className = malo ? 'tag imp' : 'tag fn';
+    swapTag.textContent = malo ? 'Los tres defectos' : 'Qué mirar';
+    swapTxt.innerHTML = malo
+      ? '<b>1.</b> Las dos salidas del rombo no dicen cuál es Sí y cuál es No. <b>2.</b> Las ramas no se reúnen. <b>3.</b> Por eso hay <b>dos «Fin»</b>, y el diagrama incumple la regla 1.'
+      : 'Las dos salidas del rombo están rotuladas, las dos ramas se reúnen en un punto y hay <b>un solo «Fin»</b>. Pulse «Con los tres defectos» para ver la versión que más llega en las entregas.';
+  }
+  swOk.addEventListener('click', function(){ pintarSwap(false); });
+  swBad.addEventListener('click', function(){ pintarSwap(true); });
+
+  /* ====== diapositiva 15 · el orden de la escalera ======================
+     Dos escaleras con las MISMAS condiciones en distinto orden. Se evalúan
+     de arriba abajo y gana la primera que se cumple: por eso la segunda
+     manda cualquier nota >= 3.0 a la letra C.                             */
+  function bien(n){ return n >= 4.5 ? "A" : n >= 4.0 ? "B" : n >= 3.0 ? "C" : "F"; }
+  function mal(n){ return n >= 3.0 ? "C" : n >= 4.0 ? "B" : n >= 4.5 ? "A" : "F"; }
+  var ordOk = document.getElementById('ordOk');
+  var ordBad = document.getElementById('ordBad');
+  var ordOut = document.getElementById('ordOut');
+  var notaBtns = Array.prototype.slice.call(
+      document.querySelectorAll('#notaBtns .tbtn'));
+  function pintarNota(n){
+    notaBtns.forEach(function(b){
+      b.setAttribute('aria-pressed', parseFloat(b.getAttribute('data-n')) === n ? 'true' : 'false');
+    });
+    var a = bien(n), b = mal(n);
+    ordOk.textContent = a;
+    ordBad.textContent = b;
+    var frontera = (n === 4.5 || n === 4.0 || n === 3.0);
+    ordOut.innerHTML = '<span class="head ' + (a === b ? 'ok' : 'no') + '">nota = ' +
+      n.toFixed(1) + (frontera ? ' · valor de frontera' : '') + '</span>' +
+      (a === b
+        ? 'Los dos órdenes coinciden en <b>' + a + '</b>. Una sola nota <b>no basta</b> para descubrir el error: pruebe también 5.0.'
+        : 'Los dos órdenes discrepan: <b>' + a + '</b> frente a <b>' + b +
+          '</b>. En el segundo, la nota cumplió «&gt;= 3.0» antes de que se le preguntara por 4.0 o 4.5, y esa pregunta ya no se hace.');
+  }
+  notaBtns.forEach(function(b){
+    b.addEventListener('click', function(){ pintarNota(parseFloat(b.getAttribute('data-n'))); });
+  });
+
+  /* ====== diapositiva 22 · traza del ciclo, paso a paso =================
+     n = 3 y los datos 5, 8 y 2. La última fila es la que enseña lo que casi
+     nadie ve: la condición se evalúa UNA VEZ MÁS que el cuerpo.           */
+  var TRZ = [
+    { g: "e1ini", r: ["inicio",   "1", "—", "0"],
+      m: "Inicialización, fuera del ciclo: suma ← 0 · i ← 1. Todavía no se ha evaluado la condición." },
+    { g: "e1cuerpo", r: ["vuelta 1", "2", "5", "5"],
+      m: "i = 1 · ¿1 <= 3? Sí → lee x = 5 · suma = 0 + 5 = 5 · i pasa a 2 · vuelve." },
+    { g: "e1cuerpo", r: ["vuelta 2", "3", "8", "13"],
+      m: "i = 2 · ¿2 <= 3? Sí → lee x = 8 · suma = 5 + 8 = 13 · i pasa a 3 · vuelve." },
+    { g: "e1cuerpo", r: ["vuelta 3", "4", "2", "15"],
+      m: "i = 3 · ¿3 <= 3? Sí, es la frontera → lee x = 2 · suma = 13 + 2 = 15 · i pasa a 4 · vuelve." },
+    { g: "e1sal", r: ["salida",   "4", "—", "15"], out: true,
+      m: "i = 4 · ¿4 <= 3? No → sale y muestra 15. La condición se evaluó 4 veces y el cuerpo 3: siempre una más." }
+  ];
+  var trzBody = document.getElementById('trzBody');
+  var trzMsg = document.getElementById('trzMsg');
+  var trzNext = document.getElementById('trzNext');
+  var trzReset = document.getElementById('trzReset');
+  var trzK = 0;
+  function trzPintar(){
+    /* Se dibujan SIEMPRE las cinco filas y las que aun no se han alcanzado
+       van en blanco: asi la altura de la diapositiva no cambia al avanzar
+       la traza y nada se sale de la pantalla durante la grabacion.        */
+    trzBody.innerHTML = '';
+    for(var k = 0; k < TRZ.length; k++){
+      var visto = k < trzK;
+      var tr = document.createElement('tr');
+      tr.className = (visto ? '' : 'pend') + (k === trzK - 1 ? ' on' : '') +
+                     (visto && TRZ[k].out ? ' out' : '');
+      for(var c = 0; c < 4; c++){
+        var td = document.createElement('td');
+        if(c) td.className = 'mono';
+        td.textContent = visto ? TRZ[k].r[c] : (c ? '·' : '—');
+        tr.appendChild(td);
+      }
+      trzBody.appendChild(tr);
+    }
+    /* el paso activo se resalta tambien en el diagrama de la izquierda */
+    ["e1ini", "e1cond", "e1cuerpo", "e1sal"].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.classList.remove('hot');
+    });
+    if(trzK){
+      var act = document.getElementById(TRZ[trzK - 1].g);
+      if(act) act.classList.add('hot');
+      var cnd = document.getElementById('e1cond');
+      if(cnd && trzK > 1) cnd.classList.add('hot');
+    }
+    trzMsg.textContent = trzK ? TRZ[trzK - 1].m : 'Pulse «Empezar» para recorrer el ciclo vuelta por vuelta.';
+    trzNext.disabled = trzK >= TRZ.length;
+    trzNext.textContent = trzK >= TRZ.length ? 'Traza completa' :
+      (trzK === 0 ? 'Empezar' : 'Siguiente paso');
+  }
+  trzNext.addEventListener('click', function(){
+    if(trzK < TRZ.length){ trzK++; trzPintar(); }
+  });
+  trzReset.addEventListener('click', function(){ trzK = 0; trzPintar(); });
+
+  /* ====== diapositiva 29 · lista de verificación ======================== */
+  var chks = Array.prototype.slice.call(document.querySelectorAll('#lista .chk'));
+  var tallyN = document.getElementById('tallyN');
+  var tallyMsg = document.getElementById('tallyMsg');
+  var MSG = ["empiece por la primera", "va una", "dos de seis",
+             "mitad de camino", "cuatro: falta poco", "una más",
+             "listo para exportar y entregar"];
+  chks.forEach(function(c){
+    c.addEventListener('click', function(){
+      c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      var n = chks.filter(function(o){ return o.getAttribute('aria-pressed') === 'true'; }).length;
+      tallyN.textContent = String(n);
+      tallyMsg.textContent = MSG[n];
+    });
+  });
+
+  pintarSwap(false);
+  pintarNota(4.5);
+  trzPintar();
+  show(0);
+})();
+</script>
