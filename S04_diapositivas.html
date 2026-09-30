@@ -1,0 +1,2207 @@
+<meta charset="utf-8">
+<title>Muchos Caminos en C</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F2F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#EBEDF3;
+  --line:#D6D9E4;
+  --ink:#141828;
+  --muted:#5B6278;
+  --accent:#4557C9;
+  --accent-soft:#E3E6F8;
+  --fn:#0B7C71;
+  --fn-soft:#DCF0ED;
+  --imp:#A2620E;
+  --imp-soft:#F6E8D3;
+  --shadow:0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.08);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1120;
+    --surface:#171B2C;
+    --surface-2:#1F2438;
+    --line:#2E3448;
+    --ink:#E8EAF4;
+    --muted:#98A0BA;
+    --accent:#8494F2;
+    --accent-soft:#232A48;
+    --fn:#3FC7B4;
+    --fn-soft:#12312F;
+    --imp:#E9A94A;
+    --imp-soft:#33270F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1120;
+  --surface:#171B2C;
+  --surface-2:#1F2438;
+  --line:#2E3448;
+  --ink:#E8EAF4;
+  --muted:#98A0BA;
+  --accent:#8494F2;
+  --accent-soft:#232A48;
+  --fn:#3FC7B4;
+  --fn-soft:#12312F;
+  --imp:#E9A94A;
+  --imp-soft:#33270F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:"IBM Plex Serif", Georgia, "Times New Roman", serif;font-weight:600}
+p{margin:0}
+code,pre,.mono{font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace}
+
+/* ============ CHROME ============ */
+.rail{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  font-size:12px;
+}
+.rail .id{font-family:"IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rail .id b{color:var(--ink);font-weight:600}
+.rail .spacer{flex:1}
+.btn{
+  font:inherit;font-size:12px;
+  background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.counter{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.counter b{color:var(--ink)}
+
+.progress{height:3px;background:var(--surface-2);position:relative}
+.progress span{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .25s ease}
+
+/* ============ STAGE ============ */
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px}
+.stage{
+  width:min(100%,1180px);
+  aspect-ratio:16/9;
+  max-height:calc(100vh - 150px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  container-type:inline-size;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;
+  padding:4.4cqi 5cqi 4cqi;
+  display:none;
+  flex-direction:column;
+  gap:2.2cqi;
+  overflow-y:auto;
+}
+.slide.on{display:flex}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:1.25cqi;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:1cqi;
+}
+.eyebrow .tick{width:2.6cqi;height:1px;background:var(--line)}
+h2.title{font-size:3.9cqi;line-height:1.12;letter-spacing:-.01em}
+h3.sub{font-size:2.05cqi;line-height:1.25}
+.lead{font-size:1.95cqi;line-height:1.5;color:var(--ink);max-width:62ch}
+.note{font-size:1.5cqi;line-height:1.5;color:var(--muted);max-width:70ch}
+.slide ul{margin:0;padding-left:2.2cqi;display:flex;flex-direction:column;gap:1.1cqi}
+.slide li{font-size:1.8cqi;line-height:1.42}
+.slide li::marker{color:var(--accent)}
+
+/* two-world grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;align-items:start}
+.panel{
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+  padding:2cqi 2.2cqi;
+  display:flex;flex-direction:column;gap:1.2cqi;
+  min-width:0;
+}
+.panel.fn{border-top:3px solid var(--fn)}
+.panel.imp{border-top:3px solid var(--imp)}
+.tag{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+.tag.fn{color:var(--fn)}
+.tag.imp{color:var(--imp)}
+.panel h4{margin:0;font-size:1.85cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.panel p{font-size:1.5cqi;line-height:1.45;color:var(--muted)}
+.panel ul{padding-left:2cqi;gap:.7cqi}
+.panel li{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1.4cqi 1.6cqi;font-size:1.42cqi;line-height:1.55;
+  overflow-x:auto;white-space:pre;
+}
+pre .k{color:var(--accent);font-weight:500}
+pre .c{color:var(--muted);font-style:italic}
+pre .n{color:var(--imp)}
+pre .s{color:var(--fn)}
+.filename{
+  font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted);
+  display:flex;justify-content:space-between;gap:1cqi;
+}
+.filename em{font-style:normal;color:var(--fn)}
+
+/* trace machine */
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqi;align-items:stretch}
+.cell{
+  display:flex;gap:1.2cqi;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+}
+.box{
+  border:2px solid var(--imp);border-radius:6px;background:var(--imp-soft);
+  padding:.8cqi 1.6cqi;font-size:2.4cqi;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;min-width:7cqi;text-align:center;
+}
+.box.flash{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.expr{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;line-height:1.7;
+  color:var(--ink);word-break:break-word;
+}
+.expr .old{color:var(--muted)}
+.steps{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:1cqi;align-items:center;flex-wrap:wrap}
+.ctl{
+  font-family:"IBM Plex Sans",sans-serif;font-size:1.4cqi;
+  padding:.8cqi 1.6cqi;border-radius:6px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;cursor:pointer;
+}
+.ctl.ghost{background:transparent;color:var(--accent)}
+.ctl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctl:disabled{opacity:.45;cursor:default}
+
+/* comparison table */
+table{border-collapse:collapse;width:100%;font-size:1.5cqi}
+th,td{text-align:left;padding:1cqi 1.2cqi;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+thead th.cfn{color:var(--fn)}
+thead th.cimp{color:var(--imp)}
+tbody th{font-weight:500;color:var(--muted);font-family:"IBM Plex Sans",sans-serif}
+
+/* cover */
+.cover{justify-content:center;gap:1.6cqi;background:
+  linear-gradient(105deg, var(--fn-soft) 0%, transparent 42%),
+  linear-gradient(255deg, var(--imp-soft) 0%, transparent 42%);}
+.cover .inst{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);line-height:1.7;letter-spacing:.04em}
+.cover h1{font-size:5.4cqi;line-height:1.05;letter-spacing:-.02em;max-width:20ch}
+.cover .course{font-size:2cqi;color:var(--accent);font-weight:600}
+.cover .who{display:flex;gap:3cqi;flex-wrap:wrap;font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+.cover .who b{display:block;color:var(--ink);font-weight:600;font-size:1.75cqi}
+
+/* q&a */
+.qa{display:flex;flex-direction:column;gap:1.4cqi}
+.q{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi}
+.q p{font-size:1.6cqi;line-height:1.4}
+.q .ans{font-size:1.45cqi;color:var(--fn);line-height:1.45;display:none}
+.q.open .ans{display:block}
+.q button{align-self:flex-start;font:inherit;font-size:1.25cqi;background:none;border:1px solid var(--line);border-radius:5px;padding:.5cqi 1.1cqi;color:var(--muted);cursor:pointer}
+.q button:hover{color:var(--accent);border-color:var(--accent)}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:1.4cqi 1.8cqi;border-radius:0 7px 7px 0;font-size:1.55cqi;line-height:1.45;
+}
+.refs{font-size:1.3cqi;line-height:1.6;color:var(--muted)}
+.refs b{color:var(--ink);font-weight:500}
+
+/* notes drawer */
+.notes{
+  width:min(100%,1180px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);padding:14px 18px;
+  font-size:14px;line-height:1.55;color:var(--ink);
+  display:none;
+}
+.notes.on{display:block}
+.notes h5{margin:0 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notes p{color:var(--muted)}
+.notes .time{color:var(--accent);font-family:"IBM Plex Mono",monospace}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+@media (max-width:720px){
+  .duo,.trace{grid-template-columns:1fr}
+  .stage{aspect-ratio:auto;height:auto;min-height:520px}
+  .slide{position:relative;padding:22px}
+  .slide:not(.on){display:none}
+}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.3 — componentes que no existían en la 1.1.
+   No se modificó ningún token de color ni ningún tamaño anterior.
+   ====================================================================== */
+
+/* retícula de tres columnas (los tres intercambios) */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.6cqi;align-items:start}
+.trio .panel{padding:1.5cqi 1.6cqi;gap:.9cqi}
+.trio pre{font-size:1.24cqi;padding:1.1cqi 1.2cqi}
+.trio li{font-size:1.35cqi}
+.trio .tag{font-size:1.05cqi}
+
+/* retícula de dos columnas desiguales */
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:2.2cqi;align-items:start}
+.split-r{display:grid;grid-template-columns:.85fr 1.15fr;gap:2.2cqi;align-items:start}
+
+/* celdas de memoria con desvanecimiento del valor anterior */
+.mem{display:flex;gap:2.6cqi;align-items:flex-end;flex-wrap:wrap}
+.memcell{display:flex;flex-direction:column;align-items:center;gap:.5cqi;position:relative}
+.memcell .name{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--imp);font-weight:600}
+.memcell .addr{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;color:var(--muted)}
+.memcell .box{min-width:8.4cqi}
+.memcell .box.empty{color:var(--muted);border-style:dashed;background:transparent}
+.memcell .gone{
+  position:absolute;left:0;right:0;top:2.1cqi;
+  font-family:"IBM Plex Mono",monospace;font-size:2.4cqi;font-weight:600;
+  color:var(--muted);text-align:center;pointer-events:none;
+  text-decoration:line-through;
+  animation:vanish 1.1s ease forwards;
+}
+@keyframes vanish{
+  0%{opacity:.9;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-3.2cqi) scale(.8)}
+}
+
+/* registro de transiciones del simulador */
+.log{
+  font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;line-height:1.6;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1cqi 1.2cqi;height:15cqi;overflow:auto;color:var(--ink);
+  white-space:pre;
+}
+.log .dim{color:var(--muted)}
+
+/* indicador de estado actual */
+.statebar{display:flex;align-items:center;gap:1.2cqi;flex-wrap:wrap}
+.statebar .lab{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:1.7cqi;font-weight:600;
+  border:2px solid var(--imp);background:var(--imp-soft);color:var(--ink);
+  border-radius:999px;padding:.5cqi 1.6cqi;
+}
+.chip.flash{animation:pop .35s ease}
+
+/* diagramas de estados en SVG */
+.fsm{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fsm .node{fill:var(--dsurf);stroke:var(--dimp);stroke-width:2.5}
+.fsm .node.on{fill:var(--dimps);stroke-width:6}
+.fsm .inner{fill:none;stroke:var(--dfn);stroke-width:2}
+.fsm .lbl{fill:var(--dink);font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;text-anchor:middle}
+.fsm .edge{fill:none;stroke:var(--dmut);stroke-width:2}
+.fsm .elbl{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:15px;text-anchor:middle}
+.fsm .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fsm .cap.acc{fill:var(--dfn)}
+.fsm marker path{fill:var(--dmut)}
+.fsm.big .lbl{font-size:21px}
+.fsm.big .elbl{font-size:17px}
+.fsm.big .cap{font-size:15px}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.4 — componentes que no existían en la 1.3.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* las tres caras de un tipo (diapositiva 3) */
+.faces{display:flex;flex-direction:column;gap:1.2cqi}
+.face{display:flex;gap:1.3cqi;align-items:baseline}
+.face .num{font-family:"IBM Plex Mono",monospace;font-size:1.6cqi;font-weight:600;color:var(--accent);min-width:2.4cqi}
+.face .txt{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+.face .txt b{display:block;font-size:1.65cqi}
+.face .txt span{color:var(--muted);font-size:1.32cqi}
+
+/* matriz 2 × 2 del tipado (diapositiva 4) */
+.matrix{display:grid;grid-template-columns:4.6cqi 1fr 1fr;gap:.9cqi;align-items:stretch}
+.axis{
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);line-height:1.35;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+}
+.axis.side{writing-mode:vertical-rl;transform:rotate(180deg)}
+.mcell{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1.2cqi 1.3cqi;display:flex;flex-direction:column;gap:.45cqi;min-width:0;
+}
+.mcell:hover{border-color:var(--accent)}
+.mcell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mcell .lang{font-family:"IBM Plex Mono",monospace;font-size:1.75cqi;font-weight:600;color:var(--ink)}
+.mcell.c .lang{color:var(--imp)}
+.mcell.r .lang{color:var(--fn)}
+.mcell .kind{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.mcell .mk{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);visibility:hidden}
+.mcell[aria-pressed="true"]{background:var(--accent-soft);border:3px solid var(--accent);padding:1cqi 1.1cqi}
+.mcell[aria-pressed="true"] .mk{visibility:visible}
+
+/* explorador de tipos y barra de bytes (diapositiva 7) */
+.tbtns{display:flex;flex-wrap:wrap;gap:.6cqi}
+.tbtn{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.55cqi 1.05cqi;cursor:pointer;
+}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.bytebar{display:flex;gap:.35cqi;flex-wrap:wrap;align-items:center}
+.byte{
+  width:2.5cqi;height:2.5cqi;border-radius:4px;
+  border:1px solid var(--imp);background:var(--imp-soft);
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.bignum{font-family:"IBM Plex Mono",monospace;font-size:3.2cqi;font-weight:600;color:var(--imp);line-height:1}
+.bignum small{font-size:1.4cqi;color:var(--muted);font-weight:400;margin-left:.6cqi}
+
+/* banda de la advertencia intencional (diapositiva 6) */
+.warnband{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.2cqi 1.6cqi;
+  display:flex;flex-direction:column;gap:.55cqi;
+}
+.warnband .hd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.1cqi;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--imp);font-weight:600;
+}
+.warnband .msg{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;line-height:1.5;color:var(--ink);word-break:break-word}
+.warnband .why{font-size:1.32cqi;line-height:1.45;color:var(--muted)}
+
+/* predictor de conversiones (diapositiva 9) */
+.opts{display:flex;gap:.9cqi;flex-wrap:wrap}
+.opt{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.75cqi 1.5cqi;cursor:pointer;
+}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt.good{background:var(--fn-soft);border:2px solid var(--fn);font-weight:600;padding:.65cqi 1.4cqi}
+.opt.bad{background:var(--surface-2);border-color:var(--muted);color:var(--muted);text-decoration:line-through}
+.opt:disabled{cursor:default}
+.verdict{font-size:1.4cqi;line-height:1.45;color:var(--ink);min-height:7cqi}
+.verdict .head{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:.5cqi}
+.verdict .head.ok{color:var(--fn)}
+.verdict .head.no{color:var(--imp)}
+
+/* columna que difiere entre modelos de datos (diapositiva 10) */
+th.diff,td.diff{background:var(--imp-soft)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.5 — componentes que no existían en la 1.4.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* cadena de las cinco piezas (diapositiva 3) */
+.chain{display:flex;align-items:stretch;gap:.8cqi;flex-wrap:nowrap}
+.link{
+  flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface-2);padding:1.1cqi 1cqi;
+  display:flex;flex-direction:column;gap:.5cqi;text-align:center;
+}
+.link .n{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.link .w{font-size:1.42cqi;font-weight:600;line-height:1.2;color:var(--ink)}
+.link .d{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.link.hot{border-color:var(--imp);background:var(--imp-soft)}
+.arrowmini{display:flex;align-items:center;color:var(--muted);font-size:1.6cqi;flex:0 0 auto}
+
+/* comparación de las dos versiones (diapositiva 5) */
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:2cqi;align-items:stretch}
+.vcard{
+  border:1px solid var(--line);border-radius:8px;padding:1.6cqi 1.8cqi;
+  display:flex;flex-direction:column;gap:.9cqi;background:var(--surface-2);
+}
+.vcard.bad{border:2px solid var(--muted);opacity:.82}
+.vcard.good{border:2px solid var(--fn);background:var(--fn-soft)}
+.vcard .vh{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.vcard.bad .vh{color:var(--muted)}
+.vcard.good .vh{color:var(--fn)}
+.vcard h4{margin:0;font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif}
+.vrow{display:flex;justify-content:space-between;gap:1cqi;font-size:1.3cqi;line-height:1.4;border-bottom:1px solid var(--line);padding-bottom:.5cqi}
+.vrow:last-of-type{border-bottom:0}
+.vrow span:first-child{color:var(--muted)}
+.vrow span:last-child{text-align:right;font-family:"IBM Plex Mono",monospace;color:var(--ink)}
+.vcard.good .vrow span:last-child{font-weight:600}
+
+/* selector de ruta por sistema operativo (diapositiva 6) */
+.osbtns{display:flex;gap:.8cqi;flex-wrap:wrap}
+.osbtn{
+  font:inherit;font-family:"IBM Plex Sans",sans-serif;font-size:1.45cqi;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);padding:.85cqi 1.6cqi;cursor:pointer;
+  display:flex;align-items:center;gap:.7cqi;
+}
+.osbtn:hover{border-color:var(--accent);color:var(--accent)}
+.osbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.osbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ospanel{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:1cqi;min-height:26cqi;
+}
+.ospanel .oh{font-size:1.9cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;color:var(--ink)}
+.ospanel .ol{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.ospanel ol{margin:0;padding-left:2.4cqi;display:flex;flex-direction:column;gap:.7cqi}
+.ospanel li{font-size:1.42cqi;line-height:1.4}
+.ospanel .nope{font-size:1.28cqi;line-height:1.45;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.2cqi}
+
+/* teclas (diapositiva 8) */
+.kbd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.35cqi;font-weight:600;
+  border:1px solid var(--line);border-bottom-width:3px;border-radius:5px;
+  background:var(--surface);padding:.35cqi .9cqi;color:var(--ink);white-space:nowrap;
+}
+.keyrow{display:flex;flex-direction:column;gap:1cqi}
+.keyline{display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi}
+.keyline .txt{color:var(--ink)}
+.keyline .txt em{font-style:normal;color:var(--muted);font-size:1.25cqi}
+
+/* lista de verificación pulsable (diapositiva 12) */
+.checks{display:flex;flex-direction:column;gap:.85cqi}
+.chk{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1cqi 1.4cqi;display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi;
+}
+.chk:hover{border-color:var(--accent)}
+.chk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chk .mk{
+  flex:0 0 auto;width:2.2cqi;height:2.2cqi;border-radius:5px;
+  border:2px solid var(--line);display:flex;align-items:center;
+  justify-content:center;font-size:1.3cqi;color:transparent;
+}
+.chk[aria-pressed="true"]{background:var(--fn-soft);border-color:var(--fn)}
+.chk[aria-pressed="true"] .mk{background:var(--fn);border-color:var(--fn);color:#fff}
+.tally{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.tally b{color:var(--fn);font-size:2cqi}
+
+/* modificador de densidad: para las diapositivas cuyo contenido es
+   irreducible sin perder información (la tabla de los cinco tipos de
+   entorno y la comparación de macOS). Solo ajusta espaciados y escala
+   tipográfica dentro de la diapositiva; no toca ningún token. */
+.dense{gap:1.6cqi}
+.dense table{font-size:1.36cqi}
+.dense th,.dense td{padding:.6cqi 1cqi}
+.dense .alert{font-size:1.36cqi;padding:1cqi 1.4cqi}
+.dense .note{font-size:1.34cqi}
+.dense .lead{font-size:1.78cqi}
+.dense .panel li{font-size:1.38cqi}
+.dense .panel p{font-size:1.38cqi}
+.dense pre{font-size:1.3cqi}
+
+/* banda de advertencia sobria (varias diapositivas) */
+.alert{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.3cqi 1.7cqi;
+  font-size:1.5cqi;line-height:1.45;
+}
+.alert b{color:var(--imp)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 2.1 / 2.2 — componentes que no existían en la
+   1.5. No se modificó ningún token de color ni ningún tamaño anterior;
+   todo lo que sigue son componentes nuevos que usan los mismos tokens.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos se dibujan en tinta neutra; el ámbar marca «esto es lo
+   que estamos mirando» o «esto está mal», y el verde azulado marca
+   «esto está bien». Siempre acompañado de etiqueta de texto.
+   ====================================================================== */
+
+/* diagramas de flujo en SVG */
+.fc{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fc .sh{fill:var(--dsurf);stroke:var(--dink);stroke-width:2.4}
+.fc .sh.hot{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc .sh.ok{fill:var(--dfns);stroke:var(--dfn);stroke-width:3.4}
+.fc .sh.err{fill:var(--dimps);stroke:var(--dimp);stroke-width:4;stroke-dasharray:7 5}
+.fc .t{
+  fill:var(--dink);font-family:"IBM Plex Mono",monospace;
+  font-size:15px;text-anchor:middle;dominant-baseline:middle;
+}
+.fc .t.sm{font-size:13px}
+.fc .fl{fill:none;stroke:var(--dmut);stroke-width:2.2}
+.fc .fl.err{stroke:var(--dimp);stroke-width:3.2;stroke-dasharray:7 5}
+.fc .fll{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fc .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:12px;text-anchor:middle}
+.fc .spot{cursor:pointer}
+.fc .spot .ring{fill:none;stroke:var(--dimp);stroke-width:3;opacity:0}
+.fc .spot[data-found="1"] .ring{opacity:1}
+.fc .mark{fill:var(--dimp);font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;text-anchor:middle;opacity:0}
+.fc .spot[data-found="1"] .mark{opacity:1}
+#armk path{fill:var(--muted)}
+
+/* vitrina de un solo símbolo (diapositiva 5) */
+.symstage{
+  border:1px solid var(--line);border-radius:8px;background:var(--surface-2);
+  padding:1.2cqi;display:flex;align-items:center;justify-content:center;
+  min-height:19cqi;
+}
+.symstage svg{width:100%;max-height:17cqi}
+
+/* fila de equivalencias pseudocódigo ↔ símbolo */
+.eq{display:flex;flex-direction:column;gap:.7cqi}
+.eqrow{
+  display:grid;grid-template-columns:1.1fr 1.4cqi 1fr;gap:1.1cqi;align-items:center;
+  border-bottom:1px solid var(--line);padding-bottom:.6cqi;
+}
+.eqrow:last-child{border-bottom:0}
+.eqrow .k1{font-family:"IBM Plex Mono",monospace;font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2{font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2 em{font-style:normal;color:var(--muted);font-size:1.2cqi;display:block}
+.eqrow .to{color:var(--muted);font-size:1.3cqi;text-align:center}
+
+/* reglas numeradas de trazado */
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:1.1cqi 2cqi}
+.rule{display:flex;gap:1.1cqi;align-items:flex-start}
+.rule .rn{
+  flex:0 0 auto;width:2.5cqi;height:2.5cqi;border-radius:50%;
+  border:2px solid var(--accent);color:var(--accent);
+  font-family:"IBM Plex Mono",monospace;font-size:1.25cqi;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+}
+.rule .rt{font-size:1.42cqi;line-height:1.38}
+.rule .rt b{display:block;font-size:1.5cqi;margin-bottom:.15cqi}
+.rule .rt span{color:var(--muted);font-size:1.26cqi}
+
+/* marcador del cazador de errores */
+.hunt{display:flex;align-items:center;gap:1.4cqi;flex-wrap:wrap}
+.hunt .score{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.hunt .score b{color:var(--imp);font-size:2.1cqi}
+.huntmsg{font-size:1.38cqi;line-height:1.42;color:var(--ink);min-height:6.4cqi}
+.huntmsg .head{
+  font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.1em;
+  text-transform:uppercase;display:block;margin-bottom:.4cqi;
+}
+.huntmsg .head.no{color:var(--imp)}
+.huntmsg .head.ok{color:var(--fn)}
+
+/* separador de cápsula dentro de la misma presentación */
+.divider{
+  justify-content:center;gap:1.4cqi;
+  background:linear-gradient(115deg, var(--accent-soft) 0%, transparent 55%);
+}
+.divider .big{font-size:4.6cqi;line-height:1.06;letter-spacing:-.02em}
+.divider .kicker{
+  font-family:"IBM Plex Mono",monospace;font-size:1.4cqi;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);font-weight:600;
+}
+
+/* ficha de herramienta (diapositiva 20) */
+.tool{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi;min-height:27cqi;
+}
+.tool .th{font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.tool .tf{font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.tool .tp{font-size:1.4cqi;line-height:1.42;color:var(--ink)}
+.tool .tlim{font-size:1.26cqi;line-height:1.42;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.1cqi}
+.tool .tsrc{font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;color:var(--muted);line-height:1.5}
+
+/* el modificador .dense de la cápsula 1.5, extendido a los componentes
+   nuevos de esta cápsula. Sigue sin tocar ningún token de color. */
+.dense .rules{gap:.8cqi 1.6cqi}
+.dense .rule .rt{font-size:1.32cqi}
+.dense .rule .rt b{font-size:1.4cqi}
+.dense .rule .rt span{font-size:1.18cqi}
+.dense .vrow{font-size:1.22cqi}
+.dense .vcard{padding:1.2cqi 1.4cqi;gap:.7cqi}
+.dense .vcard h4{font-size:1.8cqi}
+.dense .tool{min-height:24cqi;padding:1.2cqi 1.5cqi;gap:.7cqi}
+.dense .tp{font-size:1.3cqi}
+.dense .eqrow .k1,.dense .eqrow .k2{font-size:1.26cqi}
+.dense .callout{font-size:1.38cqi;padding:1.1cqi 1.5cqi}
+.dense .refs{font-size:1.2cqi}
+.dense .fc .t{font-size:14px}
+
+/* el diagrama vertical completo, cuando comparte diapositiva con texto */
+.fc.fit{max-height:40cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LAS CÁPSULAS 2.3 / 2.4 / CICLOS — componentes que no
+   existían en la 2.1-2.2. No se modificó ningún token de color ni ningún
+   tamaño anterior: todo lo que sigue usa los mismos tokens del curso.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos van en tinta neutra; el ámbar marca «esto está mal» y el
+   verde azulado «esto está bien», siempre con etiqueta de texto.
+   ====================================================================== */
+
+/* punto de reunión / de retorno: la unión de dos caminos en uno */
+.fc .jn{fill:var(--dmut);stroke:none}
+
+/* los diagramas de esta cápsula son más altos que los de la 2.1: se
+   limita su altura para que nunca desborden la diapositiva. El ancho
+   sigue mandando; la altura solo recorta cuando el diagrama es vertical. */
+.slide .fc{max-height:34cqi}
+.dense .fc{max-height:32cqi}
+.trio .fc{max-height:28cqi}
+.split .fc, .split-r .fc{max-height:34cqi}
+
+/* tabla compacta para la traza del ciclo (diapositiva 22) */
+table.mini{font-size:1.3cqi;font-variant-numeric:tabular-nums}
+table.mini th, table.mini td{padding:.42cqi .8cqi}
+table.mini thead th{font-size:1.05cqi}
+table.mini td.mono{font-family:"IBM Plex Mono",monospace}
+table.mini tr.on td{background:var(--accent-soft)}
+table.mini tr.out td{color:var(--muted)}
+
+/* reglas numeradas en una sola columna (diapositiva 27) */
+.rules.one{grid-template-columns:1fr;gap:1cqi}
+
+/* ficha de las cinco piezas / los cinco pasos */
+.faces .txt b{margin-bottom:.1cqi}
+
+/* separador de bloque: el mismo de la 2.2, con la variante de ciclos */
+.divider .lead{max-width:56ch}
+
+/* pseudocódigo dentro de una tarjeta de comparación */
+.vcard pre{background:var(--surface);font-size:1.3cqi}
+.vcard .note{font-size:1.32cqi;line-height:1.45}
+.vcard h4{font-size:1.75cqi;line-height:1.25}
+
+/* el panel de la traza no debe estirarse */
+.controls{margin-top:.8cqi}
+
+/* el modificador .dense, extendido a lo nuevo de esta cápsula */
+.dense .faces .txt{font-size:1.36cqi}
+.dense .faces .txt b{font-size:1.46cqi}
+.dense .faces .txt span{font-size:1.24cqi}
+.dense .versus .vcard{padding:1.2cqi 1.4cqi}
+.dense table.mini{font-size:1.22cqi}
+.dense .verdict{font-size:1.3cqi;min-height:5cqi}
+
+/* lista de verificación compacta (diapositiva 29) */
+.dense .checks{gap:.5cqi}
+.dense .chk{padding:.5cqi .85cqi;font-size:1.22cqi;line-height:1.3}
+.dense .chk .mk{width:1.7cqi;height:1.7cqi;font-size:1.05cqi}
+.dense .tally{font-size:1.3cqi}
+.dense .tally b{font-size:1.7cqi}
+.dense .refs{font-size:1.16cqi;line-height:1.5}
+.dense .panel li{line-height:1.34}
+
+/* resaltado de una pieza del diagrama durante la traza (diapositiva 22).
+   Ambar = «esto es lo que estamos mirando», nunca un tipo de símbolo. */
+.fc g.hot .sh{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc g.hot .fl{stroke:var(--dimp);stroke-width:3}
+.fc g.hot .t{font-weight:600}
+
+/* los dos diagramas comparativos de la diapositiva 20 */
+.trio .panel .fc{max-height:28cqi;margin-top:.4cqi}
+.tag em{font-style:normal;color:var(--muted);text-transform:none;letter-spacing:0}
+
+/* el pseudocódigo, un punto más compacto en las diapositivas .dense */
+.dense pre{font-size:1.26cqi;line-height:1.45;padding:1.1cqi 1.3cqi}
+
+/* filas de la traza todavia no alcanzadas: ocupan sitio, no distraen */
+table.mini tr.pend td{color:var(--line)}
+
+/* diapositiva 26: el diagrama mas complejo del curso necesita ancho */
+.split.ancho{grid-template-columns:1.5fr 1fr}
+.split.ancho .fc{max-height:38cqi}
+
+/* .grande: los diagramas casi cuadrados se reducen mucho al caber en la
+   diapositiva, asi que su tipografia interna se dibuja mas grande para que
+   siga leyendose. Solo cambia el tamano del texto dentro del SVG. */
+.fc.grande .t{font-size:21px}
+.fc.grande .t.sm{font-size:19px}
+.fc.grande .fll{font-size:18px}
+.fc.grande .cap{font-size:16px}
+
+/* nota bajo un diagrama (diapositiva 22) */
+.split > div > .note{margin-top:.8cqi;font-size:1.3cqi}
+
+/* diapositiva 22: la traza ocupa alto fijo; el diagrama cede un poco */
+#trzBody + tr, .slide .panel table.mini{margin-bottom:.2cqi}
+.dense .split .fc.ej1, .split .fc.ej1{max-height:26cqi}
+
+/* el mensaje de la traza reserva su alto: la diapositiva no salta al avanzar */
+#trzMsg{min-height:5.6cqi;margin-top:.5cqi}
+
+/* correcciones de herencia sobre componentes de la 1.4/1.5 -------------
+   .face .txt b es display:block en la hoja base (sirve para el titulo de
+   la ficha); los <b> que van DENTRO del parrafo tienen que seguir en
+   linea. Y el texto de una casilla va en un solo elemento, porque .chk es
+   un contenedor flex y cada nodo suelto se separaria del resto. */
+.face .txt span b, .dense .faces .txt span b{display:inline;font-size:inherit}
+.chk .lbl{flex:1 1 auto}
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 3 — componentes nuevos (código C, consola,
+   ejemplo guiado paso a paso, explorador de etapas). No se modificó ningún
+   token ni ningún tamaño anterior: todo usa los tokens del curso.
+   Regla de color respetada: ámbar = C / lo que cambia / lo que estamos
+   mirando; verde azulado = lo correcto; el color siempre va con texto.
+   ====================================================================== */
+
+/* consola: la salida REAL de un programa. Se distingue del código por
+   el filete verde azulado y la etiqueta «consola», no por un fondo propio. */
+pre.con{background:var(--ground);border-left:4px solid var(--fn);color:var(--ink)}
+pre.con .u{color:var(--accent);font-weight:600}      /* lo que teclea el usuario */
+pre.con .e{color:var(--imp);font-weight:600}         /* error / advertencia */
+pre.cc{border-left:4px solid var(--imp)}             /* código C */
+.dense pre.con, .dense pre.cc{font-size:1.2cqi;line-height:1.42}
+pre.tiny{font-size:1.08cqi !important;line-height:1.38 !important;padding:.8cqi 1cqi !important}
+
+/* líneas de código enlazadas con una figura del diagrama */
+pre .ln{display:inline-block;width:100%;border-radius:3px;cursor:pointer}
+pre .ln:hover, pre .ln.hot{background:var(--imp-soft);outline:1px solid var(--imp)}
+
+/* anatomía del programa: partes pulsables */
+pre .part{cursor:pointer;border-bottom:2px dotted var(--accent);border-radius:2px}
+pre .part.on{background:var(--accent-soft);border-bottom-style:solid}
+
+/* ejemplo guiado: pasos */
+.gsteps{display:flex;gap:.5cqi;flex-wrap:wrap;margin:.2cqi 0 .9cqi}
+.gsteps .tbtn{font-size:1.15cqi;padding:.45cqi .9cqi}
+.gbody{display:grid}
+.gbody > .gpane{grid-area:1/1;visibility:hidden;min-width:0}
+.gbody > .gpane.on{visibility:visible}
+.gcols{display:grid;grid-template-columns:1.1fr 1fr;gap:2cqi;align-items:start}
+.gcols .fc{max-height:33.4cqi}
+.gdiag{position:relative}
+.gdiag.off .fc{opacity:.07}
+.gdiag.off::after{content:"el diagrama se construye en el paso 3";position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;color:var(--muted)}
+.gpane p, .gpane li{font-size:1.36cqi;line-height:1.45}
+.gpane table{font-size:1.25cqi}
+.gpane h4{font-family:"IBM Plex Serif",Georgia,serif;font-size:1.7cqi;margin:0 0 .5cqi}
+
+/* explorador de etapas (diapositiva 7): la figura pulsable */
+.fc .spot:hover .sh, .fc .spot.sel .sh{fill:var(--dimps);stroke:var(--dimp);stroke-width:3.4}
+#etOut{min-height:8cqi}
+
+/* validador de identificadores y tabla de verdad */
+.idgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6cqi}
+.idgrid .opt{font-family:"IBM Plex Mono",monospace;font-size:1.25cqi}
+.kw{display:flex;flex-wrap:wrap;gap:.35cqi .5cqi;font-family:"IBM Plex Mono",monospace;font-size:1.08cqi}
+.kw span{padding:.15cqi .45cqi;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.kw span.new{border-color:var(--imp);color:var(--imp)}
+.tv{display:grid;grid-template-columns:repeat(3,1fr);gap:.8cqi;text-align:center;margin-top:.8cqi}
+.tv .tvc{display:flex;flex-direction:column;align-items:center;gap:.3cqi;border:1px solid var(--line);border-radius:8px;padding:.8cqi;background:var(--surface)}
+.tv .tvc b{font-family:"IBM Plex Mono",monospace;font-size:2.6cqi;line-height:1}
+.tv .tvc span{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted)}
+.tv .tvc.v1 b{color:var(--fn)} .tv .tvc.v0 b{color:var(--imp)}
+
+/* evaluación de expresiones paso a paso */
+.evsteps{font-family:"IBM Plex Mono",monospace;font-size:1.45cqi;line-height:1.7}
+.evsteps div{padding:.1cqi .6cqi;border-radius:4px}
+.evsteps div.pend{color:var(--line)}
+.evsteps div.cur{background:var(--accent-soft)}
+.evsteps u{text-decoration:none;background:var(--imp-soft);outline:1px solid var(--imp);border-radius:3px}
+
+/* callouts y listas un poco más compactos en diapositivas densas */
+.dense .panel p{margin:.3cqi 0}
+.split.w46{grid-template-columns:1fr 1.15fr}
+.split.w64{grid-template-columns:1.3fr 1fr}
+.split .fc.mid{max-height:30cqi}
+.fc.wide{max-height:none !important;flex-shrink:0}
+.mono.b{font-weight:600}
+/* altura fija de los tres diagramas de proceso: no se encogen (flex) ni
+   empujan el resto de la diapositiva fuera del escenario */
+.fc.wide.dciclo{height:22cqi}
+.fc.wide.detapas{height:22cqi}
+.fc.wide.dfallas{height:16cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 4 — sin tocar tokens: tabla ASCII, predicciones
+   y leyenda de rangos. Mismo sistema de color (ámbar = C / lo que se mira;
+   verde azulado = lo correcto), siempre con texto.
+   ====================================================================== */
+.ascii{display:grid;grid-template-columns:repeat(16,1fr);gap:.28cqi}
+.ascii button{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;padding:.35cqi 0;border:1px solid var(--line);
+  border-radius:4px;background:var(--surface);color:var(--ink);cursor:pointer;line-height:1.2}
+.ascii button:hover{border-color:var(--accent)}
+.ascii button.d{border-color:var(--fn)} .ascii button.M{border-color:var(--imp)} .ascii button.m{border-color:var(--accent)}
+.ascii button.sel{background:var(--imp-soft);outline:2px solid var(--imp)}
+.asciiout{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;margin:.3cqi 0;min-height:4.4cqi}
+.rg{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;padding:0 .4cqi;border-radius:3px;border:1px solid var(--line)}
+.rg.d{border-color:var(--fn)} .rg.M{border-color:var(--imp)} .rg.m{border-color:var(--accent)}
+.pred{display:flex;flex-direction:column;gap:.4cqi}
+.pred .row{display:flex;gap:.8cqi;align-items:center}
+.pred pre.con{min-height:2.2cqi;margin:0;flex:1}
+.pred pre.con.hid{color:transparent}
+.pred .tbtn{font-size:1.1cqi;padding:.35cqi .8cqi;white-space:nowrap}
+#bisTab td{padding:.25cqi .8cqi}
+#bisOut, #brkA, #brkB{min-height:5.2cqi}
+#ordA, #ordB{min-height:2.4cqi}
+.tri .panel .refs{margin:.2cqi 0 0;font-size:1cqi}
+.tri .panel pre.con{margin:.1cqi 0 .2cqi}
+.tri .panel .note{margin:.4cqi 0 0}
+table.mini{font-size:1.15cqi}
+table.mini td, table.mini th{padding:.2cqi .6cqi}
+tr.bad td{background:var(--imp-soft)}
+.split > *, .split-r > *, .duo > *, .gcols > *{min-width:0}
+pre.con.wr{white-space:pre-wrap;overflow-wrap:anywhere}
+.cuatro{display:grid;grid-template-columns:repeat(4,1fr);gap:1cqi}
+.cuatro .pred .row{flex-direction:column;align-items:stretch}
+.tri{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:1.4cqi;align-items:start}
+.tri .refs{margin:0 0 .3cqi}
+.tri pre.con{margin:.2cqi 0 .5cqi}
+.tri .panel .note{font-size:1.1cqi;line-height:1.3}
+.split.r16{grid-template-columns:1fr 1.7fr}
+.segunbox .fc{max-height:21cqi;width:100%}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="armk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+</defs></svg>
+
+<div class="rail">
+  <span class="id"><b>IS284</b> · Programación II</span>
+  <span class="id">Semana 4 · Selección en C99 y el tipo char</span>
+  <span class="spacer"></span>
+  <span class="counter"><b id="cur">1</b> / 36</span>
+  <button class="btn" id="prev" type="button">← Anterior</button>
+  <button class="btn" id="next" type="button">Siguiente →</button>
+  <button class="btn" id="toggleNotes" type="button" aria-pressed="false">Notas (N)</button>
+</div>
+<div class="progress"><span id="bar" style="width:2.78%"></span></div>
+
+<div class="wrap">
+<div class="stage" id="stage">
+
+<!-- 1 ............................................................. -->
+<section class="slide cover on" data-t="if / if-else · 0:32">
+  <p class="inst">UNIVERSIDAD TECNOLÓGICA DE PEREIRA<br>Facultad de Ingenierías · Ingeniería de Sistemas y Computación</p>
+  <p class="course">Programación II · IS284 · Semana 4 · Cápsulas 4.3 y 4.4 + el tipo char</p>
+  <h1>Muchos caminos: <span class="mono">else&nbsp;if</span>, <span class="mono">char</span> y <span class="mono">switch</span></h1>
+  <div class="who">
+    <span>Docente<b>Ing. Andres Vargas</b></span>
+    <span>Contenido<b>más if / if-else · else if · anidadas · char · switch</b></span>
+    <span>Video<b>Cuatro bloques de 7:00</b></span>
+    <span>Notación de la semana<b>Diagrama y C99</b></span>
+  </div>
+</section>
+
+<!-- 2 ............................................................. -->
+<section class="slide dense" data-t="if / if-else · 0:49">
+  <p class="eyebrow"><span class="tick"></span> Qué tiene que lograr</p>
+  <h2 class="title">Elegir entre muchos caminos, también con letras</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Objetivos observables</span>
+      <ul>
+        <li><b>Escribir</b> decisiones simples y compuestas en C sin las trampas que compilan: reales con <span class="mono">==</span>, <span class="mono">if</span> sueltos, condiciones siempre verdaderas.</li>
+        <li><b>Elegir</b> entre varios caminos con <span class="mono">else if</span> y con decisiones anidadas, y <b>explicar</b> por qué el orden de las condiciones cambia el resultado.</li>
+        <li><b>Leer, comparar y transformar</b> caracteres con el tipo <span class="mono">char</span>.</li>
+        <li><b>Escribir</b> un <span class="mono">switch</span> con sus <span class="mono">break</span> y su <span class="mono">default</span>, y <b>decidir</b> cuándo conviene más que un <span class="mono">if</span>.</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Evidencia que se evalúa</span>
+      <p><b>1. Diez ejercicios en C</b> (<span class="mono">S04_actividad_evaluativa.md</span>): usted los programa y los prueba con sus casos de prueba.</p>
+      <p><b>2. Formulario de 20 preguntas.</b> Cada pregunta le da unos <b>datos</b>; usted ejecuta <b>su</b> programa con ellos y elige lo que muestra la consola.</p>
+      <p>No se suben archivos, pero <b>sin los programas no hay respuestas</b>. Apoyo: <span class="mono">S04_lectura.md</span> y <span class="mono">S04_codigo/</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ............................................................. -->
+<section class="slide dense" data-t="if / if-else · 0:52">
+  <p class="eyebrow"><span class="tick"></span> Repaso de la semana 3</p>
+  <h2 class="title"><span class="mono">if</span> e <span class="mono">if-else</span> en una diapositiva</h2>
+  <div class="duo">
+    <div class="panel">
+      <span class="tag">Decisión simple</span>
+      <pre class="cc tiny"><span class="k">if</span> (condición) {
+    instrucciones;
+}
+<span class="c">/* si es falsa, sigue aquí */</span></pre>
+      <p>Solo hay algo que hacer <b>cuando se cumple</b>. La rama No va directa al punto de reunión.</p>
+    </div>
+    <div class="panel">
+      <span class="tag">Decisión compuesta</span>
+      <pre class="cc tiny"><span class="k">if</span> (condición) {
+    instrucciones del Sí;
+} <span class="k">else</span> {
+    instrucciones del No;
+}</pre>
+      <p>Uno de dos bloques, <b>nunca los dos</b>. <span class="mono">else</span> no lleva condición.</p>
+    </div>
+  </div>
+  <div class="panel imp">
+    <span class="tag imp">Las tres reglas que siguen en pie</span>
+    <ul>
+      <li>La condición <b>entre paréntesis</b> y <b>sin <span class="mono">;</span></b> después del paréntesis.</li>
+      <li><span class="mono">==</span> para comparar; <span class="mono">=</span> guarda un valor.</li>
+      <li><b>Llaves siempre</b>, aunque el bloque tenga una sola línea.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 4 ............................................................. -->
+<section class="slide dense" data-t="if / if-else · 0:48">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo 1 · decisión simple</p>
+  <h2 class="title">Envío gratis desde $150 000</h2>
+  <div class="split w64">
+    <div>
+      <p class="note">«Una tienda cobra $12 000 de envío, salvo que la compra llegue a $150 000: <b>desde</b> ese valor el envío es gratis.»</p>
+      <pre class="cc tiny" data-src="envio.c">envio = COSTO_ENVIO;
+<span class="k">if</span> (compra &gt;= MINIMO_ENVIO_GRATIS) {
+    envio = <span class="n">0.0</span>;
+}
+total = compra + envio;</pre>
+      <div class="duo">
+        <pre class="con tiny">Valor de la compra: <span class="u">200000</span>
+Envio: 0.00
+Total: 200000.00</pre>
+        <pre class="con tiny">Valor de la compra: <span class="u">150000</span>
+Envio: 0.00
+Total: 150000.00</pre>
+      </div>
+      <pre class="con tiny">Valor de la compra: <span class="u">149999</span>
+Envio: 12000.00
+Total: 161999.00</pre>
+      <p class="note"><b>Patrón:</b> se inicializa con el valor normal y el <span class="mono">if</span> solo lo cambia cuando hace falta. 150000 es la <b>frontera</b>: «desde» incluye el igual. Programa: <span class="mono">envio.c</span>.</p>
+    </div>
+    <div><svg class="fc" viewBox="0 0 416 546" role="img" aria-label="Diagrama: envio gratis desde 150000"><g id="ev-ini"><rect class="sh" x="82.8" y="14" width="150" height="36" rx="18"/><text class="t" x="157.8" y="32">Inicio</text></g><line class="fl" x1="157.8" y1="50" x2="157.8" y2="72" marker-end="url(#armk)"/><g id="ev-leer"><polygon class="sh" points="93.6,72 263.6,72 222,112 52,112"/><text class="t" x="157.8" y="92">Leer compra</text></g><line class="fl" x1="157.8" y1="112" x2="157.8" y2="134" marker-end="url(#armk)"/><g id="ev-ini2"><rect class="sh" x="72.8" y="134" width="170" height="40" rx="3"/><text class="t" x="157.8" y="154">envio ← 12000</text></g><line class="fl" x1="157.8" y1="174" x2="157.8" y2="196" marker-end="url(#armk)"/><g id="ev-dec"><polygon class="sh" points="157.8,196 282.8,237 157.8,278 32.8,237"/><text class="t" x="157.8" y="237">compra &gt;= 150000</text></g><polyline class="fl" points="282.8,237 316.8,237 316.8,286" marker-end="url(#armk)"/><text class="fll" x="299.8" y="227">Sí</text><g id="ev-cero"><rect class="sh" x="231.8" y="286" width="170" height="40" rx="3"/><text class="t" x="316.8" y="306">envio ← 0</text></g><polyline class="fl" points="316.8,326 316.8,350 166.8,350" marker-end="url(#armk)"/><line class="fl" x1="157.8" y1="278" x2="157.8" y2="344" marker-end="url(#armk)"/><text class="fll" x="175.8" y="296">No</text><circle class="jn" cx="157.8" cy="350" r="5"/><line class="fl" x1="157.8" y1="350" x2="157.8" y2="372" marker-end="url(#armk)"/><g id="ev-tot"><rect class="sh" x="39.7" y="372" width="236.2" height="40" rx="3"/><text class="t" x="157.8" y="392">total ← compra + envio</text></g><line class="fl" x1="157.8" y1="412" x2="157.8" y2="434" marker-end="url(#armk)"/><g id="ev-mos"><polygon class="sh" points="55.6,434 301.6,434 260,474 14,474"/><text class="t" x="157.8" y="454">Mostrar envio, total</text></g><line class="fl" x1="157.8" y1="474" x2="157.8" y2="496" marker-end="url(#armk)"/><g id="ev-fin"><rect class="sh" x="82.8" y="496" width="150" height="36" rx="18"/><text class="t" x="157.8" y="514">Fin</text></g></svg></div>
+  </div>
+</section>
+
+<!-- 5 ............................................................. -->
+<section class="slide dense" data-t="if / if-else · 0:52">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo 2 · compuesta con condición de tres partes</p>
+  <h2 class="title">¿Es bisiesto?</h2>
+  <p class="note">«Un año es bisiesto si es múltiplo de 4 y no de 100, <b>o</b> si es múltiplo de 400.»</p>
+  <pre class="cc tiny" data-src="bisiesto.c"><span class="k">if</span> ((anio % <span class="n">4</span> == <span class="n">0</span> &amp;&amp; anio % <span class="n">100</span> != <span class="n">0</span>) || anio % <span class="n">400</span> == <span class="n">0</span>) {
+    printf(<span class="s">"%d es bisiesto\n"</span>, anio);
+} <span class="k">else</span> {
+    printf(<span class="s">"%d no es bisiesto\n"</span>, anio);
+}</pre>
+  <div class="split">
+    <div class="panel">
+      <span class="tag">Pulse un año</span>
+      <div class="tbtns" id="bisBtns">
+        <button class="tbtn" type="button" aria-pressed="true" data-i="0">2024</button>
+        <button class="tbtn" type="button" aria-pressed="false" data-i="1">1900</button>
+        <button class="tbtn" type="button" aria-pressed="false" data-i="2">2000</button>
+        <button class="tbtn" type="button" aria-pressed="false" data-i="3">2026</button>
+      </div>
+      <table id="bisTab"><tbody>
+        <tr><td class="mono">anio % 4 == 0</td><td class="mono" id="bis0"></td></tr>
+        <tr><td class="mono">anio % 100 != 0</td><td class="mono" id="bis1"></td></tr>
+        <tr><td class="mono">anio % 400 == 0</td><td class="mono" id="bis2"></td></tr>
+      </tbody></table>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Salida real</span>
+      <pre class="con tiny" id="bisOut"></pre>
+      <p><span class="mono">&amp;&amp;</span> tiene <b>más precedencia</b> que <span class="mono">||</span>: los paréntesis interiores no son obligatorios, pero dejan clara la intención. Los valores 1/0 son los que calcula C para cada parte.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ............................................................. -->
+<section class="slide dense" data-t="if / if-else · 0:52">
+  <p class="eyebrow"><span class="tick"></span> Trampa 1</p>
+  <h2 class="title">Los reales no se comparan con <span class="mono">==</span></h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="reales_igual.c"><span class="k">double</span> a = <span class="n">0.1</span> + <span class="n">0.2</span>;
+<span class="k">double</span> b = <span class="n">0.3</span>;
+<span class="c">...</span>
+<span class="k">if</span> (a == b) {
+<span class="c">...</span>
+diferencia = a - b;
+<span class="k">if</span> (diferencia &lt; <span class="n">0</span>) {
+    diferencia = -diferencia;
+}
+<span class="k">if</span> (diferencia &lt; TOLERANCIA) {</pre>
+    </div>
+    <div>
+      <pre class="con tiny">a = 0.30000000000000004
+b = 0.29999999999999999
+Con ==: distintos
+Con tolerancia: iguales</pre>
+      <div class="panel imp">
+        <span class="tag imp">Por qué</span>
+        <p>0.1, 0.2 y 0.3 <b>no se guardan exactos</b> en binario (cápsula 1.4). Con 17 decimales se ve: los dos números difieren en el último dígito.</p>
+        <p><b>Regla:</b> para reales, se pregunta si la <b>diferencia sin signo</b> es menor que una <b>tolerancia</b> (<span class="mono">#define TOLERANCIA 0.000001</span>). Programa: <span class="mono">reales_igual.c</span>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 ............................................................. -->
+<section class="slide dense" data-t="if / if-else · 0:43">
+  <p class="eyebrow"><span class="tick"></span> Trampa 2</p>
+  <h2 class="title">Dos <span class="mono">if</span> seguidos no son un <span class="mono">if-else</span></h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="ifs_sueltos.c"><span class="k">if</span> (temperatura &gt; <span class="n">30</span>) {
+    printf(<span class="s">"Hace calor\n"</span>);
+}
+<span class="k">if</span> (temperatura &gt; <span class="n">20</span>) {
+    printf(<span class="s">"Clima templado\n"</span>);
+}</pre>
+      <div class="duo">
+        <pre class="con tiny">Temperatura: <span class="u">35</span>
+Hace calor
+Clima templado</pre>
+        <pre class="con tiny">Temperatura: <span class="u">25</span>
+Clima templado</pre>
+      </div>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Qué pasó</span>
+      <ul>
+        <li>Son <b>dos preguntas independientes</b>: se evalúan las dos, siempre.</li>
+        <li>Con 35 se cumplen <b>las dos</b>: 35 &gt; 30 y también 35 &gt; 20. Salen dos mensajes.</li>
+        <li>Si se quería <b>una sola</b> respuesta, faltaba un <span class="mono">else</span>: hace que las preguntas se excluyan.</li>
+        <li>Con <b>más de dos</b> opciones, lo que falta es la escalera <span class="mono">else if</span> del bloque B.</li>
+      </ul>
+      <p class="refs">Programa: <span class="mono">ifs_sueltos.c</span>. Compila sin advertencias: el compilador no puede adivinar la intención.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ............................................................. -->
+<section class="slide dense" data-t="if / if-else · 0:43">
+  <p class="eyebrow"><span class="tick"></span> Trampa 3</p>
+  <h2 class="title">Condiciones que compilan y mienten</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="condiciones.c"><span class="c">/* Se queria: x entre 1 y 9. Con || es verdadera para cualquier x. */</span>
+<span class="k">if</span> (x &gt; <span class="n">0</span> || x &lt; <span class="n">10</span>) {
+<span class="c">...</span>
+<span class="k">if</span> (x &gt; <span class="n">0</span> &amp;&amp; x &lt; <span class="n">10</span>) {
+<span class="c">...</span>
+<span class="c">/* En C, cualquier valor distinto de 0 es verdadero. */</span>
+<span class="k">if</span> (x) {</pre>
+      <div class="duo">
+        <pre class="con tiny">x: <span class="u">25</span>
+Con ||: dentro del rango
+Con &amp;&amp;: fuera del rango
+if (x): verdadero</pre>
+        <pre class="con tiny">x: <span class="u">0</span>
+Con ||: dentro del rango
+Con &amp;&amp;: fuera del rango
+if (x): falso</pre>
+      </div>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Dos lecciones</span>
+      <p><b>Un rango se escribe con <span class="mono">&amp;&amp;</span>.</b> Con <span class="mono">||</span>, todo número cumple al menos una parte: 25 no es menor que 10, pero sí es mayor que 0. La condición es <b>siempre</b> verdadera, y gcc no lo avisa.</p>
+      <p><b>En C, distinto de 0 es verdadero.</b> <span class="mono">if (x)</span> significa <span class="mono">if (x != 0)</span>. Es válido, pero en el curso se escribe la comparación completa: se lee mejor.</p>
+      <p class="refs">Programa: <span class="mono">condiciones.c</span> (cero advertencias con <span class="mono">-Wall -Wextra</span>).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 ............................................................. -->
+<section class="slide dense" data-t="if / if-else · 0:47">
+  <p class="eyebrow"><span class="tick"></span> Compruebe antes de seguir</p>
+  <h2 class="title">¿Qué muestra cada fragmento?</h2>
+  <p class="note">Decida primero; después pulse <b>Ver salida</b>. Cada fragmento se compiló y ejecutó al generar esta presentación: la salida es la real.</p>
+  <div class="cuatro">
+<div class="panel pred"><span class="tag">Fragmento 1</span><pre class="cc tiny"><span class="k">int</span> t = <span class="n">25</span>;
+<span class="k">if</span> (t &gt; <span class="n">30</span>) {
+    printf(<span class="s">"A\n"</span>);
+}
+<span class="k">if</span> (t &gt; <span class="n">20</span>) {
+    printf(<span class="s">"B\n"</span>);
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pr1">Ver salida</button><pre class="con tiny hid" id="pr1">B</pre></div></div>
+<div class="panel pred"><span class="tag">Fragmento 2</span><pre class="cc tiny"><span class="k">double</span> a = <span class="n">0.1</span> * <span class="n">3</span>;
+<span class="k">if</span> (a == <span class="n">0.3</span>) {
+    printf(<span class="s">"igual\n"</span>);
+} <span class="k">else</span> {
+    printf(<span class="s">"distinto\n"</span>);
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pr2">Ver salida</button><pre class="con tiny hid" id="pr2">distinto</pre></div></div>
+<div class="panel pred"><span class="tag">Fragmento 3</span><pre class="cc tiny"><span class="k">int</span> x = <span class="n">15</span>;
+<span class="k">if</span> (x &gt; <span class="n">0</span> || x &lt; <span class="n">10</span>) {
+    printf(<span class="s">"dentro\n"</span>);
+} <span class="k">else</span> {
+    printf(<span class="s">"fuera\n"</span>);
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pr3">Ver salida</button><pre class="con tiny hid" id="pr3">dentro</pre></div></div>
+<div class="panel pred"><span class="tag">Fragmento 4</span><pre class="cc tiny"><span class="k">int</span> n = -<span class="n">2</span>;
+<span class="k">if</span> (n) {
+    printf(<span class="s">"verdadero\n"</span>);
+} <span class="k">else</span> {
+    printf(<span class="s">"falso\n"</span>);
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pr4">Ver salida</button><pre class="con tiny hid" id="pr4">verdadero</pre></div></div>
+  </div>
+</section>
+<!-- 10 ............................................................ -->
+<section class="slide divider" data-t="4.3 else if · 0:24">
+  <p class="kicker">Bloque B · Cápsula 4.3</p>
+  <h2 class="big">La escalera <span class="mono">else if</span><br>y las decisiones anidadas</h2>
+  <p class="lead">En la cápsula 2.4 usted dibujó la escalera de rombos y los rombos anidados. Hoy los escribe en C: el <b>orden</b> de las condiciones, <b>cuándo anidar</b>, el <b>else colgante</b> y cómo <b>probar</b> una escalera.</p>
+</section>
+
+<!-- 11 ............................................................ -->
+<section class="slide dense" data-t="4.3 else if · 0:57">
+  <p class="eyebrow"><span class="tick"></span> Del diagrama al código</p>
+  <h2 class="title">Si · Sino Si · Sino → <span class="mono">if · else if · else</span></h2>
+  <div class="split-r">
+    <div><svg class="fc" viewBox="0 0 483 298" role="img" aria-label="Escalera: si la condicion 1 es falsa se pregunta la 2; el ultimo else recoge el resto"><polygon class="sh" points="116.578,14 219.155,55 116.578,96 14,55"/><text class="t" x="116.578" y="55">condición 1</text><line class="fl" x1="219.155" y1="55" x2="262.155" y2="55" marker-end="url(#armk)"/><text class="fll" x="242.155" y="46">Sí</text><line class="fl" x1="116.578" y1="96" x2="116.578" y2="118" marker-end="url(#armk)"/><text class="fll" x="134.577" y="114">No</text><polygon class="sh" points="116.578,118 219.155,159 116.578,200 14,159"/><text class="t" x="116.578" y="159">condición 2</text><line class="fl" x1="219.155" y1="159" x2="262.155" y2="159" marker-end="url(#armk)"/><text class="fll" x="242.155" y="150">Sí</text><line class="fl" x1="116.578" y1="200" x2="116.578" y2="222" marker-end="url(#armk)"/><text class="fll" x="134.577" y="218">No</text><line class="fl" x1="116.578" y1="262" x2="116.578" y2="284"/><rect class="sh" x="265.155" y="35" width="170" height="40" rx="3"/><text class="t" x="350.155" y="55">bloque 1</text><polyline class="fl" points="350.155,75 350.155,87 465.155,87"/><rect class="sh" x="265.155" y="139" width="170" height="40" rx="3"/><text class="t" x="350.155" y="159">bloque 2</text><polyline class="fl" points="350.155,179 350.155,191 465.155,191"/><rect class="sh" x="30.3275" y="222" width="172.5" height="40" rx="3"/><text class="t" x="116.578" y="242">bloque 3 (else)</text><polyline class="fl" points="465.155,87 465.155,284 124.578,284" marker-end="url(#armk)"/><circle class="jn" cx="116.578" cy="284" r="5"/></svg></div>
+    <div>
+      <div class="duo">
+        <div class="panel">
+          <span class="tag">Pseudocódigo</span>
+          <pre class="tiny"><span class="k">Si</span> cond1 <span class="k">Entonces</span>
+   bloque 1
+<span class="k">Sino Si</span> cond2 <span class="k">Entonces</span>
+   bloque 2
+<span class="k">Sino</span>
+   bloque 3
+<span class="k">FinSi</span></pre>
+        </div>
+        <div class="panel imp">
+          <span class="tag imp">C</span>
+          <pre class="cc tiny"><span class="k">if</span> (cond1) {
+    bloque 1;
+} <span class="k">else if</span> (cond2) {
+    bloque 2;
+} <span class="k">else</span> {
+    bloque 3;
+}</pre>
+        </div>
+      </div>
+      <ul class="panel">
+        <li>Se evalúa <b>de arriba hacia abajo</b>: <b>la primera condición verdadera gana</b>; las siguientes ni se miran.</li>
+        <li>Por eso cada condición puede <b>dar por hecho</b> que todas las anteriores fueron falsas.</li>
+        <li>El <span class="mono">else</span> final no lleva condición: recoge <b>todo lo demás</b>.</li>
+        <li><span class="mono">else if</span> son dos palabras, en la misma línea de la <span class="mono">}</span> anterior.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 12 ............................................................ -->
+<section class="slide dense" data-t="4.3 else if · 0:53">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo guiado · escalera</p>
+  <h2 class="title">Sanción según la velocidad</h2>
+  <div class="tbtns gsteps" data-g="vl">
+    <button class="tbtn" type="button" aria-pressed="true" data-s="1">1 · Enunciado</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="2">2 · Análisis</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="3">3 · Diagrama</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="4">4 · Código C</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="5">5 · Probar</button>
+  </div>
+  <div class="gcols">
+    <div class="gdiag off" data-g="vl"><svg class="fc" viewBox="0 0 626 580" role="img" aria-label="Diagrama del ejemplo guiado: sancion segun la velocidad, escalera de tres rombos"><g id="vl-ini"><rect class="sh" x="78.25" y="14" width="150" height="36" rx="18"/><text class="t" x="153.25" y="32">Inicio</text></g><line class="fl" x1="153.25" y1="50" x2="153.25" y2="72" marker-end="url(#armk)"/><g id="vl-leer"><polygon class="sh" points="78.35,72 269.75,72 228.15,112 36.75,112"/><text class="t" x="153.25" y="92">Leer velocidad</text></g><line class="fl" x1="153.25" y1="112" x2="153.25" y2="134" marker-end="url(#armk)"/><g id="vl-d1"><polygon class="sh" points="153.25,134 271.25,175 153.25,216 35.25,175"/><text class="t" x="153.25" y="175">velocidad &lt;= 50</text></g><line class="fl" x1="271.25" y1="175" x2="335.05" y2="175" marker-end="url(#armk)"/><text class="fll" x="304.65" y="166">Sí</text><line class="fl" x1="153.25" y1="216" x2="153.25" y2="238" marker-end="url(#armk)"/><text class="fll" x="171.25" y="234">No</text><g id="vl-d2"><polygon class="sh" points="153.25,238 271.25,279 153.25,320 35.25,279"/><text class="t" x="153.25" y="279">velocidad &lt;= 60</text></g><line class="fl" x1="271.25" y1="279" x2="348.7" y2="279" marker-end="url(#armk)"/><text class="fll" x="311.475" y="270">Sí</text><line class="fl" x1="153.25" y1="320" x2="153.25" y2="342" marker-end="url(#armk)"/><text class="fll" x="171.25" y="338">No</text><g id="vl-d3"><polygon class="sh" points="153.25,342 271.25,383 153.25,424 35.25,383"/><text class="t" x="153.25" y="383">velocidad &lt;= 80</text></g><line class="fl" x1="271.25" y1="383" x2="344.15" y2="383" marker-end="url(#armk)"/><text class="fll" x="309.2" y="374">Sí</text><line class="fl" x1="153.25" y1="424" x2="153.25" y2="446" marker-end="url(#armk)"/><text class="fll" x="171.25" y="442">No</text><line class="fl" x1="153.25" y1="486" x2="153.25" y2="508"/><g id="vl-s1"><polygon class="sh" points="358.85,155 577.55,155 535.95,195 317.25,195"/><text class="t" x="447.4" y="175">Mostrar «ninguna»</text></g><polyline class="fl" points="447.4,195 447.4,207 607.55,207"/><g id="vl-s2"><polygon class="sh" points="372.5,259 563.9,259 522.3,299 330.9,299"/><text class="t" x="447.4" y="279">Mostrar «leve»</text></g><polyline class="fl" points="447.4,299 447.4,311 607.55,311"/><g id="vl-s3"><polygon class="sh" points="367.95,363 568.45,363 526.85,403 326.35,403"/><text class="t" x="447.4" y="383">Mostrar «grave»</text></g><polyline class="fl" points="447.4,403 447.4,415 607.55,415"/><g id="vl-s4"><polygon class="sh" points="55.6,446 292.5,446 250.9,486 14,486"/><text class="t" x="153.25" y="466">Mostrar «gravisima»</text></g><polyline class="fl" points="607.55,207 607.55,508 161.25,508" marker-end="url(#armk)"/><circle class="jn" cx="153.25" cy="508" r="5"/><line class="fl" x1="153.25" y1="508" x2="153.25" y2="530" marker-end="url(#armk)"/><g id="vl-fin"><rect class="sh" x="78.25" y="530" width="150" height="36" rx="18"/><text class="t" x="153.25" y="548">Fin</text></g></svg></div>
+    <div class="gbody" data-g="vl">
+      <div class="gpane on" data-s="1">
+        <h4>El enunciado</h4>
+        <p>«En una vía con límite de 50 km/h: hasta <b>50</b>, ninguna sanción; hasta <b>60</b>, leve; hasta <b>80</b>, grave; <b>más de 80</b>, gravísima. Lea la velocidad y muestre la sanción.» (Valores del ejemplo.)</p>
+        <p>Lo ambiguo, resuelto: «hasta 60» <b>incluye</b> el 60.</p>
+      </div>
+      <div class="gpane" data-s="2">
+        <h4>Entradas · proceso · salidas</h4>
+        <p><b>Entrada:</b> <span class="mono">velocidad</span> (entero). <b>Salida:</b> <span class="mono">Sancion: …</span>. <b>Proceso:</b> cuatro tramos → tres condiciones y un <span class="mono">else</span>.</p>
+        <table>
+          <thead><tr><th>velocidad</th><th>esperado</th><th>prueba</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">30 · 50</td><td class="mono">ninguna</td><td>tramo · frontera</td></tr>
+            <tr><td class="mono">51 · 60</td><td class="mono">leve</td><td>tras frontera · frontera</td></tr>
+            <tr><td class="mono">61 · 80</td><td class="mono">grave</td><td>tras frontera · frontera</td></tr>
+            <tr><td class="mono">81 · 120</td><td class="mono">gravisima</td><td>tras frontera · tramo</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gpane" data-s="3">
+        <h4>El diagrama</h4>
+        <p>Una <b>escalera de tres rombos</b>: cada No baja al siguiente; cada Sí va a su mensaje, y todos se reúnen abajo.</p>
+        <p>Los rombos van <b>del límite más bajo al más alto</b>, todos con <span class="mono">&lt;=</span>. En la diapositiva siguiente se ve qué pasa si se desordenan.</p>
+      </div>
+      <div class="gpane" data-s="4">
+        <pre class="cc tiny" data-g="vl" data-src="velocidad.c"><span class="ln" data-m="leer">printf(<span class="s">"Velocidad (km/h): "</span>);</span>
+<span class="ln" data-m="leer">scanf(<span class="s">"%d"</span>, &amp;velocidad);</span>
+
+<span class="ln" data-m="d1"><span class="k">if</span> (velocidad &lt;= LIMITE) {</span>
+<span class="ln" data-m="s1">    printf(<span class="s">"Sancion: ninguna\n"</span>);</span>
+<span class="ln" data-m="d2">} <span class="k">else</span> <span class="k">if</span> (velocidad &lt;= LEVE) {</span>
+<span class="ln" data-m="s2">    printf(<span class="s">"Sancion: leve\n"</span>);</span>
+<span class="ln" data-m="d3">} <span class="k">else</span> <span class="k">if</span> (velocidad &lt;= GRAVE) {</span>
+<span class="ln" data-m="s3">    printf(<span class="s">"Sancion: grave\n"</span>);</span>
+<span class="ln" data-m="s4">} <span class="k">else</span> {</span>
+<span class="ln" data-m="s4">    printf(<span class="s">"Sancion: gravisima\n"</span>);</span>
+}</pre>
+        <p class="note">Pase el cursor por cada línea. En la segunda condición basta <span class="mono">velocidad &lt;= LEVE</span>: si llegó ahí, ya no era <span class="mono">&lt;= 50</span>. Constantes: <span class="mono">LIMITE 50</span>, <span class="mono">LEVE 60</span>, <span class="mono">GRAVE 80</span>.</p>
+      </div>
+      <div class="gpane" data-s="5">
+<table class="mini"><thead><tr><th>velocidad</th><th>salida real de velocidad.c</th></tr></thead><tbody><tr><td class="mono">30</td><td class="mono">Sancion: ninguna</td></tr><tr><td class="mono">50</td><td class="mono">Sancion: ninguna</td></tr><tr><td class="mono">51</td><td class="mono">Sancion: leve</td></tr><tr><td class="mono">60</td><td class="mono">Sancion: leve</td></tr><tr><td class="mono">61</td><td class="mono">Sancion: grave</td></tr><tr><td class="mono">80</td><td class="mono">Sancion: grave</td></tr><tr><td class="mono">81</td><td class="mono">Sancion: gravisima</td></tr><tr><td class="mono">120</td><td class="mono">Sancion: gravisima</td></tr></tbody></table>
+        <p class="note">Los ocho casos del paso 2, <b>ejecutados</b> con <span class="mono">velocidad.c</span>: todos dan lo esperado. Cero advertencias.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 ............................................................ -->
+<section class="slide dense" data-t="4.3 else if · 0:49">
+  <p class="eyebrow"><span class="tick"></span> El orden importa</p>
+  <h2 class="title">La misma escalera, en otro orden</h2>
+  <div class="tri">
+    <div><p class="refs"><span class="mono">velocidad.c</span> · ordenada</p>
+    <pre class="cc tiny" data-src="velocidad.c"><span class="k">if</span> (velocidad &lt;= LIMITE) {
+    printf(<span class="s">"Sancion: ninguna\n"</span>);
+} <span class="k">else</span> <span class="k">if</span> (velocidad &lt;= LEVE) {
+    printf(<span class="s">"Sancion: leve\n"</span>);
+} <span class="k">else</span> <span class="k">if</span> (velocidad &lt;= GRAVE) {
+    printf(<span class="s">"Sancion: grave\n"</span>);
+} <span class="k">else</span> {
+    printf(<span class="s">"Sancion: gravisima\n"</span>);
+}</pre></div>
+    <div><p class="refs"><span class="mono">velocidad_desorden.c</span> · desordenada</p>
+    <pre class="cc tiny" data-src="velocidad_desorden.c"><span class="k">if</span> (velocidad &gt; LIMITE) {
+    printf(<span class="s">"Sancion: leve\n"</span>);
+} <span class="k">else</span> <span class="k">if</span> (velocidad &gt; LEVE) {
+    printf(<span class="s">"Sancion: grave\n"</span>);
+} <span class="k">else</span> <span class="k">if</span> (velocidad &gt; GRAVE) {
+    printf(<span class="s">"Sancion: gravisima\n"</span>);
+} <span class="k">else</span> {
+    printf(<span class="s">"Sancion: ninguna\n"</span>);
+}</pre></div>
+    <div class="panel">
+      <span class="tag">Elija una velocidad</span>
+      <div class="tbtns" id="ordBtns"><button class="tbtn" type="button" aria-pressed="false" data-i="0">45 km/h</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">50 km/h</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">55 km/h</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">70 km/h</button><button class="tbtn" type="button" aria-pressed="false" data-i="4">95 km/h</button></div>
+      <p class="refs">ordenada</p><pre class="con tiny" id="ordA"></pre>
+      <p class="refs">desordenada</p><pre class="con tiny" id="ordB"></pre>
+      <p id="ordMsg" class="note"></p>
+    </div>
+  </div>
+  <p class="refs">Las dos compilan sin advertencias. Con <span class="mono">&lt;=</span>, del límite más bajo al más alto; con <span class="mono">&gt;</span>, al revés.</p>
+</section>
+
+<!-- 14 ............................................................ -->
+<section class="slide dense" data-t="4.3 else if · 0:52">
+  <p class="eyebrow"><span class="tick"></span> Decisiones anidadas</p>
+  <h2 class="title">Una decisión dentro de otra</h2>
+  <div class="split">
+    <div>
+      <p class="note">«Para subir a la atracción hay que medir <b>al menos 120 cm</b>. A quien cumple, se le pregunta la edad: con <b>12 o más</b> sube solo; si no, con un adulto.» (Reglas del ejemplo.)</p>
+      <pre class="cc tiny" data-src="atraccion.c"><span class="k">if</span> (estatura &gt;= ESTATURA_MINIMA) {
+    <span class="k">if</span> (edad &gt;= EDAD_SOLO) {
+        printf(<span class="s">"Puede subir solo\n"</span>);
+    } <span class="k">else</span> {
+        printf(<span class="s">"Puede subir con un adulto\n"</span>);
+    }
+} <span class="k">else</span> {
+    printf(<span class="s">"No puede subir\n"</span>);
+}</pre>
+      <pre class="con tiny">Estatura (cm): <span class="u">130</span>
+Edad: <span class="u">10</span>
+Puede subir con un adulto</pre>
+    </div>
+    <div>
+      <svg class="fc" viewBox="0 0 952 376" role="img" aria-label="Decision anidada: la pregunta por la edad esta dentro de la rama Si de la estatura"><g id="at-leer"><polygon class="sh" points="205.87,14 442.77,14 401.17,54 164.27,54"/><text class="t" x="303.52" y="34">Leer estatura, edad</text></g><line class="fl" x1="303.52" y1="54" x2="303.52" y2="76" marker-end="url(#armk)"/><g id="at-d1"><polygon class="sh" points="303.52,76 408.52,117 303.52,158 198.52,117"/><text class="t" x="303.52" y="117">estatura &gt;= 120</text></g><polyline class="fl" points="408.52,117 649.04,117 649.04,166" marker-end="url(#armk)"/><text class="fll" x="528.78" y="107">Sí</text><polyline class="fl" points="198.52,117 130.76,117 130.76,166" marker-end="url(#armk)"/><text class="fll" x="164.64" y="107">No</text><g id="at-d2"><polygon class="sh" points="649.04,166 739.04,207 649.04,248 559.04,207"/><text class="t" x="649.04" y="207">edad &gt;= 12</text></g><polyline class="fl" points="739.04,207 821.54,207 821.54,256" marker-end="url(#armk)"/><text class="fll" x="780.29" y="197">Sí</text><polyline class="fl" points="559.04,207 476.28,207 476.28,256" marker-end="url(#armk)"/><text class="fll" x="517.66" y="197">No</text><g id="at-solo"><polygon class="sh" points="746.64,256 938.04,256 896.44,296 705.04,296"/><text class="t" x="821.54" y="276">Mostrar «solo»</text></g><g id="at-adulto"><polygon class="sh" points="419.84,256 593.04,256 532.72,314 359.52,314"/><text class="t" x="476.28" y="276.5">Mostrar «con</text><text class="t" x="476.28" y="293.5">un adulto»</text></g><polyline class="fl" points="821.54,296 821.54,338 649.04,338"/><polyline class="fl" points="476.28,314 476.28,338 649.04,338"/><circle class="jn" cx="649.04" cy="338" r="5"/><g id="at-no"><polygon class="sh" points="74.32,166 247.52,166 187.2,224 14,224"/><text class="t" x="130.76" y="186.5">Mostrar «no</text><text class="t" x="130.76" y="203.5">puede subir»</text></g><polyline class="fl" points="649.04,338 649.04,362 303.52,362"/><polyline class="fl" points="130.76,224 130.76,362 303.52,362"/><circle class="jn" cx="303.52" cy="362" r="5"/></svg>
+      <ul class="panel">
+        <li>La pregunta por la edad <b>solo tiene sentido</b> si la estatura alcanzó: por eso va <b>dentro</b> de la rama Sí.</li>
+        <li>Cada nivel se corre <b>cuatro espacios</b> y cada <span class="mono">if</span> lleva sus llaves: se ve qué <span class="mono">else</span> es de quién.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 15 ............................................................ -->
+<section class="slide dense" data-t="4.3 else if · 0:45">
+  <p class="eyebrow"><span class="tick"></span> ¿Anidar o combinar?</p>
+  <h2 class="title">Anidar o unir con <span class="mono">&amp;&amp;</span>: cuente las salidas</h2>
+  <div class="duo">
+    <div class="panel">
+      <span class="tag">Dos salidas → una decisión basta</span>
+      <pre class="cc tiny"><span class="k">if</span> (estatura &gt;= <span class="n">120</span>) {
+    <span class="k">if</span> (edad &gt;= <span class="n">12</span>) {
+        printf(<span class="s">"Puede subir solo\n"</span>);
+    }
+}</pre>
+      <p>equivale a</p>
+      <pre class="cc tiny"><span class="k">if</span> (estatura &gt;= <span class="n">120</span> &amp;&amp; edad &gt;= <span class="n">12</span>) {
+    printf(<span class="s">"Puede subir solo\n"</span>);
+}</pre>
+      <p>Sin <span class="mono">else</span> interno, la versión con <span class="mono">&amp;&amp;</span> es más corta y se lee mejor.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Tres salidas → hacen falta dos decisiones</span>
+      <p>En la atracción, cada «no» lleva a un mensaje <b>distinto</b>:</p>
+      <table><tbody>
+        <tr><td>no alcanza la estatura</td><td class="mono">No puede subir</td></tr>
+        <tr><td>alcanza, menor de 12</td><td class="mono">... con un adulto</td></tr>
+        <tr><td>alcanza, 12 o más</td><td class="mono">Puede subir solo</td></tr>
+      </tbody></table>
+      <p>Con un solo <span class="mono">if (… &amp;&amp; …)</span> quedan solo dos caminos, y dos de los tres casos caerían en el mismo <span class="mono">else</span>. <b>Pregunta que decide:</b> ¿cuántas salidas distintas tiene el problema?</p>
+    </div>
+  </div>
+</section>
+
+<!-- 16 ............................................................ -->
+<section class="slide dense" data-t="4.3 else if · 0:46">
+  <p class="eyebrow"><span class="tick"></span> Un error clásico</p>
+  <h2 class="title">El <span class="mono">else</span> colgante: la sangría engaña, el compilador no</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="colgante.c"><span class="k">if</span> (estatura &gt;= <span class="n">120</span>)
+    <span class="k">if</span> (edad &gt;= <span class="n">12</span>)
+        printf(<span class="s">"Puede subir solo\n"</span>);
+<span class="k">else</span>
+    printf(<span class="s">"No puede subir\n"</span>);</pre>
+      <pre class="con tiny wr">colgante.c:13:8: <span class="e">warning:</span> suggest explicit braces to avoid ambiguous ‘else’ [-Wdangling-else]
+   13 |     if (estatura &gt;= 120)
+      |        ^</pre>
+      <div class="duo">
+        <pre class="con tiny">Estatura (cm): <span class="u">130</span>
+Edad: <span class="u">10</span>
+No puede subir
+Fin</pre>
+        <pre class="con tiny">Estatura (cm): <span class="u">110</span>
+Edad: <span class="u">20</span>
+Fin</pre>
+      </div>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Qué pasó</span>
+      <ul>
+        <li>La sangría sugiere que el <span class="mono">else</span> es del primer <span class="mono">if</span>.</li>
+        <li><b>Regla de C:</b> un <span class="mono">else</span> se empareja con el <b><span class="mono">if</span> más cercano que no tenga <span class="mono">else</span></b>: el de la edad.</li>
+        <li>130 cm y 10 años → «No puede subir». 110 cm → <b>no dice nada</b>.</li>
+        <li><span class="mono">-Wall</span> lo advierte: <i>suggest explicit braces</i>. Con <b>llaves siempre</b>, sangría y compilador dicen lo mismo.</li>
+      </ul>
+      <p class="refs">Programa: <span class="mono">colgante.c</span>. La advertencia es <b>intencional</b>: es la lección.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 17 ............................................................ -->
+<section class="slide dense" data-t="4.3 else if · 0:40">
+  <p class="eyebrow"><span class="tick"></span> Otro error que compila</p>
+  <h2 class="title">Huecos en la escalera</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="huecos.c"><span class="k">if</span> (velocidad &lt;= <span class="n">50</span>) {
+    printf(<span class="s">"Sancion: ninguna\n"</span>);
+} <span class="k">else</span> <span class="k">if</span> (velocidad &gt; <span class="n">50</span> &amp;&amp; velocidad &lt; <span class="n">60</span>) {
+    printf(<span class="s">"Sancion: leve\n"</span>);
+} <span class="k">else</span> <span class="k">if</span> (velocidad &gt; <span class="n">60</span> &amp;&amp; velocidad &lt;= <span class="n">80</span>) {
+    printf(<span class="s">"Sancion: grave\n"</span>);
+} <span class="k">else</span> {
+    printf(<span class="s">"Sancion: gravisima\n"</span>);
+}</pre>
+      <pre class="con tiny">Velocidad (km/h): <span class="u">60</span>
+Sancion: gravisima</pre>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">El 60 se cayó por el hueco</span>
+      <ul>
+        <li>60 no es <span class="mono">&lt; 60</span> ni <span class="mono">&gt; 60</span>: no entra en ningún tramo y termina en el <span class="mono">else</span>. <b>Gravísima</b> por un carácter.</li>
+        <li><b>Consejo 1:</b> aproveche la escalera. Después del primer tramo, <span class="mono">velocidad &gt; 50</span> ya es cierto: escriba solo el límite superior, como en el ejemplo guiado.</li>
+        <li><b>Consejo 2:</b> pruebe cada frontera, una por una. Este error solo aparece con el 60 exacto.</li>
+      </ul>
+      <p class="refs">Programa: <span class="mono">huecos.c</span>. Compila sin advertencias.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 18 ............................................................ -->
+<section class="slide dense" data-t="4.3 else if · 0:52">
+  <p class="eyebrow"><span class="tick"></span> Probar una escalera</p>
+  <h2 class="title">Un caso por tramo, uno por frontera, uno tras cada frontera</h2>
+  <div class="split">
+<table class="mini"><thead><tr><th>velocidad</th><th>esperado</th><th>velocidad.c</th><th>huecos.c</th></tr></thead><tbody><tr><td class="mono">30</td><td class="mono">ninguna</td><td class="mono">ninguna</td><td class="mono">ninguna</td></tr><tr><td class="mono">50</td><td class="mono">ninguna</td><td class="mono">ninguna</td><td class="mono">ninguna</td></tr><tr><td class="mono">51</td><td class="mono">leve</td><td class="mono">leve</td><td class="mono">leve</td></tr><tr><td class="mono">55</td><td class="mono">leve</td><td class="mono">leve</td><td class="mono">leve</td></tr><tr class="bad"><td class="mono">60</td><td class="mono">leve</td><td class="mono">leve</td><td class="mono">gravisima ✗</td></tr><tr><td class="mono">61</td><td class="mono">grave</td><td class="mono">grave</td><td class="mono">grave</td></tr><tr><td class="mono">70</td><td class="mono">grave</td><td class="mono">grave</td><td class="mono">grave</td></tr><tr><td class="mono">80</td><td class="mono">grave</td><td class="mono">grave</td><td class="mono">grave</td></tr><tr><td class="mono">81</td><td class="mono">gravisima</td><td class="mono">gravisima</td><td class="mono">gravisima</td></tr><tr><td class="mono">100</td><td class="mono">gravisima</td><td class="mono">gravisima</td><td class="mono">gravisima</td></tr></tbody></table>
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">Cuántos casos</span>
+        <p>4 tramos + 3 fronteras (50, 60, 80) + el primer valor tras cada frontera (51, 61, 81) = <b>10 casos</b>. La tabla es la salida <b>real</b> de <span class="mono">velocidad.c</span> y de <span class="mono">huecos.c</span>.</p>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Así se trabaja la actividad</span>
+        <p>Cada ejercicio trae sus <b>casos de prueba</b>. Páselos <b>todos</b> antes de abrir el formulario. Si uno falla, no cambie el código al azar: busque en qué tramo cayó el valor y qué condición lo dejó pasar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 19 ............................................................ -->
+<section class="slide divider" data-t="char · 0:21">
+  <p class="kicker">Bloque C · El tipo <span class="mono">char</span></p>
+  <h2 class="big">Decidir con letras,<br>dígitos y símbolos</h2>
+  <p class="lead">Una opción de menú, una respuesta «S» o «N», el operador de una calculadora: todo eso cabe en un <span class="mono">char</span>. Y un <span class="mono">char</span>, en el fondo, es <b>un número</b>.</p>
+</section>
+
+<!-- 20 ............................................................ -->
+<section class="slide dense" data-t="char · 0:51">
+  <p class="eyebrow"><span class="tick"></span> Qué guarda un char</p>
+  <h2 class="title">Un <span class="mono">char</span> es un número pequeño</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="char_basico.c"><span class="k">char</span> letra = <span class="s">'A'</span>;
+<span class="k">char</span> digito = <span class="s">'7'</span>;
+<span class="k">char</span> otra = <span class="n">66</span>;
+
+printf(<span class="s">"letra : %c %d\n"</span>, letra, letra);
+printf(<span class="s">"digito: %c %d\n"</span>, digito, digito);
+printf(<span class="s">"otra  : %c %d\n"</span>, otra, otra);
+printf(<span class="s">"Ocupa %d byte\n"</span>, (<span class="k">int</span>) <span class="k">sizeof</span>(<span class="k">char</span>));</pre>
+      <pre class="con tiny">letra : A 65
+digito: 7 55
+otra  : B 66
+Ocupa 1 byte</pre>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Tres ideas</span>
+      <ul>
+        <li>Un <span class="mono">char</span> ocupa <b>1 byte</b> y guarda el <b>código</b> del carácter en la tabla ASCII.</li>
+        <li>La misma variable se muestra de dos formas: <span class="mono">%c</span> → el carácter; <span class="mono">%d</span> → su código.</li>
+        <li><span class="mono">'7'</span> <b>no vale 7</b>: vale 55. Y un <span class="mono">char</span> con 66 se muestra como <span class="mono">B</span>.</li>
+      </ul>
+      <p>No es un truco: para el compilador, un <span class="mono">char</span> <b>es</b> un número pequeño. Programa: <span class="mono">char_basico.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 21 ............................................................ -->
+<section class="slide dense" data-t="char · 0:47">
+  <p class="eyebrow"><span class="tick"></span> Explore</p>
+  <h2 class="title">La tabla ASCII imprimible (32 a 126)</h2>
+  <div class="split w64">
+    <div class="ascii" id="asciiGrid"><button type="button" class="" data-c=" " data-k="32">␣</button><button type="button" class="" data-c="!" data-k="33">!</button><button type="button" class="" data-c="&quot;" data-k="34">"</button><button type="button" class="" data-c="#" data-k="35">#</button><button type="button" class="" data-c="$" data-k="36">$</button><button type="button" class="" data-c="%" data-k="37">%</button><button type="button" class="" data-c="&amp;" data-k="38">&amp;</button><button type="button" class="" data-c="&#x27;" data-k="39">'</button><button type="button" class="" data-c="(" data-k="40">(</button><button type="button" class="" data-c=")" data-k="41">)</button><button type="button" class="" data-c="*" data-k="42">*</button><button type="button" class="" data-c="+" data-k="43">+</button><button type="button" class="" data-c="," data-k="44">,</button><button type="button" class="" data-c="-" data-k="45">-</button><button type="button" class="" data-c="." data-k="46">.</button><button type="button" class="" data-c="/" data-k="47">/</button><button type="button" class="d" data-c="0" data-k="48">0</button><button type="button" class="d" data-c="1" data-k="49">1</button><button type="button" class="d" data-c="2" data-k="50">2</button><button type="button" class="d" data-c="3" data-k="51">3</button><button type="button" class="d" data-c="4" data-k="52">4</button><button type="button" class="d" data-c="5" data-k="53">5</button><button type="button" class="d" data-c="6" data-k="54">6</button><button type="button" class="d" data-c="7" data-k="55">7</button><button type="button" class="d" data-c="8" data-k="56">8</button><button type="button" class="d" data-c="9" data-k="57">9</button><button type="button" class="" data-c=":" data-k="58">:</button><button type="button" class="" data-c=";" data-k="59">;</button><button type="button" class="" data-c="&lt;" data-k="60">&lt;</button><button type="button" class="" data-c="=" data-k="61">=</button><button type="button" class="" data-c="&gt;" data-k="62">&gt;</button><button type="button" class="" data-c="?" data-k="63">?</button><button type="button" class="" data-c="@" data-k="64">@</button><button type="button" class="M" data-c="A" data-k="65">A</button><button type="button" class="M" data-c="B" data-k="66">B</button><button type="button" class="M" data-c="C" data-k="67">C</button><button type="button" class="M" data-c="D" data-k="68">D</button><button type="button" class="M" data-c="E" data-k="69">E</button><button type="button" class="M" data-c="F" data-k="70">F</button><button type="button" class="M" data-c="G" data-k="71">G</button><button type="button" class="M" data-c="H" data-k="72">H</button><button type="button" class="M" data-c="I" data-k="73">I</button><button type="button" class="M" data-c="J" data-k="74">J</button><button type="button" class="M" data-c="K" data-k="75">K</button><button type="button" class="M" data-c="L" data-k="76">L</button><button type="button" class="M" data-c="M" data-k="77">M</button><button type="button" class="M" data-c="N" data-k="78">N</button><button type="button" class="M" data-c="O" data-k="79">O</button><button type="button" class="M" data-c="P" data-k="80">P</button><button type="button" class="M" data-c="Q" data-k="81">Q</button><button type="button" class="M" data-c="R" data-k="82">R</button><button type="button" class="M" data-c="S" data-k="83">S</button><button type="button" class="M" data-c="T" data-k="84">T</button><button type="button" class="M" data-c="U" data-k="85">U</button><button type="button" class="M" data-c="V" data-k="86">V</button><button type="button" class="M" data-c="W" data-k="87">W</button><button type="button" class="M" data-c="X" data-k="88">X</button><button type="button" class="M" data-c="Y" data-k="89">Y</button><button type="button" class="M" data-c="Z" data-k="90">Z</button><button type="button" class="" data-c="[" data-k="91">[</button><button type="button" class="" data-c="\" data-k="92">\</button><button type="button" class="" data-c="]" data-k="93">]</button><button type="button" class="" data-c="^" data-k="94">^</button><button type="button" class="" data-c="_" data-k="95">_</button><button type="button" class="" data-c="`" data-k="96">`</button><button type="button" class="m" data-c="a" data-k="97">a</button><button type="button" class="m" data-c="b" data-k="98">b</button><button type="button" class="m" data-c="c" data-k="99">c</button><button type="button" class="m" data-c="d" data-k="100">d</button><button type="button" class="m" data-c="e" data-k="101">e</button><button type="button" class="m" data-c="f" data-k="102">f</button><button type="button" class="m" data-c="g" data-k="103">g</button><button type="button" class="m" data-c="h" data-k="104">h</button><button type="button" class="m" data-c="i" data-k="105">i</button><button type="button" class="m" data-c="j" data-k="106">j</button><button type="button" class="m" data-c="k" data-k="107">k</button><button type="button" class="m" data-c="l" data-k="108">l</button><button type="button" class="m" data-c="m" data-k="109">m</button><button type="button" class="m" data-c="n" data-k="110">n</button><button type="button" class="m" data-c="o" data-k="111">o</button><button type="button" class="m" data-c="p" data-k="112">p</button><button type="button" class="m" data-c="q" data-k="113">q</button><button type="button" class="m" data-c="r" data-k="114">r</button><button type="button" class="m" data-c="s" data-k="115">s</button><button type="button" class="m" data-c="t" data-k="116">t</button><button type="button" class="m" data-c="u" data-k="117">u</button><button type="button" class="m" data-c="v" data-k="118">v</button><button type="button" class="m" data-c="w" data-k="119">w</button><button type="button" class="m" data-c="x" data-k="120">x</button><button type="button" class="m" data-c="y" data-k="121">y</button><button type="button" class="m" data-c="z" data-k="122">z</button><button type="button" class="" data-c="{" data-k="123">{</button><button type="button" class="" data-c="|" data-k="124">|</button><button type="button" class="" data-c="}" data-k="125">}</button><button type="button" class="" data-c="~" data-k="126">~</button></div>
+    <div>
+      <div class="panel">
+        <span class="tag" id="asciiTag">Pulse un carácter</span>
+        <p id="asciiOut" class="asciiout">—</p>
+      </div>
+      <pre class="con tiny">'0' = 48   '9' = 57
+'A' = 65   'Z' = 90
+'a' = 97   'z' = 122
+'a' - 'A' = 32
+' ' = 32</pre>
+      <p class="note">Tres rangos <b>continuos y en orden</b>: <span class="rg d">dígitos 48–57</span> <span class="rg M">mayúsculas 65–90</span> <span class="rg m">minúsculas 97–122</span>. Entre una mayúscula y su minúscula hay siempre <b>32</b>. Códigos de la tabla: los imprimió <span class="mono">ascii_rangos.c</span> y un programa que recorrió del 32 al 126.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 22 ............................................................ -->
+<section class="slide dense" data-t="char · 0:40">
+  <p class="eyebrow"><span class="tick"></span> Las comillas importan</p>
+  <h2 class="title"><span class="mono">'S'</span> es un carácter · <span class="mono">"S"</span> es una cadena</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="comillas.c"><span class="k">if</span> (resp == <span class="s">"S"</span>) {
+<span class="c">...</span>
+<span class="k">if</span> (resp == <span class="s">'S'</span>) {</pre>
+      <pre class="con tiny wr">comillas.c:11:14: <span class="e">warning:</span> comparison between pointer and integer
+   11 |     if (resp == "S") {
+      |              ^~
+comillas.c:11:14: <span class="e">warning:</span> comparison with string literal results in unspecified behavior [-Waddress]</pre>
+      <pre class="con tiny">Continuar (<span class="u">S</span>/N): S
+Con "S": no
+Con 'S': si</pre>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Qué pasó</span>
+      <ul>
+        <li><span class="mono">'S'</span>, con comillas <b>simples</b>, es un carácter: el número 83.</li>
+        <li><span class="mono">"S"</span>, con comillas <b>dobles</b>, es una <b>cadena</b>: otra cosa, que se estudia en la semana 8.</li>
+        <li>Compararlos compila con advertencia (<i>comparison between pointer and integer</i>) y da <b>falso</b> aunque el usuario escriba S.</li>
+      </ul>
+      <p><b>Regla:</b> un <span class="mono">char</span> se compara con comillas simples. Programa: <span class="mono">comillas.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 23 ............................................................ -->
+<section class="slide dense" data-t="char · 1:02">
+  <p class="eyebrow"><span class="tick"></span> El error de char más frecuente</p>
+  <h2 class="title">Leer un <span class="mono">char</span>: el Enter que quedó pendiente</h2>
+  <div class="duo">
+    <div class="panel">
+      <span class="tag">Sin espacio · <span class="mono">leer_char_mal.c</span></span>
+      <pre class="cc tiny" data-src="leer_char_mal.c">scanf(<span class="s">"%d"</span>, &amp;edad);
+<span class="c">...</span>
+scanf(<span class="s">"%c"</span>, &amp;jornada);</pre>
+      <pre class="con tiny">Edad: <span class="u">20</span>
+Jornada (D diurna, N nocturna): Se leyo el codigo 10</pre>
+      <p>El usuario escribió <span class="mono">20</span> y pulsó <b>Enter</b>. <span class="mono">%d</span> tomó el 20; el Enter se quedó. <span class="mono">%c</span> lo leyó como carácter —código <b>10</b>, el salto de línea— <b>sin esperar</b> al usuario.</p>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">Con espacio · <span class="mono">leer_char.c</span></span>
+      <pre class="cc tiny" data-src="leer_char.c">scanf(<span class="s">"%d"</span>, &amp;edad);
+<span class="c">...</span>
+scanf(<span class="s">" %c"</span>, &amp;jornada);</pre>
+      <pre class="con tiny">Edad: <span class="u">20</span>
+Jornada (D diurna, N nocturna): <span class="u">S</span>
+Se leyo el codigo 83, que es 'S'</pre>
+      <p>El espacio antes de <span class="mono">%c</span> significa «salte espacios y Enter pendientes». <span class="mono">%d</span> y <span class="mono">%lf</span> ya lo hacen solos; <span class="mono">%c</span> no. <b>Úselo siempre al leer un char.</b></p>
+    </div>
+  </div>
+  <p class="refs">Ninguno de los dos programas produce advertencias: este error solo se descubre ejecutando.</p>
+</section>
+
+<!-- 24 ............................................................ -->
+<section class="slide dense" data-t="char · 0:49">
+  <p class="eyebrow"><span class="tick"></span> Operar con caracteres</p>
+  <h2 class="title">Aritmética con <span class="mono">char</span></h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="aritmetica_char.c"><span class="k">char</span> d = <span class="s">'7'</span>;
+<span class="k">char</span> m = <span class="s">'g'</span>;
+<span class="k">char</span> s = <span class="s">'c'</span>;
+
+printf(<span class="s">"'7' - '0' = %d\n"</span>, d - <span class="s">'0'</span>);
+printf(<span class="s">"'c' + 1   = %c\n"</span>, s + <span class="n">1</span>);
+printf(<span class="s">"'g' a mayuscula = %c\n"</span>, m - <span class="s">'a'</span> + <span class="s">'A'</span>);
+printf(<span class="s">"'g' es la letra numero %d\n"</span>, m - <span class="s">'a'</span> + <span class="n">1</span>);</pre>
+      <pre class="con tiny">'7' - '0' = 7
+'c' + 1   = d
+'g' a mayuscula = G
+'g' es la letra numero 7</pre>
+    </div>
+    <table>
+      <thead><tr><th>Operación</th><th>Para qué</th><th>Por qué funciona</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">d - '0'</td><td>valor de un dígito</td><td>los dígitos son consecutivos: 55 − 48 = 7</td></tr>
+        <tr><td class="mono">s + 1</td><td>la letra siguiente</td><td>las letras son consecutivas</td></tr>
+        <tr><td class="mono">m - 'a'</td><td>posición desde 0</td><td>'a' es la posición 0; 'g', la 6</td></tr>
+        <tr><td class="mono">m - 'a' + 'A'</td><td>minúscula → mayúscula</td><td>misma posición, otro rango</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="refs">Nunca se escribe 48, 65 ni 97: se escriben <span class="mono">'0'</span>, <span class="mono">'A'</span> y <span class="mono">'a'</span>, y el compilador pone el código. Programa: <span class="mono">aritmetica_char.c</span>.</p>
+</section>
+
+<!-- 25 ............................................................ -->
+<section class="slide dense" data-t="char · 0:45">
+  <p class="eyebrow"><span class="tick"></span> Decidir con char</p>
+  <h2 class="title">Rangos con <span class="mono">&amp;&amp;</span> · listas con <span class="mono">||</span></h2>
+  <div class="split r16">
+    <div class="panel fn">
+      <span class="tag fn">Un rango</span>
+      <pre class="cc tiny"><span class="k">if</span> (c &gt;= <span class="s">'a'</span> &amp;&amp; c &lt;= <span class="s">'z'</span>) {
+    <span class="c">/* es una minuscula */</span>
+}</pre>
+      <p>Funciona porque el rango es <b>continuo</b>. Lo mismo para <span class="mono">'A'…'Z'</span> y <span class="mono">'0'…'9'</span>, siempre con comillas simples.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Una lista</span>
+      <pre class="cc tiny" data-src="vocal_if.c"><span class="k">if</span> (c == <span class="s">'a'</span> || c == <span class="s">'e'</span> || c == <span class="s">'i'</span> || c == <span class="s">'o'</span> || c == <span class="s">'u'</span> ||
+    c == <span class="s">'A'</span> || c == <span class="s">'E'</span> || c == <span class="s">'I'</span> || c == <span class="s">'O'</span> || c == <span class="s">'U'</span>) {</pre>
+      <pre class="con tiny">Letra: <span class="u">E</span>
+E es vocal</pre>
+      <p>Funciona, pero diez comparaciones se leen mal y es fácil equivocarse en una. En el bloque D, el <span class="mono">switch</span> escribe esta lista de forma más clara.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 26 ............................................................ -->
+<section class="slide dense" data-t="char · 0:49">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo guiado · char + escalera</p>
+  <h2 class="title">Posición de una letra en el alfabeto</h2>
+  <div class="tbtns gsteps" data-g="pl">
+    <button class="tbtn" type="button" aria-pressed="true" data-s="1">1 · Enunciado</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="2">2 · Análisis</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="3">3 · Diagrama</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="4">4 · Código C</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="5">5 · Probar</button>
+  </div>
+  <div class="gcols">
+    <div class="gdiag off" data-g="pl"><svg class="fc" viewBox="0 0 545 622" role="img" aria-label="Diagrama del ejemplo guiado: posicion de una letra en el alfabeto"><g id="pl-ini"><rect class="sh" x="64.86" y="14" width="150" height="36" rx="18"/><text class="t" x="139.86" y="32">Inicio</text></g><line class="fl" x1="139.86" y1="50" x2="139.86" y2="72" marker-end="url(#armk)"/><g id="pl-leer"><polygon class="sh" points="75.66,72 245.66,72 204.06,112 34.06,112"/><text class="t" x="139.86" y="92">Leer c</text></g><line class="fl" x1="139.86" y1="112" x2="139.86" y2="134" marker-end="url(#armk)"/><g id="pl-d1"><polygon class="sh" points="139.86,134 239.86,186 139.86,238 39.86,186"/><text class="t" x="139.86" y="177.5">c &gt;= 'a' Y</text><text class="t" x="139.86" y="194.5">c &lt;= 'z'</text></g><line class="fl" x1="239.86" y1="186" x2="293.31" y2="186" marker-end="url(#armk)"/><text class="fll" x="268.085" y="177">Sí</text><line class="fl" x1="139.86" y1="238" x2="139.86" y2="302" marker-end="url(#armk)"/><text class="fll" x="157.86" y="256">No</text><g id="pl-d2"><polygon class="sh" points="139.86,302 239.86,354 139.86,406 39.86,354"/><text class="t" x="139.86" y="345.5">c &gt;= 'A' Y</text><text class="t" x="139.86" y="362.5">c &lt;= 'Z'</text></g><line class="fl" x1="239.86" y1="354" x2="293.31" y2="354" marker-end="url(#armk)"/><text class="fll" x="268.085" y="345">Sí</text><line class="fl" x1="139.86" y1="406" x2="139.86" y2="470" marker-end="url(#armk)"/><text class="fll" x="157.86" y="424">No</text><line class="fl" x1="139.86" y1="528" x2="139.86" y2="550"/><g id="pl-min"><rect class="sh" x="296.31" y="166" width="190.7" height="40" rx="3"/><text class="t" x="391.66" y="186">pos ← c − 'a' + 1</text></g><line class="fl" x1="391.66" y1="206" x2="391.66" y2="228" marker-end="url(#armk)"/><g id="pl-m1"><polygon class="sh" points="327.46,228 497.46,228 455.86,268 285.86,268"/><text class="t" x="391.66" y="248">Mostrar pos</text></g><polyline class="fl" points="391.66,268 391.66,280 527.46,280"/><g id="pl-may"><rect class="sh" x="296.31" y="334" width="190.7" height="40" rx="3"/><text class="t" x="391.66" y="354">pos ← c − 'A' + 1</text></g><line class="fl" x1="391.66" y1="374" x2="391.66" y2="396" marker-end="url(#armk)"/><g id="pl-m2"><polygon class="sh" points="327.46,396 497.46,396 455.86,436 285.86,436"/><text class="t" x="391.66" y="416">Mostrar pos</text></g><polyline class="fl" points="391.66,436 391.66,448 527.46,448"/><g id="pl-no"><polygon class="sh" points="74.32,470 265.72,470 205.4,528 14,528"/><text class="t" x="139.86" y="490.5">Mostrar «No es</text><text class="t" x="139.86" y="507.5">una letra»</text></g><polyline class="fl" points="527.46,280 527.46,550 147.86,550" marker-end="url(#armk)"/><circle class="jn" cx="139.86" cy="550" r="5"/><line class="fl" x1="139.86" y1="550" x2="139.86" y2="572" marker-end="url(#armk)"/><g id="pl-fin"><rect class="sh" x="64.86" y="572" width="150" height="36" rx="18"/><text class="t" x="139.86" y="590">Fin</text></g></svg></div>
+    <div class="gbody" data-g="pl">
+      <div class="gpane on" data-s="1">
+        <h4>El enunciado</h4>
+        <p>«Lea una letra, <b>mayúscula o minúscula</b>, y muestre su posición en el alfabeto inglés: <span class="mono">a</span> o <span class="mono">A</span> es la 1, <span class="mono">z</span> o <span class="mono">Z</span> la 26. Si no es una letra, dígalo.»</p>
+        <p>Lo ambiguo, resuelto: alfabeto de 26 letras, <b>sin ñ</b> (la ñ no cabe en un <span class="mono">char</span>, diapositiva 27).</p>
+      </div>
+      <div class="gpane" data-s="2">
+        <h4>Entradas · proceso · salidas</h4>
+        <p><b>Entrada:</b> <span class="mono">c</span> (char). <b>Salida:</b> <span class="mono">Posicion: n</span> o <span class="mono">No es una letra</span>. <b>Proceso:</b> dos rangos → dos condiciones y un <span class="mono">else</span>.</p>
+        <table>
+          <thead><tr><th>c</th><th>esperado</th><th>prueba</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">g · Z</td><td class="mono">7 · 26</td><td>minúscula · mayúscula</td></tr>
+            <tr><td class="mono">a · z · A</td><td class="mono">1 · 26 · 1</td><td>fronteras de los rangos</td></tr>
+            <tr><td class="mono">4 · #</td><td class="mono">No es una letra</td><td>dígito · símbolo</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gpane" data-s="3">
+        <h4>El diagrama</h4>
+        <p>Una <b>escalera de dos rombos</b>, uno por rango. En cada rama Sí, la misma idea: <b>restar la primera letra del rango y sumar 1</b>.</p>
+        <p>El orden de los dos rombos no importa aquí: los rangos <b>no se solapan</b>.</p>
+      </div>
+      <div class="gpane" data-s="4">
+        <pre class="cc tiny" data-g="pl" data-src="posicion_letra.c"><span class="ln" data-m="leer">printf(<span class="s">"Letra: "</span>);</span>
+<span class="ln" data-m="leer">scanf(<span class="s">" %c"</span>, &amp;c);</span>
+
+<span class="ln" data-m="d1"><span class="k">if</span> (c &gt;= <span class="s">'a'</span> &amp;&amp; c &lt;= <span class="s">'z'</span>) {</span>
+<span class="ln" data-m="min">    posicion = c - <span class="s">'a'</span> + <span class="n">1</span>;</span>
+<span class="ln" data-m="m1">    printf(<span class="s">"Posicion: %d\n"</span>, posicion);</span>
+<span class="ln" data-m="d2">} <span class="k">else</span> <span class="k">if</span> (c &gt;= <span class="s">'A'</span> &amp;&amp; c &lt;= <span class="s">'Z'</span>) {</span>
+<span class="ln" data-m="may">    posicion = c - <span class="s">'A'</span> + <span class="n">1</span>;</span>
+<span class="ln" data-m="m2">    printf(<span class="s">"Posicion: %d\n"</span>, posicion);</span>
+<span class="ln" data-m="no">} <span class="k">else</span> {</span>
+<span class="ln" data-m="no">    printf(<span class="s">"No es una letra\n"</span>);</span>
+}</pre>
+        <p class="note">Pase el cursor por cada línea. Fíjese en el espacio de <span class="mono">" %c"</span> y en las comillas simples de cada rango.</p>
+      </div>
+      <div class="gpane" data-s="5">
+        <div class="duo">
+          <pre class="con tiny">Letra: <span class="u">g</span>
+Posicion: 7</pre>
+          <pre class="con tiny">Letra: <span class="u">Z</span>
+Posicion: 26</pre>
+        </div>
+        <pre class="con tiny">Letra: <span class="u">4</span>
+No es una letra</pre>
+        <p class="note">Los siete casos del paso 2 dan lo esperado (<span class="mono">a</span>, <span class="mono">z</span>, <span class="mono">A</span> y <span class="mono">#</span> están en la lectura). Cero advertencias.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 27 ............................................................ -->
+<section class="slide dense" data-t="char · 0:54">
+  <p class="eyebrow"><span class="tick"></span> Cierre del bloque C</p>
+  <h2 class="title">Tres cosas que un <span class="mono">char</span> no es</h2>
+  <div class="faces">
+    <div class="face"><span class="num">1</span><span class="txt"><b>No es una cadena</b><span><span class="mono">'S'</span> y <span class="mono">"S"</span> son cosas distintas. Un <span class="mono">char</span> se compara con comillas simples (diapositiva 22).</span></span></div>
+    <div class="face"><span class="num">2</span><span class="txt"><b>No es el número que parece</b><span><span class="mono">'0'</span> vale 48. <span class="mono">c &gt;= 0 &amp;&amp; c &lt;= 9</span>, sin comillas, compila y pregunta otra cosa: los códigos del 0 al 9, que no son dígitos.</span></span></div>
+    <div class="face"><span class="num">3</span><span class="txt"><b>No es cualquier símbolo del teclado</b><span>La ñ y las vocales con tilde ocupan más de un byte cuando el archivo está en UTF-8. gcc lo advierte (abajo). Por eso: <b>sin tildes ni eñes en el código</b>; en los mensajes, <span class="mono">anio</span> en lugar de año.</span></span></div>
+  </div>
+  <div class="split">
+    <pre class="cc tiny" data-src="enie.c"><span class="k">char</span> c = <span class="s">'ñ'</span>;</pre>
+    <pre class="con tiny wr">enie.c:6:14: <span class="e">warning:</span> multi-character character constant [-Wmultichar]
+    6 |     char c = 'ñ';
+      |              ^~~
+enie.c:6:14: <span class="e">warning:</span> overflow in conversion from ‘int’ to ‘char’ changes value from ‘50097’ to ‘-79’ [-Woverflow]</pre>
+  </div>
+  <p class="refs">Salida de gcc 13.3 con <span class="mono">enie.c</span> guardado en UTF-8. Con otra codificación del archivo (Dev-C++ puede guardar en la de Windows) el mensaje y el valor cambian: no dependa de eso.</p>
+</section>
+<!-- 28 ............................................................ -->
+<section class="slide divider" data-t="4.4 switch · 0:26">
+  <p class="kicker">Bloque D · Cápsula 4.4</p>
+  <h2 class="big">Del Según al <span class="mono">switch</span></h2>
+  <p class="lead">Cuando hay que elegir un camino según el <b>valor exacto</b> de un entero o de un <span class="mono">char</span>: su anatomía, el papel del <span class="mono">break</span>, los casos agrupados y cuándo conviene más un <span class="mono">if</span>.</p>
+</section>
+
+<!-- 29 ............................................................ -->
+<section class="slide dense" data-t="4.4 switch · 0:54">
+  <p class="eyebrow"><span class="tick"></span> Anatomía</p>
+  <h2 class="title"><span class="mono">switch · case · break · default</span></h2>
+  <div class="split">
+    <div>
+      <div class="segunbox"><svg class="fc" viewBox="0 0 590 356" role="img" aria-label="Seleccion multiple: un rombo con una salida por valor y una para el otro caso; todas se reunen"><rect class="sh" x="210" y="14" width="170" height="40" rx="3"/><text class="t" x="295" y="34">antes</text><line class="fl" x1="295" y1="54" x2="295" y2="76" marker-end="url(#armk)"/><polygon class="sh" points="295,76 395,114 295,152 195,114"/><text class="t" x="295" y="114">expresión</text><polyline class="fl" points="295,152 295,180"/><polyline class="fl" points="99,180 491,180"/><line class="fl" x1="99" y1="180" x2="99" y2="214" marker-end="url(#armk)"/><text class="fll" x="106" y="202" style="text-anchor:start">valor 1</text><line class="fl" x1="295" y1="180" x2="295" y2="214" marker-end="url(#armk)"/><text class="fll" x="302" y="202" style="text-anchor:start">valor 2</text><line class="fl" x1="491" y1="180" x2="491" y2="214" marker-end="url(#armk)"/><text class="fll" x="498" y="202" style="text-anchor:start">otro</text><rect class="sh" x="14" y="214" width="170" height="40" rx="3"/><text class="t" x="99" y="234">bloque 1</text><polyline class="fl" points="99,254 99,280"/><rect class="sh" x="210" y="214" width="170" height="40" rx="3"/><text class="t" x="295" y="234">bloque 2</text><polyline class="fl" points="295,254 295,280"/><rect class="sh" x="406" y="214" width="170" height="40" rx="3"/><text class="t" x="491" y="234">default</text><polyline class="fl" points="491,254 491,280"/><polyline class="fl" points="99,280 491,280"/><circle class="jn" cx="295" cy="280" r="5"/><line class="fl" x1="295" y1="280" x2="295" y2="302" marker-end="url(#armk)"/><rect class="sh" x="210" y="302" width="170" height="40" rx="3"/><text class="t" x="295" y="322">después</text></svg></div>
+      <ul class="panel">
+        <li>La expresión es <b>entera o <span class="mono">char</span></b>; cada <span class="mono">case</span>, un <b>valor constante</b> y dos puntos.</li>
+        <li>Si coincide, la ejecución <b>empieza ahí</b>; <span class="mono">break</span> sale del <span class="mono">switch</span>.</li>
+        <li><span class="mono">default</span> = «de otro modo». <b>Curso:</b> siempre, de último, con <span class="mono">break</span>.</li>
+      </ul>
+
+    </div>
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">C</span>
+        <pre class="cc tiny"><span class="k">switch</span> (expresión) {
+    <span class="k">case</span> valor1: bloque 1; <span class="k">break</span>;
+    <span class="k">case</span> valor2: bloque 2; <span class="k">break</span>;
+    <span class="k">default</span>:     bloque 3; <span class="k">break</span>;
+}</pre>
+        <p class="refs">Esquema compacto; en los programas, una instrucción por línea.</p>
+      </div>
+      <div class="panel">
+        <span class="tag">Pseudocódigo (semana 2)</span>
+        <pre class="tiny"><span class="k">Según</span> expresión <span class="k">Hacer</span>
+   valor 1: bloque 1
+   valor 2: bloque 2
+   <span class="k">De Otro Modo</span>: bloque 3
+<span class="k">FinSegún</span></pre>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- 30 ............................................................ -->
+<section class="slide dense" data-t="4.4 switch · 0:47">
+  <p class="eyebrow"><span class="tick"></span> switch con enteros</p>
+  <h2 class="title">Nombre del día de la semana</h2>
+  <div class="split">
+    <pre class="cc tiny" data-src="dias.c"><span class="k">switch</span> (dia) {
+    <span class="k">case</span> <span class="n">1</span>:
+        printf(<span class="s">"Lunes\n"</span>);
+        <span class="k">break</span>;
+    <span class="k">case</span> <span class="n">2</span>:
+        printf(<span class="s">"Martes\n"</span>);
+        <span class="k">break</span>;
+    <span class="k">case</span> <span class="n">3</span>:
+        printf(<span class="s">"Miercoles\n"</span>);
+        <span class="k">break</span>;
+<span class="c">...</span>
+    <span class="k">case</span> <span class="n">7</span>:
+        printf(<span class="s">"Domingo\n"</span>);
+        <span class="k">break</span>;
+    <span class="k">default</span>:
+        printf(<span class="s">"Dia no valido\n"</span>);
+        <span class="k">break</span>;
+}</pre>
+    <div>
+      <div class="duo">
+        <pre class="con tiny">Dia (1 a 7): <span class="u">3</span>
+Miercoles</pre>
+        <pre class="con tiny">Dia (1 a 7): <span class="u">9</span>
+Dia no valido</pre>
+      </div>
+      <div class="panel fn">
+        <span class="tag fn">Por qué switch aquí</span>
+        <p>Se compara <b>una sola variable</b> contra <b>valores exactos</b>. El <span class="mono">switch</span> deja ver de un golpe todos los valores posibles, uno debajo del otro.</p>
+        <p>Con <span class="mono">if</span> serían siete <span class="mono">else if</span>, cada uno repitiendo <span class="mono">dia == …</span>. Los <span class="mono">case</span> no tienen que ir en orden, pero ordenarlos ayuda a leer.</p>
+      </div>
+      <p class="refs">Programa completo (los siete días): <span class="mono">dias.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 31 ............................................................ -->
+<section class="slide dense" data-t="4.4 switch · 0:46">
+  <p class="eyebrow"><span class="tick"></span> El papel del break</p>
+  <h2 class="title">Sin <span class="mono">break</span>, se cae al caso siguiente</h2>
+  <div class="tri">
+    <div><p class="refs"><span class="mono">con_break.c</span></p>
+    <pre class="cc tiny" data-src="con_break.c"><span class="k">case</span> <span class="n">1</span>:
+    printf(<span class="s">"Acceso a la biblioteca\n"</span>);
+    <span class="k">break</span>;
+<span class="k">case</span> <span class="n">2</span>:
+    printf(<span class="s">"Acceso a los laboratorios\n"</span>);
+    <span class="k">break</span>;
+<span class="k">case</span> <span class="n">3</span>:
+    printf(<span class="s">"Acceso a la sala de servidores\n"</span>);
+    <span class="k">break</span>;
+<span class="k">default</span>:
+    printf(<span class="s">"Fin de la lista\n"</span>);
+    <span class="k">break</span>;</pre></div>
+    <div><p class="refs"><span class="mono">sin_break.c</span></p>
+    <pre class="cc tiny" data-src="sin_break.c"><span class="k">case</span> <span class="n">1</span>:
+    printf(<span class="s">"Acceso a la biblioteca\n"</span>);
+<span class="k">case</span> <span class="n">2</span>:
+    printf(<span class="s">"Acceso a los laboratorios\n"</span>);
+<span class="k">case</span> <span class="n">3</span>:
+    printf(<span class="s">"Acceso a la sala de servidores\n"</span>);
+<span class="k">default</span>:
+    printf(<span class="s">"Fin de la lista\n"</span>);</pre></div>
+    <div class="panel">
+      <span class="tag">Elija el nivel</span>
+      <div class="tbtns" id="brkBtns"><button class="tbtn" type="button" aria-pressed="false" data-i="0">nivel 1</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">nivel 2</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">nivel 3</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">nivel 5</button></div>
+      <p class="refs">con break</p><pre class="con tiny" id="brkA"></pre>
+      <p class="refs">sin break</p><pre class="con tiny" id="brkB"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- 32 ............................................................ -->
+<section class="slide dense" data-t="4.4 switch · 0:48">
+  <p class="eyebrow"><span class="tick"></span> La caída a propósito</p>
+  <h2 class="title">Casos agrupados</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="vocal_switch.c"><span class="k">switch</span> (c) {
+    <span class="k">case</span> <span class="s">'a'</span>: <span class="k">case</span> <span class="s">'e'</span>: <span class="k">case</span> <span class="s">'i'</span>: <span class="k">case</span> <span class="s">'o'</span>: <span class="k">case</span> <span class="s">'u'</span>:
+    <span class="k">case</span> <span class="s">'A'</span>: <span class="k">case</span> <span class="s">'E'</span>: <span class="k">case</span> <span class="s">'I'</span>: <span class="k">case</span> <span class="s">'O'</span>: <span class="k">case</span> <span class="s">'U'</span>:
+        printf(<span class="s">"%c es vocal\n"</span>, c);
+        <span class="k">break</span>;
+    <span class="k">default</span>:
+        printf(<span class="s">"%c no es vocal\n"</span>, c);
+        <span class="k">break</span>;
+}</pre>
+      <pre class="con tiny">Letra: <span class="u">u</span>
+u es vocal</pre>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">Cuándo se permite caer</span>
+      <ul>
+        <li>Diez <span class="mono">case</span> <b>seguidos, sin nada entre ellos</b>: todos llegan al mismo <span class="mono">printf</span>.</li>
+        <li>Hace lo mismo que la condición de diez partes de la diapositiva 25, y se lee mejor.</li>
+        <li>Si entre dos <span class="mono">case</span> hay instrucciones, <b>cada caso termina en <span class="mono">break</span></b>.</li>
+        <li>Varios <span class="mono">case</span> en una línea es cuestión de estilo: lo importante es que se vea que van juntos.</li>
+      </ul>
+      <p class="refs">Programa: <span class="mono">vocal_switch.c</span>. Compila sin advertencias: los <span class="mono">case</span> vacíos no «caen» en el sentido de la advertencia.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 33 ............................................................ -->
+<section class="slide dense" data-t="4.4 switch · 0:52">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo guiado · switch con char</p>
+  <h2 class="title">Menú de la cafetería</h2>
+  <div class="tbtns gsteps" data-g="cf">
+    <button class="tbtn" type="button" aria-pressed="true" data-s="1">1 · Enunciado</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="2">2 · Análisis</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="3">3 · Diagrama</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="4">4 · Código C</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="5">5 · Probar</button>
+  </div>
+  <div class="gcols">
+    <div class="gdiag off" data-g="cf"><svg class="fc" viewBox="0 0 846 684" role="img" aria-label="Diagrama del ejemplo guiado: menu de la cafeteria con seleccion multiple"><g id="cf-ini"><rect class="sh" x="348.16" y="14" width="150" height="36" rx="18"/><text class="t" x="423.16" y="32">Inicio</text></g><line class="fl" x1="423.16" y1="50" x2="423.16" y2="72" marker-end="url(#armk)"/><g id="cf-leer"><polygon class="sh" points="316.41,72 571.51,72 529.91,112 274.81,112"/><text class="t" x="423.16" y="92">Leer opcion, cantidad</text></g><line class="fl" x1="423.16" y1="112" x2="423.16" y2="134" marker-end="url(#armk)"/><g id="cf-cero"><rect class="sh" x="338.16" y="134" width="170" height="40" rx="3"/><text class="t" x="423.16" y="154">precio ← 0</text></g><line class="fl" x1="423.16" y1="174" x2="423.16" y2="196" marker-end="url(#armk)"/><g id="cf-sw"><polygon class="sh" points="423.16,196 508.16,234 423.16,272 338.16,234"/><text class="t" x="423.16" y="234">opcion</text></g><polyline class="fl" points="423.16,272 423.16,300"/><polyline class="fl" points="99,300 717.16,300"/><line class="fl" x1="99" y1="300" x2="99" y2="334" marker-end="url(#armk)"/><text class="fll" x="106" y="322" style="text-anchor:start">'T' 't'</text><line class="fl" x1="295" y1="300" x2="295" y2="334" marker-end="url(#armk)"/><text class="fll" x="302" y="322" style="text-anchor:start">'P' 'p'</text><line class="fl" x1="491" y1="300" x2="491" y2="334" marker-end="url(#armk)"/><text class="fll" x="498" y="322" style="text-anchor:start">'E' 'e'</text><line class="fl" x1="717.16" y1="300" x2="717.16" y2="334" marker-end="url(#armk)"/><text class="fll" x="724.16" y="322" style="text-anchor:start">otro</text><g id="cf-t"><rect class="sh" x="14" y="334" width="170" height="40" rx="3"/><text class="t" x="99" y="354">precio ← 1500</text></g><polyline class="fl" points="99,374 99,418"/><g id="cf-p"><rect class="sh" x="210" y="334" width="170" height="40" rx="3"/><text class="t" x="295" y="354">precio ← 2000</text></g><polyline class="fl" points="295,374 295,418"/><g id="cf-e"><rect class="sh" x="406" y="334" width="170" height="40" rx="3"/><text class="t" x="491" y="354">precio ← 2500</text></g><polyline class="fl" points="491,374 491,418"/><g id="cf-d"><polygon class="sh" points="662.32,334 832.32,334 772,392 602,392"/><text class="t" x="717.16" y="354.5">Mostrar «no</text><text class="t" x="717.16" y="371.5">valida»</text></g><polyline class="fl" points="717.16,392 717.16,418"/><polyline class="fl" points="99,418 717.16,418"/><circle class="jn" cx="423.16" cy="418" r="5"/><line class="fl" x1="423.16" y1="418" x2="423.16" y2="440" marker-end="url(#armk)"/><g id="cf-dec"><polygon class="sh" points="423.16,440 523.16,481 423.16,522 323.16,481"/><text class="t" x="423.16" y="481">precio &gt; 0</text></g><polyline class="fl" points="523.16,481 618.67,481 618.67,530" marker-end="url(#armk)"/><text class="fll" x="570.915" y="471">Sí</text><g id="cf-tot"><polygon class="sh" points="539.48,530 758.18,530 697.86,588 479.16,588"/><text class="t" x="618.67" y="550.5">Mostrar</text><text class="t" x="618.67" y="567.5">precio * cantidad</text></g><polyline class="fl" points="618.67,588 618.67,612 432.16,612" marker-end="url(#armk)"/><line class="fl" x1="423.16" y1="522" x2="423.16" y2="606" marker-end="url(#armk)"/><text class="fll" x="441.16" y="540">No</text><circle class="jn" cx="423.16" cy="612" r="5"/><line class="fl" x1="423.16" y1="612" x2="423.16" y2="634" marker-end="url(#armk)"/><g id="cf-fin"><rect class="sh" x="348.16" y="634" width="150" height="36" rx="18"/><text class="t" x="423.16" y="652">Fin</text></g></svg></div>
+    <div class="gbody" data-g="cf">
+      <div class="gpane on" data-s="1">
+        <h4>El enunciado</h4>
+        <p>«La cafetería vende <b>tinto ($1 500)</b>, <b>pintadito ($2 000)</b> y <b>empanada ($2 500)</b>. El cliente elige con la inicial —mayúscula o minúscula— y dice la cantidad. Muestre el total, o <span class="mono">Opcion no valida</span>.» (Precios del ejemplo.)</p>
+      </div>
+      <div class="gpane" data-s="2">
+        <h4>Entradas · proceso · salidas</h4>
+        <p><b>Entradas:</b> <span class="mono">opcion</span> (char), <span class="mono">cantidad</span> (entero). <b>Salida:</b> <span class="mono">Total: n</span>. <b>Proceso:</b> <b>elegir</b> el precio según la letra; <b>después</b>, calcular.</p>
+        <table>
+          <thead><tr><th>entrada</th><th>esperado</th><th>prueba</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">T 2 · E 1</td><td class="mono">3000 · 2500</td><td>mayúsculas</td></tr>
+            <tr><td class="mono">p 3</td><td class="mono">6000</td><td>minúscula</td></tr>
+            <tr><td class="mono">x 2</td><td class="mono">Opcion no valida</td><td>letra inexistente</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gpane" data-s="3">
+        <h4>El diagrama</h4>
+        <p>Un <b>Según</b> con tres salidas rotuladas y una para «otro». Cada salida solo <b>fija el precio</b>.</p>
+        <p>Después del punto de reunión, una <b>decisión simple</b>: si hay precio, se calcula y se muestra el total.</p>
+      </div>
+      <div class="gpane" data-s="4">
+        <pre class="cc tiny" data-g="cf" data-src="cafeteria.c"><span class="ln" data-m="cero">precio = <span class="n">0</span>;</span>
+<span class="ln" data-m="sw"><span class="k">switch</span> (opcion) {</span>
+<span class="ln" data-m="t">    <span class="k">case</span> <span class="s">'T'</span>:</span>
+<span class="ln" data-m="t">    <span class="k">case</span> <span class="s">'t'</span>:</span>
+<span class="ln" data-m="t">        precio = PRECIO_TINTO;</span>
+<span class="ln" data-m="t">        <span class="k">break</span>;</span>
+<span class="ln" data-m="p">    <span class="k">case</span> <span class="s">'P'</span>:</span>
+<span class="ln" data-m="p">    <span class="k">case</span> <span class="s">'p'</span>:</span>
+<span class="ln" data-m="p">        precio = PRECIO_PINTADITO;</span>
+<span class="ln" data-m="p">        <span class="k">break</span>;</span>
+<span class="c">...</span>
+<span class="ln" data-m="d">    <span class="k">default</span>:</span>
+<span class="ln" data-m="d">        printf(<span class="s">"Opcion no valida\n"</span>);</span>
+<span class="ln" data-m="d">        <span class="k">break</span>;</span>
+}
+<span class="ln" data-m="dec"><span class="k">if</span> (precio &gt; <span class="n">0</span>) {</span>
+<span class="ln" data-m="tot">    printf(<span class="s">"Total: %d\n"</span>, precio * cantidad);</span>
+}</pre>
+        <p class="note">Pase el cursor por las líneas. El caso de la empanada, igual a los otros dos, está en <span class="mono">cafeteria.c</span>.</p>
+      </div>
+      <div class="gpane" data-s="5">
+        <pre class="con tiny">T tinto, P <span class="u">p</span>erico, E empanada: p
+Cantidad: <span class="u">3</span>
+Total: 6000</pre>
+        <pre class="con tiny">T tinto, P pintadito, E empanada: <span class="u">x</span>
+Cantidad: <span class="u">2</span>
+Opcion no valida</pre>
+        <p class="note">Los cuatro casos del paso 2 dan lo esperado. Con <span class="mono">x</span> el programa no calcula nada: <span class="mono">precio</span> quedó en 0. Cero advertencias.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 34 ............................................................ -->
+<section class="slide dense" data-t="4.4 switch · 0:52">
+  <p class="eyebrow"><span class="tick"></span> ¿switch o if?</p>
+  <h2 class="title"><span class="mono">switch</span> solo compara igualdad</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="switch_real.c"><span class="k">double</span> nota = <span class="n">4.5</span>;
+
+<span class="k">switch</span> (nota) {
+    <span class="k">case</span> <span class="n">4.5</span>:</pre>
+      <pre class="con tiny wr">switch_real.c:8:13: <span class="e">error:</span> switch quantity not an integer
+    8 |     switch (nota) {
+      |             ^~~~
+switch_real.c:9:9: <span class="e">error:</span> case label does not reduce to an integer constant
+    9 |         case 4.5:
+      |         ^~~~</pre>
+      <pre class="cc tiny" data-src="switch_rango.c"><span class="k">case</span> edad &gt;= <span class="n">18</span>:</pre>
+      <pre class="con tiny wr">switch_rango.c:9:9: <span class="e">error:</span> case label does not reduce to an integer constant
+    9 |         case edad &gt;= 18:
+      |         ^~~~</pre>
+    </div>
+    <div>
+      <table>
+        <thead><tr><th>El problema dice…</th><th>Use</th></tr></thead>
+        <tbody>
+          <tr><td>una lista de opciones con número o letra (menú, día, operador)</td><td class="mono b">switch</td></tr>
+          <tr><td>«entre», «más de», «menos de», «hasta» (rangos)</td><td class="mono b">else if</td></tr>
+          <tr><td>valores reales (notas, precios, temperaturas)</td><td class="mono b">else if</td></tr>
+          <tr><td>cadenas de texto</td><td>semana 8</td></tr>
+        </tbody>
+      </table>
+      <p class="refs">Los dos programas de la izquierda <b>no compilan</b>, a propósito: los mensajes son los reales de gcc 13.3.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 35 ............................................................ -->
+<section class="slide dense" data-t="4.4 switch · 0:45">
+  <p class="eyebrow"><span class="tick"></span> Compile con todas las advertencias</p>
+  <h2 class="title">Dos errores de <span class="mono">switch</span> que el compilador detecta</h2>
+  <div class="duo">
+    <div class="panel imp">
+      <span class="tag imp">El break olvidado · advertencia</span>
+      <pre class="con tiny wr">sin_break.c:13:13: <span class="e">warning:</span> this statement may fall through [-Wimplicit-fallthrough=]
+   13 |             printf("Acceso a la biblioteca\n");
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sin_break.c:14:9: note: here
+   14 |         case 2:
+      |         ^~~~</pre>
+      <p><span class="mono">-Wextra</span> activa <i>this statement may fall through</i> en cada caso que cae al siguiente (<span class="mono">sin_break.c</span> produce tres, una por caso; aquí se muestra la primera). Si la caída no es a propósito, <b>falta un <span class="mono">break</span></b>.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">El case repetido · error</span>
+      <pre class="cc tiny" data-src="switch_duplicado.c"><span class="k">case</span> <span class="s">'a'</span>:
+<span class="c">...</span>
+<span class="k">case</span> <span class="n">97</span>:</pre>
+      <pre class="con tiny wr">switch_duplicado.c:12:9: <span class="e">error:</span> duplicate case value
+   12 |         case 97:
+      |         ^~~~
+switch_duplicado.c:9:9: note: previously used here
+    9 |         case 'a':
+      |         ^~~~</pre>
+      <p><span class="mono">'a'</span> y <span class="mono">97</span> son <b>el mismo valor</b>: un <span class="mono">char</span> es un número. Un <span class="mono">case</span> repetido casi siempre es un error de copiar y pegar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 36 ............................................................ -->
+<section class="slide dense" data-t="4.4 switch · 0:49">
+  <p class="eyebrow"><span class="tick"></span> Cierre · la actividad de la semana</p>
+  <h2 class="title">Diez programas y un formulario de 20 preguntas</h2>
+  <div class="split">
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Cómo funciona</span>
+        <ul>
+          <li><b>1–4</b> <span class="mono">else if</span> y anidadas · <b>5–7</b> <span class="mono">char</span> · <b>8–10</b> <span class="mono">switch</span> (<span class="mono">S04_actividad_evaluativa.md</span>).</li>
+          <li>Programe <b>los diez</b> y páselos por <b>todos</b> sus casos de prueba.</li>
+          <li>En el <b>formulario</b>, cada pregunta da unos datos: ejecute su programa y elija la opción <b>idéntica</b> a la consola.</li>
+          <li>Puede preguntar por <b>cualquiera</b> de los diez. Si ninguna opción coincide, su programa tiene un error.</li>
+        </ul>
+      </div>
+      <p class="refs"><b>Materiales:</b> <span class="mono">S04_lectura.md</span> · <span class="mono">S04_codigo/</span>. <b>Semana 5:</b> funciones.</p>
+    </div>
+    <div class="panel">
+      <span class="tag fn">Antes de abrir el formulario</span>
+      <div class="checks" id="lista">
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Los <b>diez</b> programas compilan con <b>cero advertencias</b>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Pasan <b>todos</b> sus casos de prueba.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Escaleras en el <b>orden</b> correcto y <b>sin huecos</b>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Los <span class="mono">char</span> se leen con <span class="mono">" %c"</span> y se comparan con <span class="mono">'…'</span>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl"><span class="mono">break</span> en cada <span class="mono">case</span>, salvo agrupados.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Salidas con el <b>formato exacto</b> del enunciado.</span></button>
+      </div>
+      <p class="tally"><b id="tallyN">0</b> / 6 · <span id="tallyMsg">empiece por la primera</span></p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="notes" id="notesBox">
+  <h5>Guion del presentador · <span class="time" id="notesTime"></span></h5>
+  <p id="notesText"></p>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var notesBox = document.getElementById('notesBox');
+  var notesText = document.getElementById('notesText');
+  var notesTime = document.getElementById('notesTime');
+  function $(id){ return document.getElementById(id); }
+  function all(sel, root){ return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  /* El panel de notas es guion de narración: los cuatro bloques llevan
+     video. El texto es el mismo del libreto S04_libreto.md, generado desde
+     la misma fuente (guion_data.py), y el campo de tiempo es la duración
+     de cada diapositiva dentro de su bloque.                              */
+  var NOTES = [
+  "Semana cuatro. La semana pasada su programa aprendió a elegir entre dos caminos. Esta semana va a elegir entre muchos: con la escalera else if, con decisiones una dentro de otra y con switch. Y aparece un tipo de dato nuevo para decidir con letras y símbolos: el char. Son cuatro videos cortos; este es el primero, y empieza con más ejemplos de if y de if-else.",
+  "Cuatro objetivos. Escribir decisiones simples y compuestas sin las trampas de siempre. Elegir entre varios caminos con else if y con decisiones anidadas, y explicar por qué el orden de las condiciones cambia el resultado. Leer, comparar y transformar caracteres con el tipo char. Y escribir un switch con sus break y su default. La evidencia es distinta a la de la semana tres: usted programa diez ejercicios y responde un formulario de veinte preguntas. Cada pregunta le da unos datos, usted ejecuta su programa con ellos y elige lo que muestra la consola. No se suben archivos, pero sin los programas no hay respuestas.",
+  "Repaso rápido de lo que ya sabe. El if ejecuta un bloque solo si la condición es verdadera; si es falsa, el programa sigue después de la llave de cierre. El if-else elige uno de dos bloques, nunca los dos. Y las tres reglas de la semana pasada siguen en pie: la condición entre paréntesis, sin punto y coma después del paréntesis; doble igual para comparar; y llaves siempre, aunque el bloque tenga una sola línea. Con eso, vamos a ver cuatro ejemplos nuevos y tres trampas que compilan sin error. Y un recordatorio del diagrama: la rama que no hace nada en la decisión simple llega directo al punto de reunión.",
+  "Primer ejemplo: una tienda cobra doce mil pesos de envío, salvo que la compra llegue a ciento cincuenta mil; entonces el envío es gratis. Fíjese en el patrón: el envío se inicializa con el valor normal y el if solo lo cambia cuando hace falta. Es una decisión simple, porque en un caso hay algo que hacer y en el otro no. Mire las tres ejecuciones: con doscientos mil, envío cero; con ciento cincuenta mil exactos, también cero, porque el enunciado dice «desde»; y con ciento cuarenta y nueve mil novecientos noventa y nueve, se cobra. Ese es el caso de frontera.",
+  "Segundo ejemplo, con una condición de tres partes. Un año es bisiesto si es múltiplo de cuatro y no de cien, o si es múltiplo de cuatrocientos. En C cabe en una sola línea. Los paréntesis interiores no son obligatorios, porque el y tiene más precedencia que el o, pero dejan clara la intención. Pulse cada año de la diapositiva y mire cómo se evalúa cada parte. Dos mil veinticuatro: múltiplo de cuatro, no de cien, bisiesto. Mil novecientos: múltiplo de cien, no lo es. Dos mil: múltiplo de cuatrocientos, sí lo es. Y dos mil veintiséis, el año de este curso, no es múltiplo de cuatro: no es bisiesto.",
+  "Primera trampa. Cero punto uno más cero punto dos, ¿es igual a cero punto tres? En C, no. Mire la salida: con diecisiete decimales, los dos números no son iguales, porque la mayoría de los decimales no se guardan exactos en binario. Es lo mismo que vio en la cápsula uno punto cuatro. La regla: los reales no se comparan con doble igual. Se calcula la diferencia, se le quita el signo como en el taller de la semana pasada, y se pregunta si es menor que una tolerancia muy pequeña. Mire la última línea de la salida: con tolerancia, iguales. La tolerancia se define como constante, igual que cualquier otro valor fijo.",
+  "Segunda trampa. Dos if seguidos son dos preguntas independientes: se evalúan las dos, y pueden cumplirse las dos. Con treinta y cinco grados, este programa dice «hace calor» y también «clima templado», porque treinta y cinco es mayor que treinta y también mayor que veinte. Si lo que se quería era una sola respuesta, hacía falta un else: el else hace que las dos preguntas se excluyan. Y cuando las opciones son más de dos, lo que hace falta es una escalera else if, que es el tema del siguiente video.",
+  "Tercera trampa, dos condiciones que compilan sin advertencias. La primera: alguien quería saber si x está entre uno y nueve, y escribió x mayor que cero o x menor que diez. Con o, cualquier número cumple al menos una de las dos partes; la condición es siempre verdadera. Para un rango se necesita y. La segunda: en C, cualquier valor distinto de cero cuenta como verdadero. Por eso if de x, sin comparación, pregunta si x es distinto de cero. Es válido, pero en este curso preferimos escribir la comparación completa.",
+  "Antes de seguir, compruebe. Aquí hay cuatro fragmentos de código con su dato de entrada. Para cada uno, decida qué muestra, y solo después pulse para ver la salida real. Si acierta los cuatro, las trampas de este bloque ya no lo atrapan. Si falla alguno, vuelva a la diapositiva que lo explica. Pause el video aquí, haga los cuatro, y cuando termine siga con el bloque dos, donde el programa aprende a elegir entre más de dos caminos. Los cuatro fragmentos se compilaron y ejecutaron antes de ponerlos aquí: la salida que aparece al pulsar es la real.",
+  "Bloque dos. En la cápsula dos punto cuatro usted dibujó la escalera de rombos y los rombos anidados. Hoy los escribe en C. Vamos a ver la escalera else if, por qué su orden importa, cuándo anidar y cuándo combinar condiciones, y un error clásico: el else colgante.",
+  "La escalera del diagrama se traduce casi palabra por palabra. Cada Sino Si se vuelve else if con su condición entre paréntesis, y el último Sino se vuelve un else sin condición, que recoge todo lo que no cumplió ninguna. La regla que hay que recordar es esta: las condiciones se evalúan de arriba hacia abajo, y la primera verdadera gana. Su bloque se ejecuta, y las demás condiciones ni siquiera se miran. Por eso, en una escalera, cada condición puede dar por hecho que todas las anteriores fueron falsas. Un detalle de escritura: else if son dos palabras, y se escriben en la misma línea de la llave que cierra el bloque anterior. Así la escalera se lee como una sola estructura.",
+  "Ejemplo guiado, con los cinco pasos de siempre. El enunciado: hasta cincuenta kilómetros por hora no hay sanción; hasta sesenta, leve; hasta ochenta, grave; más de ochenta, gravísima. En el análisis salen los casos de prueba: uno por tramo y los de frontera, cincuenta, sesenta y ochenta. El diagrama es una escalera de tres rombos. Y en el código, fíjese en el segundo if: dice solo velocidad menor o igual a sesenta. No hace falta preguntar si es mayor que cincuenta, porque si llegó ahí, la primera condición ya fue falsa. Pase el cursor por las líneas para ver su figura, y compruebe las fronteras en el paso cinco.",
+  "Ahora el mismo programa con las condiciones en otro orden: primero pregunta si la velocidad es mayor que cincuenta. Compila sin advertencias. Elija noventa y cinco en la diapositiva: el programa ordenado dice gravísima, y el desordenado dice leve, porque noventa y cinco es mayor que cincuenta, esa condición gana y las demás nunca se miran. Pruebe los cinco valores. Con mayor que, la escalera se ordena del límite más alto al más bajo; con menor o igual, del más bajo al más alto. Mezclarlos es el error. Cuando una escalera da un resultado raro, lo primero que se revisa es el orden.",
+  "A veces una pregunta solo tiene sentido si otra se respondió antes. Para subir a una atracción hay que medir al menos ciento veinte centímetros. Solo a quien cumple eso le preguntamos la edad: con doce o más, sube solo; con menos, sube con un adulto. Esa segunda decisión va dentro de la rama Sí de la primera. Eso es una decisión anidada. Mire la sangría: cada nivel se corre cuatro espacios, y cada if tiene sus llaves. Así se ve a simple vista qué else pertenece a qué if. En el diagrama, el segundo rombo queda completo dentro de la rama Sí del primero, con su propio punto de reunión.",
+  "Dos ifs anidados sin else interno equivalen a uno solo con y. Si lo único que importa es que se cumplan las dos cosas, la versión con y es más corta y más fácil de leer. Pero en cuanto el nivel de adentro tiene su propio else, como en la atracción, ya no se pueden fundir, porque cada no lleva a un mensaje distinto. La pregunta que decide es: ¿cuántas salidas diferentes tiene el problema? Si son tres, como aquí, hacen falta dos decisiones. Si son dos, alcanza con una decisión, aunque su condición sea compuesta.",
+  "Este programa parece el de la atracción, pero sin llaves. La sangría sugiere que el else pertenece al primer if. Para el compilador, no: un else se empareja siempre con el if más cercano que no tenga else. Resultado: con ciento treinta centímetros y diez años dice «no puede subir», y con ciento diez no dice nada. El gcc del curso lo advierte con menos Wall: sugiere llaves explícitas para evitar un else ambiguo. Es la razón de la regla de las llaves siempre. Con llaves, la sangría y el compilador dicen lo mismo, y la advertencia desaparece.",
+  "Otro error que compila: escribir los tramos como rangos completos y dejar un hueco. Aquí el tramo leve dice mayor que cincuenta y menor que sesenta, y el grave, mayor que sesenta. ¿Y el sesenta exacto? No cumple ninguna de las dos, y cae en el else: gravísima. Una multa injusta por un error de un carácter. Dos consejos. Aproveche que la escalera ya descartó lo anterior y escriba solo el límite superior. Y pruebe siempre los valores de frontera, uno por uno.",
+  "¿Cuántos casos de prueba necesita una escalera? Como mínimo, uno dentro de cada tramo y uno en cada frontera. Para la velocidad son cuatro tramos y tres fronteras: siete casos, y conviene agregar el primer valor después de cada frontera, como cincuenta y uno. La tabla de la diapositiva es la que se ejecutó con el programa del ejemplo guiado. Esta es exactamente la forma de trabajo de la actividad de la semana: cada ejercicio trae sus casos de prueba, y hay que pasarlos todos antes de abrir el formulario. Si un caso falla, no cambie el programa al azar: busque en qué tramo cayó el valor y qué condición lo dejó pasar.",
+  "Bloque tres: el tipo char. Hasta ahora sus programas decidían con números. Desde aquí también deciden con letras, dígitos y símbolos: una opción de menú, una respuesta de sí o no, el operador de una calculadora. Todo eso cabe en un char.",
+  "Lo primero que hay que entender: un char no guarda una letra, guarda un número. Ocupa un byte, y el número es el código del carácter en la tabla ASCII. Por eso la misma variable se puede mostrar de dos maneras: con porcentaje c aparece el carácter, y con porcentaje d aparece su código. La letra A mayúscula es el sesenta y cinco. El dígito siete no vale siete, vale cincuenta y cinco. Y si a un char le asigna sesenta y seis, al mostrarlo con porcentaje c aparece una B. Esto último no es un truco: es la definición. Para el compilador, un char es un número pequeño.",
+  "Explore la tabla en la diapositiva. Pulse cualquier carácter y verá su código. Hay tres rangos que conviene saber de memoria, o al menos saber que existen: los dígitos van del cuarenta y ocho al cincuenta y siete, las mayúsculas del sesenta y cinco al noventa y las minúsculas del noventa y siete al ciento veintidós. Cada rango es continuo y está en orden. Y entre una mayúscula y su minúscula hay siempre la misma distancia: treinta y dos. Pulse la A y luego la a para comprobarlo. De esas dos propiedades salen todos los trucos de este bloque.",
+  "Las comillas importan. Con comillas simples, S es un carácter: un número, el ochenta y tres. Con comillas dobles, S es una cadena de texto, que es otra cosa y se estudia en la semana ocho. Si compara un char con una cadena, gcc avisa: comparación entre puntero y entero. Y el programa corre, pero la comparación da falso aunque el usuario haya escrito S. Mire la ejecución: con comillas dobles dice no; con simples, sí. Regla: un char se compara con comillas simples.",
+  "Este es el error de char más frecuente, y no produce ninguna advertencia. Se lee la edad con scanf, el usuario escribe veinte y pulsa Enter. El scanf toma el veinte, pero el Enter se queda esperando en la entrada. El siguiente scanf, con porcentaje c, lee ese Enter como si fuera el carácter, y ni siquiera espera a que el usuario escriba. Mire la consola: se leyó el código diez, que es el salto de línea. La solución es un espacio antes del porcentaje c. Ese espacio significa: salte los espacios y los Enter pendientes. Úselo siempre al leer un char. Con porcentaje d y porcentaje lf no hace falta, porque esos formatos ya saltan los espacios y los Enter por su cuenta; porcentaje c es el que no lo hace.",
+  "Como un char es un número, se puede operar. Tres operaciones que va a usar. Restar el carácter cero a un dígito da su valor: siete menos cero es siete. Sumar uno a una letra da la siguiente: la c más uno es la d. Y para pasar de minúscula a mayúscula, se resta la a minúscula, que deja la posición, y se suma la A mayúscula. Fíjese que nunca se escribe el número sesenta y cinco ni el noventa y siete: se escriben los caracteres, y el compilador pone el código. Estas mismas operaciones son la base de varios ejercicios de la actividad.",
+  "Para decidir con caracteres se usan los mismos operadores de siempre. Para un rango, como «es una minúscula», se pregunta si el char es mayor o igual que la a y menor o igual que la z, con y. Para una lista, como «es una vocal», se pregunta por cada valor con o. Funciona, pero diez comparaciones en una condición se leen mal y es fácil equivocarse en una. En el bloque cuatro verá cómo el switch escribe esa misma lista de una forma mucho más clara. Y recuerde las comillas simples en cada comparación.",
+  "Ejemplo guiado. Enunciado: lea una letra, mayúscula o minúscula, y muestre su posición en el alfabeto, de uno a veintiséis; si no es una letra, dígalo. En el análisis salen los casos: una minúscula, una mayúscula, las dos fronteras de cada rango y algo que no sea letra, como un dígito. El diagrama es una escalera de dos rombos. En el código, la posición sale de restar la primera letra del rango y sumar uno. Pase por las líneas y compruebe las ejecuciones: la g es la siete, la Z es la veintiséis y el cuatro no es una letra.",
+  "Cierre del bloque con tres cosas que un char no es. No es una cadena: la S con comillas dobles es otra cosa. No es el número que parece: el carácter cero vale cuarenta y ocho, así que comparar con cero sin comillas es un error que compila. Y no es cualquier símbolo del teclado: la eñe y las vocales con tilde no caben en un byte cuando el archivo está en UTF-8, y gcc lo advierte. Por eso la regla del curso sigue en pie: sin tildes ni eñes en el código. Si necesita una palabra con eñe en un mensaje, escríbala sin ella, como en todos los programas del curso: anio en lugar de año.",
+  "Último bloque: switch. Es la traducción a C del Según que dibujó en la semana dos. Sirve cuando hay que elegir un camino según el valor exacto de una variable entera o de un char. Vamos a ver su anatomía, el papel del break, los casos agrupados y cuándo conviene más un if.",
+  "El switch recibe una expresión entre paréntesis, que debe ser entera o char. Cada case lleva un valor constante y dos puntos. Cuando el valor de la expresión coincide con un case, la ejecución empieza ahí. El break termina el switch y salta a la instrucción que sigue a la llave de cierre. El default es el Sino: recoge cualquier valor que no tenga su case. Por convención del curso, el default va siempre, y siempre de último, también con su break. En el diagrama, el Según es un rombo con una salida por cada valor, rotulada con ese valor, y una salida más para el otro caso. Todas se reúnen abajo, en un solo punto.",
+  "Un ejemplo con enteros: leer un número del uno al siete y mostrar el nombre del día. Siete casos, cada uno con su printf y su break, y un default para lo que no es un día. Mire la forma: el switch deja ver de un golpe todos los valores posibles, uno debajo del otro. La misma lógica con if necesitaría una escalera de siete else if, cada uno repitiendo día igual igual a algo. Con tres, llega el miércoles; con nueve, día no válido. Los valores de los case no tienen que ir en orden, pero ordenarlos ayuda a leer.",
+  "¿Qué pasa si se olvida el break? El case no es una caja cerrada: es una etiqueta que marca dónde empezar. Sin break, la ejecución sigue hacia abajo y ejecuta los casos siguientes, sin volver a comparar. Eso se llama caer, o fallthrough. En la diapositiva, elija un nivel y compare las dos versiones. Con nivel dos, la versión con break muestra una línea. La versión sin break muestra tres: la suya, la del caso tres y la del default. Y gcc, con las banderas del curso, advierte esa caída, como verá en dos diapositivas.",
+  "Esa caída tiene un uso legítimo: agrupar valores que llevan al mismo bloque. Aquí, las cinco vocales minúsculas y las cinco mayúsculas son diez case seguidos, sin nada entre ellos, y todos llegan al mismo printf. Compare con la condición de diez partes del bloque tres: hace lo mismo, pero esta versión se lee mejor. La caída a propósito solo se permite así, con los case pegados. Si entre dos case hay instrucciones, cada caso termina en break. Escribir varios case en una misma línea, como aquí, es válido: es cuestión de estilo, y lo importante es que se vea que van juntos.",
+  "Ejemplo guiado. Una cafetería vende tinto, pintadito y empanada; el cliente elige con una letra, mayúscula o minúscula, y dice la cantidad. En el análisis, los casos: cada producto, una minúscula y una letra que no existe. El diagrama es un Según con tres salidas y un otro caso. En el código, cada producto agrupa su mayúscula y su minúscula. Fíjese en un detalle: el switch no calcula el total, solo elige el precio. El total se calcula después, y solo si la opción fue válida. Separar elegir de calcular deja el switch corto. Con la opción x, el programa dice «opción no válida» y no calcula nada.",
+  "¿Cuándo switch y cuándo if? Switch solo compara igualdad con valores constantes de tipo entero o char. No sirve para rangos, como velocidad mayor que sesenta; no sirve para reales, como una nota de cuatro punto cinco, y no sirve para cadenas. Mire los dos mensajes de gcc: con un double, «switch quantity not an integer»; con una comparación en el case, «case label does not reduce to an integer constant». Para rangos y reales, la escalera else if. Una forma práctica de decidir: si el enunciado dice «entre», «más de» o «menos de», es un if; si da una lista de opciones con número o con letra, es un switch.",
+  "Dos errores de switch que el compilador del curso detecta. El break olvidado: con menos W extra, gcc advierte «this statement may fall through» en cada caso que cae al siguiente. Si esa caída no es a propósito, falta un break. Y el case repetido: dos case con el mismo valor no compilan. Ojo, que la a minúscula y el noventa y siete son el mismo valor, porque un char es un número. Un case repetido casi siempre es un error de copiar y pegar. Por eso vale la pena compilar con todas las advertencias activadas.",
+  "Para terminar, la actividad. Son diez ejercicios: cuatro de else if y decisiones anidadas, tres con char y tres con switch. Programe los diez, páselos por todos sus casos de prueba y solo entonces abra el formulario. Cada pregunta le dará unos datos: ejecute su programa y elija la opción idéntica a lo que muestra. Si ninguna coincide, su programa tiene un error: vuelva a los casos de prueba. El formulario puede preguntar por cualquiera de los diez, así que no deje ninguno sin programar. Use la lista de la diapositiva antes de abrir el formulario. Nos vemos en la semana cinco, con funciones."
+];
+
+  function show(n){
+    if(n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('on');
+    slides[i].scrollTop = 0;
+    cur.textContent = String(i + 1);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    notesText.textContent = NOTES[i];
+    notesTime.textContent = slides[i].getAttribute('data-t');
+  }
+  $('next').addEventListener('click', function(){ show(i + 1); });
+  $('prev').addEventListener('click', function(){ show(i - 1); });
+  var tn = $('toggleNotes');
+  tn.addEventListener('click', function(){
+    var on = notesBox.classList.toggle('on');
+    tn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ show(i - 1); }
+    else if(e.key === 'n' || e.key === 'N'){ tn.click(); }
+  });
+
+  /* ====== pasos: 12, 26 y 33 (ejemplos guiados) =====================
+     Todos los paneles ocupan la misma celda de la rejilla; solo cambia
+     cuál es visible. Por eso la diapositiva no cambia de alto al avanzar. */
+  all('.gsteps[data-g]').forEach(function(bx){
+    var g = bx.getAttribute('data-g');
+    var body = document.querySelector('.gbody[data-g="' + g + '"]');
+    var diag = document.querySelector('.gdiag[data-g="' + g + '"]');
+    var btns = all('.tbtn', bx);
+    btns.forEach(function(b){
+      b.addEventListener('click', function(){
+        var s = b.getAttribute('data-s');
+        btns.forEach(function(o){ o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+        all('.gpane', body).forEach(function(p){ p.classList.toggle('on', p.getAttribute('data-s') === s); });
+        if(diag){ diag.classList.toggle('off', +s < 3); }
+      });
+    });
+  });
+
+  /* línea de código ↔ figura del diagrama (paso 4 de cada ejemplo) */
+  all('pre[data-g] .ln').forEach(function(ln){
+    var g = ln.parentNode.getAttribute('data-g');
+    var m = ln.getAttribute('data-m');
+    function on(v){
+      all('pre[data-g="' + g + '"] .ln').forEach(function(o){ o.classList.toggle('hot', v && o.getAttribute('data-m') === m); });
+      var fig = document.getElementById(g + '-' + m);
+      all('svg g.hot').forEach(function(x){ x.classList.remove('hot'); });
+      if(v && fig){ fig.classList.add('hot'); }
+    }
+    ln.addEventListener('mouseenter', function(){ on(true); });
+    ln.addEventListener('mouseleave', function(){ on(false); });
+    ln.addEventListener('click', function(){ on(true); });
+  });
+
+  var DATA = {"bis": [{"p": [1, 1, 0], "out": "Anio: <span class=\"u\">2024</span>\n2024 es bisiesto"}, {"p": [1, 0, 0], "out": "Anio: <span class=\"u\">1900</span>\n1900 no es bisiesto"}, {"p": [1, 0, 1], "out": "Anio: <span class=\"u\">2000</span>\n2000 es bisiesto"}, {"p": [0, 1, 0], "out": "Anio: <span class=\"u\">2026</span>\n2026 no es bisiesto"}], "ord": [{"a": "Sancion: ninguna", "b": "Sancion: ninguna", "m": "Coinciden."}, {"a": "Sancion: ninguna", "b": "Sancion: ninguna", "m": "Coinciden."}, {"a": "Sancion: leve", "b": "Sancion: leve", "m": "Coinciden."}, {"a": "Sancion: grave", "b": "Sancion: leve", "m": "<b>No coinciden:</b> 70 &gt; 50 es verdadero y gana."}, {"a": "Sancion: gravisima", "b": "Sancion: leve", "m": "<b>No coinciden:</b> 95 &gt; 50 es verdadero y gana."}], "brk": [{"a": "Acceso a la biblioteca", "b": "Acceso a la biblioteca\nAcceso a los laboratorios\nAcceso a la sala de servidores\nFin de la lista"}, {"a": "Acceso a los laboratorios", "b": "Acceso a los laboratorios\nAcceso a la sala de servidores\nFin de la lista"}, {"a": "Acceso a la sala de servidores", "b": "Acceso a la sala de servidores\nFin de la lista"}, {"a": "Fin de la lista", "b": "Fin de la lista"}]};
+
+  /* ====== 5 · bisiesto: cada parte de la condición ===================== */
+  function pintarBis(k){
+    var d = DATA.bis[k];
+    all('#bisBtns .tbtn').forEach(function(o){ o.setAttribute('aria-pressed', +o.getAttribute('data-i') === k ? 'true' : 'false'); });
+    for(var j = 0; j < 3; j++){ $('bis' + j).textContent = d.p[j] + (d.p[j] ? '  verdadero' : '  falso'); }
+    $('bisOut').innerHTML = d.out;
+  }
+  all('#bisBtns .tbtn').forEach(function(b){ b.addEventListener('click', function(){ pintarBis(+b.getAttribute('data-i')); }); });
+  pintarBis(0);
+
+  /* ====== 9 · predicciones ============================================= */
+  all('.pred .tbtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var pre = document.getElementById(b.getAttribute('data-o'));
+      var oculto = pre.classList.toggle('hid');
+      b.textContent = oculto ? 'Ver salida' : 'Ocultar';
+    });
+  });
+
+  /* ====== 13 y 31 · dos programas lado a lado ========================== */
+  function comparador(btns, ida, idb, datos, msg){
+    var bs = all(btns);
+    function pintar(k){
+      bs.forEach(function(o){ o.setAttribute('aria-pressed', +o.getAttribute('data-i') === k ? 'true' : 'false'); });
+      $(ida).innerHTML = datos[k].a; $(idb).innerHTML = datos[k].b;
+      if(msg){ $(msg).innerHTML = datos[k].m; }
+    }
+    bs.forEach(function(b){ b.addEventListener('click', function(){ pintar(+b.getAttribute('data-i')); }); });
+    pintar(0);
+  }
+  comparador('#ordBtns .tbtn', 'ordA', 'ordB', DATA.ord, 'ordMsg');
+  comparador('#brkBtns .tbtn', 'brkA', 'brkB', DATA.brk, null);
+
+  /* ====== 21 · tabla ASCII ============================================= */
+  var CL = {d: 'dígito', M: 'letra mayúscula', m: 'letra minúscula', o: 'otro carácter'};
+  all('#asciiGrid button').forEach(function(b){
+    b.addEventListener('click', function(){
+      all('#asciiGrid button').forEach(function(o){ o.classList.toggle('sel', o === b); });
+      var c = b.getAttribute('data-c'), k = b.getAttribute('data-k');
+      $('asciiTag').textContent = 'Carácter ' + (c === ' ' ? '(espacio)' : c);
+      $('asciiOut').innerHTML = "'" + (c === ' ' ? ' ' : c.replace(/&/g,'&amp;').replace(/</g,'&lt;')) + "' = " + k + ' · ' + CL[b.className.replace(' sel','') || 'o'];
+    });
+  });
+
+  /* ====== 36 · lista de verificación =================================== */
+  var chks = all('#lista .chk');
+  var MSG = ['empiece por la primera', 'siga', 'va bien', 'la mitad', 'ya casi', 'falta una', 'listo para el formulario'];
+  chks.forEach(function(c){
+    c.addEventListener('click', function(){
+      c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      var n = chks.filter(function(x){ return x.getAttribute('aria-pressed') === 'true'; }).length;
+      $('tallyN').textContent = n;
+      $('tallyMsg').textContent = MSG[n];
+    });
+  });
+
+  show(0);
+})();
+</script>
