@@ -1,0 +1,2085 @@
+<meta charset="utf-8">
+<title>Repetir sin Copiar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F2F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#EBEDF3;
+  --line:#D6D9E4;
+  --ink:#141828;
+  --muted:#5B6278;
+  --accent:#4557C9;
+  --accent-soft:#E3E6F8;
+  --fn:#0B7C71;
+  --fn-soft:#DCF0ED;
+  --imp:#A2620E;
+  --imp-soft:#F6E8D3;
+  --shadow:0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.08);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1120;
+    --surface:#171B2C;
+    --surface-2:#1F2438;
+    --line:#2E3448;
+    --ink:#E8EAF4;
+    --muted:#98A0BA;
+    --accent:#8494F2;
+    --accent-soft:#232A48;
+    --fn:#3FC7B4;
+    --fn-soft:#12312F;
+    --imp:#E9A94A;
+    --imp-soft:#33270F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1120;
+  --surface:#171B2C;
+  --surface-2:#1F2438;
+  --line:#2E3448;
+  --ink:#E8EAF4;
+  --muted:#98A0BA;
+  --accent:#8494F2;
+  --accent-soft:#232A48;
+  --fn:#3FC7B4;
+  --fn-soft:#12312F;
+  --imp:#E9A94A;
+  --imp-soft:#33270F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:"IBM Plex Serif", Georgia, "Times New Roman", serif;font-weight:600}
+p{margin:0}
+code,pre,.mono{font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace}
+
+/* ============ CHROME ============ */
+.rail{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  font-size:12px;
+}
+.rail .id{font-family:"IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rail .id b{color:var(--ink);font-weight:600}
+.rail .spacer{flex:1}
+.btn{
+  font:inherit;font-size:12px;
+  background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.counter{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.counter b{color:var(--ink)}
+
+.progress{height:3px;background:var(--surface-2);position:relative}
+.progress span{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .25s ease}
+
+/* ============ STAGE ============ */
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px}
+.stage{
+  width:min(100%,1180px);
+  aspect-ratio:16/9;
+  max-height:calc(100vh - 150px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  container-type:inline-size;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;
+  padding:4.4cqi 5cqi 4cqi;
+  display:none;
+  flex-direction:column;
+  gap:2.2cqi;
+  overflow-y:auto;
+}
+.slide.on{display:flex}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:1.25cqi;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:1cqi;
+}
+.eyebrow .tick{width:2.6cqi;height:1px;background:var(--line)}
+h2.title{font-size:3.9cqi;line-height:1.12;letter-spacing:-.01em}
+h3.sub{font-size:2.05cqi;line-height:1.25}
+.lead{font-size:1.95cqi;line-height:1.5;color:var(--ink);max-width:62ch}
+.note{font-size:1.5cqi;line-height:1.5;color:var(--muted);max-width:70ch}
+.slide ul{margin:0;padding-left:2.2cqi;display:flex;flex-direction:column;gap:1.1cqi}
+.slide li{font-size:1.8cqi;line-height:1.42}
+.slide li::marker{color:var(--accent)}
+
+/* two-world grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;align-items:start}
+.panel{
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+  padding:2cqi 2.2cqi;
+  display:flex;flex-direction:column;gap:1.2cqi;
+  min-width:0;
+}
+.panel.fn{border-top:3px solid var(--fn)}
+.panel.imp{border-top:3px solid var(--imp)}
+.tag{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+.tag.fn{color:var(--fn)}
+.tag.imp{color:var(--imp)}
+.panel h4{margin:0;font-size:1.85cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.panel p{font-size:1.5cqi;line-height:1.45;color:var(--muted)}
+.panel ul{padding-left:2cqi;gap:.7cqi}
+.panel li{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1.4cqi 1.6cqi;font-size:1.42cqi;line-height:1.55;
+  overflow-x:auto;white-space:pre;
+}
+pre .k{color:var(--accent);font-weight:500}
+pre .c{color:var(--muted);font-style:italic}
+pre .n{color:var(--imp)}
+pre .s{color:var(--fn)}
+.filename{
+  font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted);
+  display:flex;justify-content:space-between;gap:1cqi;
+}
+.filename em{font-style:normal;color:var(--fn)}
+
+/* trace machine */
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqi;align-items:stretch}
+.cell{
+  display:flex;gap:1.2cqi;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+}
+.box{
+  border:2px solid var(--imp);border-radius:6px;background:var(--imp-soft);
+  padding:.8cqi 1.6cqi;font-size:2.4cqi;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;min-width:7cqi;text-align:center;
+}
+.box.flash{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.expr{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;line-height:1.7;
+  color:var(--ink);word-break:break-word;
+}
+.expr .old{color:var(--muted)}
+.steps{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:1cqi;align-items:center;flex-wrap:wrap}
+.ctl{
+  font-family:"IBM Plex Sans",sans-serif;font-size:1.4cqi;
+  padding:.8cqi 1.6cqi;border-radius:6px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;cursor:pointer;
+}
+.ctl.ghost{background:transparent;color:var(--accent)}
+.ctl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctl:disabled{opacity:.45;cursor:default}
+
+/* comparison table */
+table{border-collapse:collapse;width:100%;font-size:1.5cqi}
+th,td{text-align:left;padding:1cqi 1.2cqi;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+thead th.cfn{color:var(--fn)}
+thead th.cimp{color:var(--imp)}
+tbody th{font-weight:500;color:var(--muted);font-family:"IBM Plex Sans",sans-serif}
+
+/* cover */
+.cover{justify-content:center;gap:1.6cqi;background:
+  linear-gradient(105deg, var(--fn-soft) 0%, transparent 42%),
+  linear-gradient(255deg, var(--imp-soft) 0%, transparent 42%);}
+.cover .inst{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);line-height:1.7;letter-spacing:.04em}
+.cover h1{font-size:5.4cqi;line-height:1.05;letter-spacing:-.02em;max-width:20ch}
+.cover .course{font-size:2cqi;color:var(--accent);font-weight:600}
+.cover .who{display:flex;gap:3cqi;flex-wrap:wrap;font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+.cover .who b{display:block;color:var(--ink);font-weight:600;font-size:1.75cqi}
+
+/* q&a */
+.qa{display:flex;flex-direction:column;gap:1.4cqi}
+.q{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi}
+.q p{font-size:1.6cqi;line-height:1.4}
+.q .ans{font-size:1.45cqi;color:var(--fn);line-height:1.45;display:none}
+.q.open .ans{display:block}
+.q button{align-self:flex-start;font:inherit;font-size:1.25cqi;background:none;border:1px solid var(--line);border-radius:5px;padding:.5cqi 1.1cqi;color:var(--muted);cursor:pointer}
+.q button:hover{color:var(--accent);border-color:var(--accent)}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:1.4cqi 1.8cqi;border-radius:0 7px 7px 0;font-size:1.55cqi;line-height:1.45;
+}
+.refs{font-size:1.3cqi;line-height:1.6;color:var(--muted)}
+.refs b{color:var(--ink);font-weight:500}
+
+/* notes drawer */
+.notes{
+  width:min(100%,1180px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);padding:14px 18px;
+  font-size:14px;line-height:1.55;color:var(--ink);
+  display:none;
+}
+.notes.on{display:block}
+.notes h5{margin:0 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notes p{color:var(--muted)}
+.notes .time{color:var(--accent);font-family:"IBM Plex Mono",monospace}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+@media (max-width:720px){
+  .duo,.trace{grid-template-columns:1fr}
+  .stage{aspect-ratio:auto;height:auto;min-height:520px}
+  .slide{position:relative;padding:22px}
+  .slide:not(.on){display:none}
+}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.3 — componentes que no existían en la 1.1.
+   No se modificó ningún token de color ni ningún tamaño anterior.
+   ====================================================================== */
+
+/* retícula de tres columnas (los tres intercambios) */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.6cqi;align-items:start}
+.trio .panel{padding:1.5cqi 1.6cqi;gap:.9cqi}
+.trio pre{font-size:1.24cqi;padding:1.1cqi 1.2cqi}
+.trio li{font-size:1.35cqi}
+.trio .tag{font-size:1.05cqi}
+
+/* retícula de dos columnas desiguales */
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:2.2cqi;align-items:start}
+.split-r{display:grid;grid-template-columns:.85fr 1.15fr;gap:2.2cqi;align-items:start}
+
+/* celdas de memoria con desvanecimiento del valor anterior */
+.mem{display:flex;gap:2.6cqi;align-items:flex-end;flex-wrap:wrap}
+.memcell{display:flex;flex-direction:column;align-items:center;gap:.5cqi;position:relative}
+.memcell .name{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--imp);font-weight:600}
+.memcell .addr{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;color:var(--muted)}
+.memcell .box{min-width:8.4cqi}
+.memcell .box.empty{color:var(--muted);border-style:dashed;background:transparent}
+.memcell .gone{
+  position:absolute;left:0;right:0;top:2.1cqi;
+  font-family:"IBM Plex Mono",monospace;font-size:2.4cqi;font-weight:600;
+  color:var(--muted);text-align:center;pointer-events:none;
+  text-decoration:line-through;
+  animation:vanish 1.1s ease forwards;
+}
+@keyframes vanish{
+  0%{opacity:.9;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-3.2cqi) scale(.8)}
+}
+
+/* registro de transiciones del simulador */
+.log{
+  font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;line-height:1.6;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1cqi 1.2cqi;height:15cqi;overflow:auto;color:var(--ink);
+  white-space:pre;
+}
+.log .dim{color:var(--muted)}
+
+/* indicador de estado actual */
+.statebar{display:flex;align-items:center;gap:1.2cqi;flex-wrap:wrap}
+.statebar .lab{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:1.7cqi;font-weight:600;
+  border:2px solid var(--imp);background:var(--imp-soft);color:var(--ink);
+  border-radius:999px;padding:.5cqi 1.6cqi;
+}
+.chip.flash{animation:pop .35s ease}
+
+/* diagramas de estados en SVG */
+.fsm{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fsm .node{fill:var(--dsurf);stroke:var(--dimp);stroke-width:2.5}
+.fsm .node.on{fill:var(--dimps);stroke-width:6}
+.fsm .inner{fill:none;stroke:var(--dfn);stroke-width:2}
+.fsm .lbl{fill:var(--dink);font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;text-anchor:middle}
+.fsm .edge{fill:none;stroke:var(--dmut);stroke-width:2}
+.fsm .elbl{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:15px;text-anchor:middle}
+.fsm .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fsm .cap.acc{fill:var(--dfn)}
+.fsm marker path{fill:var(--dmut)}
+.fsm.big .lbl{font-size:21px}
+.fsm.big .elbl{font-size:17px}
+.fsm.big .cap{font-size:15px}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.4 — componentes que no existían en la 1.3.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* las tres caras de un tipo (diapositiva 3) */
+.faces{display:flex;flex-direction:column;gap:1.2cqi}
+.face{display:flex;gap:1.3cqi;align-items:baseline}
+.face .num{font-family:"IBM Plex Mono",monospace;font-size:1.6cqi;font-weight:600;color:var(--accent);min-width:2.4cqi}
+.face .txt{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+.face .txt b{display:block;font-size:1.65cqi}
+.face .txt span{color:var(--muted);font-size:1.32cqi}
+
+/* matriz 2 × 2 del tipado (diapositiva 4) */
+.matrix{display:grid;grid-template-columns:4.6cqi 1fr 1fr;gap:.9cqi;align-items:stretch}
+.axis{
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);line-height:1.35;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+}
+.axis.side{writing-mode:vertical-rl;transform:rotate(180deg)}
+.mcell{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1.2cqi 1.3cqi;display:flex;flex-direction:column;gap:.45cqi;min-width:0;
+}
+.mcell:hover{border-color:var(--accent)}
+.mcell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mcell .lang{font-family:"IBM Plex Mono",monospace;font-size:1.75cqi;font-weight:600;color:var(--ink)}
+.mcell.c .lang{color:var(--imp)}
+.mcell.r .lang{color:var(--fn)}
+.mcell .kind{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.mcell .mk{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);visibility:hidden}
+.mcell[aria-pressed="true"]{background:var(--accent-soft);border:3px solid var(--accent);padding:1cqi 1.1cqi}
+.mcell[aria-pressed="true"] .mk{visibility:visible}
+
+/* explorador de tipos y barra de bytes (diapositiva 7) */
+.tbtns{display:flex;flex-wrap:wrap;gap:.6cqi}
+.tbtn{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.55cqi 1.05cqi;cursor:pointer;
+}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.bytebar{display:flex;gap:.35cqi;flex-wrap:wrap;align-items:center}
+.byte{
+  width:2.5cqi;height:2.5cqi;border-radius:4px;
+  border:1px solid var(--imp);background:var(--imp-soft);
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.bignum{font-family:"IBM Plex Mono",monospace;font-size:3.2cqi;font-weight:600;color:var(--imp);line-height:1}
+.bignum small{font-size:1.4cqi;color:var(--muted);font-weight:400;margin-left:.6cqi}
+
+/* banda de la advertencia intencional (diapositiva 6) */
+.warnband{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.2cqi 1.6cqi;
+  display:flex;flex-direction:column;gap:.55cqi;
+}
+.warnband .hd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.1cqi;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--imp);font-weight:600;
+}
+.warnband .msg{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;line-height:1.5;color:var(--ink);word-break:break-word}
+.warnband .why{font-size:1.32cqi;line-height:1.45;color:var(--muted)}
+
+/* predictor de conversiones (diapositiva 9) */
+.opts{display:flex;gap:.9cqi;flex-wrap:wrap}
+.opt{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.75cqi 1.5cqi;cursor:pointer;
+}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt.good{background:var(--fn-soft);border:2px solid var(--fn);font-weight:600;padding:.65cqi 1.4cqi}
+.opt.bad{background:var(--surface-2);border-color:var(--muted);color:var(--muted);text-decoration:line-through}
+.opt:disabled{cursor:default}
+.verdict{font-size:1.4cqi;line-height:1.45;color:var(--ink);min-height:7cqi}
+.verdict .head{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:.5cqi}
+.verdict .head.ok{color:var(--fn)}
+.verdict .head.no{color:var(--imp)}
+
+/* columna que difiere entre modelos de datos (diapositiva 10) */
+th.diff,td.diff{background:var(--imp-soft)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.5 — componentes que no existían en la 1.4.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* cadena de las cinco piezas (diapositiva 3) */
+.chain{display:flex;align-items:stretch;gap:.8cqi;flex-wrap:nowrap}
+.link{
+  flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface-2);padding:1.1cqi 1cqi;
+  display:flex;flex-direction:column;gap:.5cqi;text-align:center;
+}
+.link .n{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.link .w{font-size:1.42cqi;font-weight:600;line-height:1.2;color:var(--ink)}
+.link .d{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.link.hot{border-color:var(--imp);background:var(--imp-soft)}
+.arrowmini{display:flex;align-items:center;color:var(--muted);font-size:1.6cqi;flex:0 0 auto}
+
+/* comparación de las dos versiones (diapositiva 5) */
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:2cqi;align-items:stretch}
+.vcard{
+  border:1px solid var(--line);border-radius:8px;padding:1.6cqi 1.8cqi;
+  display:flex;flex-direction:column;gap:.9cqi;background:var(--surface-2);
+}
+.vcard.bad{border:2px solid var(--muted);opacity:.82}
+.vcard.good{border:2px solid var(--fn);background:var(--fn-soft)}
+.vcard .vh{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.vcard.bad .vh{color:var(--muted)}
+.vcard.good .vh{color:var(--fn)}
+.vcard h4{margin:0;font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif}
+.vrow{display:flex;justify-content:space-between;gap:1cqi;font-size:1.3cqi;line-height:1.4;border-bottom:1px solid var(--line);padding-bottom:.5cqi}
+.vrow:last-of-type{border-bottom:0}
+.vrow span:first-child{color:var(--muted)}
+.vrow span:last-child{text-align:right;font-family:"IBM Plex Mono",monospace;color:var(--ink)}
+.vcard.good .vrow span:last-child{font-weight:600}
+
+/* selector de ruta por sistema operativo (diapositiva 6) */
+.osbtns{display:flex;gap:.8cqi;flex-wrap:wrap}
+.osbtn{
+  font:inherit;font-family:"IBM Plex Sans",sans-serif;font-size:1.45cqi;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);padding:.85cqi 1.6cqi;cursor:pointer;
+  display:flex;align-items:center;gap:.7cqi;
+}
+.osbtn:hover{border-color:var(--accent);color:var(--accent)}
+.osbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.osbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ospanel{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:1cqi;min-height:26cqi;
+}
+.ospanel .oh{font-size:1.9cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;color:var(--ink)}
+.ospanel .ol{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.ospanel ol{margin:0;padding-left:2.4cqi;display:flex;flex-direction:column;gap:.7cqi}
+.ospanel li{font-size:1.42cqi;line-height:1.4}
+.ospanel .nope{font-size:1.28cqi;line-height:1.45;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.2cqi}
+
+/* teclas (diapositiva 8) */
+.kbd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.35cqi;font-weight:600;
+  border:1px solid var(--line);border-bottom-width:3px;border-radius:5px;
+  background:var(--surface);padding:.35cqi .9cqi;color:var(--ink);white-space:nowrap;
+}
+.keyrow{display:flex;flex-direction:column;gap:1cqi}
+.keyline{display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi}
+.keyline .txt{color:var(--ink)}
+.keyline .txt em{font-style:normal;color:var(--muted);font-size:1.25cqi}
+
+/* lista de verificación pulsable (diapositiva 12) */
+.checks{display:flex;flex-direction:column;gap:.85cqi}
+.chk{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1cqi 1.4cqi;display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi;
+}
+.chk:hover{border-color:var(--accent)}
+.chk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chk .mk{
+  flex:0 0 auto;width:2.2cqi;height:2.2cqi;border-radius:5px;
+  border:2px solid var(--line);display:flex;align-items:center;
+  justify-content:center;font-size:1.3cqi;color:transparent;
+}
+.chk[aria-pressed="true"]{background:var(--fn-soft);border-color:var(--fn)}
+.chk[aria-pressed="true"] .mk{background:var(--fn);border-color:var(--fn);color:#fff}
+.tally{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.tally b{color:var(--fn);font-size:2cqi}
+
+/* modificador de densidad: para las diapositivas cuyo contenido es
+   irreducible sin perder información (la tabla de los cinco tipos de
+   entorno y la comparación de macOS). Solo ajusta espaciados y escala
+   tipográfica dentro de la diapositiva; no toca ningún token. */
+.dense{gap:1.6cqi}
+.dense table{font-size:1.36cqi}
+.dense th,.dense td{padding:.6cqi 1cqi}
+.dense .alert{font-size:1.36cqi;padding:1cqi 1.4cqi}
+.dense .note{font-size:1.34cqi}
+.dense .lead{font-size:1.78cqi}
+.dense .panel li{font-size:1.38cqi}
+.dense .panel p{font-size:1.38cqi}
+.dense pre{font-size:1.3cqi}
+
+/* banda de advertencia sobria (varias diapositivas) */
+.alert{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.3cqi 1.7cqi;
+  font-size:1.5cqi;line-height:1.45;
+}
+.alert b{color:var(--imp)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 2.1 / 2.2 — componentes que no existían en la
+   1.5. No se modificó ningún token de color ni ningún tamaño anterior;
+   todo lo que sigue son componentes nuevos que usan los mismos tokens.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos se dibujan en tinta neutra; el ámbar marca «esto es lo
+   que estamos mirando» o «esto está mal», y el verde azulado marca
+   «esto está bien». Siempre acompañado de etiqueta de texto.
+   ====================================================================== */
+
+/* diagramas de flujo en SVG */
+.fc{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fc .sh{fill:var(--dsurf);stroke:var(--dink);stroke-width:2.4}
+.fc .sh.hot{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc .sh.ok{fill:var(--dfns);stroke:var(--dfn);stroke-width:3.4}
+.fc .sh.err{fill:var(--dimps);stroke:var(--dimp);stroke-width:4;stroke-dasharray:7 5}
+.fc .t{
+  fill:var(--dink);font-family:"IBM Plex Mono",monospace;
+  font-size:15px;text-anchor:middle;dominant-baseline:middle;
+}
+.fc .t.sm{font-size:13px}
+.fc .fl{fill:none;stroke:var(--dmut);stroke-width:2.2}
+.fc .fl.err{stroke:var(--dimp);stroke-width:3.2;stroke-dasharray:7 5}
+.fc .fll{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fc .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:12px;text-anchor:middle}
+.fc .spot{cursor:pointer}
+.fc .spot .ring{fill:none;stroke:var(--dimp);stroke-width:3;opacity:0}
+.fc .spot[data-found="1"] .ring{opacity:1}
+.fc .mark{fill:var(--dimp);font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;text-anchor:middle;opacity:0}
+.fc .spot[data-found="1"] .mark{opacity:1}
+#armk path{fill:var(--muted)}
+
+/* vitrina de un solo símbolo (diapositiva 5) */
+.symstage{
+  border:1px solid var(--line);border-radius:8px;background:var(--surface-2);
+  padding:1.2cqi;display:flex;align-items:center;justify-content:center;
+  min-height:19cqi;
+}
+.symstage svg{width:100%;max-height:17cqi}
+
+/* fila de equivalencias pseudocódigo ↔ símbolo */
+.eq{display:flex;flex-direction:column;gap:.7cqi}
+.eqrow{
+  display:grid;grid-template-columns:1.1fr 1.4cqi 1fr;gap:1.1cqi;align-items:center;
+  border-bottom:1px solid var(--line);padding-bottom:.6cqi;
+}
+.eqrow:last-child{border-bottom:0}
+.eqrow .k1{font-family:"IBM Plex Mono",monospace;font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2{font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2 em{font-style:normal;color:var(--muted);font-size:1.2cqi;display:block}
+.eqrow .to{color:var(--muted);font-size:1.3cqi;text-align:center}
+
+/* reglas numeradas de trazado */
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:1.1cqi 2cqi}
+.rule{display:flex;gap:1.1cqi;align-items:flex-start}
+.rule .rn{
+  flex:0 0 auto;width:2.5cqi;height:2.5cqi;border-radius:50%;
+  border:2px solid var(--accent);color:var(--accent);
+  font-family:"IBM Plex Mono",monospace;font-size:1.25cqi;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+}
+.rule .rt{font-size:1.42cqi;line-height:1.38}
+.rule .rt b{display:block;font-size:1.5cqi;margin-bottom:.15cqi}
+.rule .rt span{color:var(--muted);font-size:1.26cqi}
+
+/* marcador del cazador de errores */
+.hunt{display:flex;align-items:center;gap:1.4cqi;flex-wrap:wrap}
+.hunt .score{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.hunt .score b{color:var(--imp);font-size:2.1cqi}
+.huntmsg{font-size:1.38cqi;line-height:1.42;color:var(--ink);min-height:6.4cqi}
+.huntmsg .head{
+  font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.1em;
+  text-transform:uppercase;display:block;margin-bottom:.4cqi;
+}
+.huntmsg .head.no{color:var(--imp)}
+.huntmsg .head.ok{color:var(--fn)}
+
+/* separador de cápsula dentro de la misma presentación */
+.divider{
+  justify-content:center;gap:1.4cqi;
+  background:linear-gradient(115deg, var(--accent-soft) 0%, transparent 55%);
+}
+.divider .big{font-size:4.6cqi;line-height:1.06;letter-spacing:-.02em}
+.divider .kicker{
+  font-family:"IBM Plex Mono",monospace;font-size:1.4cqi;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);font-weight:600;
+}
+
+/* ficha de herramienta (diapositiva 20) */
+.tool{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi;min-height:27cqi;
+}
+.tool .th{font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.tool .tf{font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.tool .tp{font-size:1.4cqi;line-height:1.42;color:var(--ink)}
+.tool .tlim{font-size:1.26cqi;line-height:1.42;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.1cqi}
+.tool .tsrc{font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;color:var(--muted);line-height:1.5}
+
+/* el modificador .dense de la cápsula 1.5, extendido a los componentes
+   nuevos de esta cápsula. Sigue sin tocar ningún token de color. */
+.dense .rules{gap:.8cqi 1.6cqi}
+.dense .rule .rt{font-size:1.32cqi}
+.dense .rule .rt b{font-size:1.4cqi}
+.dense .rule .rt span{font-size:1.18cqi}
+.dense .vrow{font-size:1.22cqi}
+.dense .vcard{padding:1.2cqi 1.4cqi;gap:.7cqi}
+.dense .vcard h4{font-size:1.8cqi}
+.dense .tool{min-height:24cqi;padding:1.2cqi 1.5cqi;gap:.7cqi}
+.dense .tp{font-size:1.3cqi}
+.dense .eqrow .k1,.dense .eqrow .k2{font-size:1.26cqi}
+.dense .callout{font-size:1.38cqi;padding:1.1cqi 1.5cqi}
+.dense .refs{font-size:1.2cqi}
+.dense .fc .t{font-size:14px}
+
+/* el diagrama vertical completo, cuando comparte diapositiva con texto */
+.fc.fit{max-height:40cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LAS CÁPSULAS 2.3 / 2.4 / CICLOS — componentes que no
+   existían en la 2.1-2.2. No se modificó ningún token de color ni ningún
+   tamaño anterior: todo lo que sigue usa los mismos tokens del curso.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos van en tinta neutra; el ámbar marca «esto está mal» y el
+   verde azulado «esto está bien», siempre con etiqueta de texto.
+   ====================================================================== */
+
+/* punto de reunión / de retorno: la unión de dos caminos en uno */
+.fc .jn{fill:var(--dmut);stroke:none}
+
+/* los diagramas de esta cápsula son más altos que los de la 2.1: se
+   limita su altura para que nunca desborden la diapositiva. El ancho
+   sigue mandando; la altura solo recorta cuando el diagrama es vertical. */
+.slide .fc{max-height:34cqi}
+.dense .fc{max-height:32cqi}
+.trio .fc{max-height:28cqi}
+.split .fc, .split-r .fc{max-height:34cqi}
+
+/* tabla compacta para la traza del ciclo (diapositiva 22) */
+table.mini{font-size:1.3cqi;font-variant-numeric:tabular-nums}
+table.mini th, table.mini td{padding:.42cqi .8cqi}
+table.mini thead th{font-size:1.05cqi}
+table.mini td.mono{font-family:"IBM Plex Mono",monospace}
+table.mini tr.on td{background:var(--accent-soft)}
+table.mini tr.out td{color:var(--muted)}
+
+/* reglas numeradas en una sola columna (diapositiva 27) */
+.rules.one{grid-template-columns:1fr;gap:1cqi}
+
+/* ficha de las cinco piezas / los cinco pasos */
+.faces .txt b{margin-bottom:.1cqi}
+
+/* separador de bloque: el mismo de la 2.2, con la variante de ciclos */
+.divider .lead{max-width:56ch}
+
+/* pseudocódigo dentro de una tarjeta de comparación */
+.vcard pre{background:var(--surface);font-size:1.3cqi}
+.vcard .note{font-size:1.32cqi;line-height:1.45}
+.vcard h4{font-size:1.75cqi;line-height:1.25}
+
+/* el panel de la traza no debe estirarse */
+.controls{margin-top:.8cqi}
+
+/* el modificador .dense, extendido a lo nuevo de esta cápsula */
+.dense .faces .txt{font-size:1.36cqi}
+.dense .faces .txt b{font-size:1.46cqi}
+.dense .faces .txt span{font-size:1.24cqi}
+.dense .versus .vcard{padding:1.2cqi 1.4cqi}
+.dense table.mini{font-size:1.22cqi}
+.dense .verdict{font-size:1.3cqi;min-height:5cqi}
+
+/* lista de verificación compacta (diapositiva 29) */
+.dense .checks{gap:.5cqi}
+.dense .chk{padding:.5cqi .85cqi;font-size:1.22cqi;line-height:1.3}
+.dense .chk .mk{width:1.7cqi;height:1.7cqi;font-size:1.05cqi}
+.dense .tally{font-size:1.3cqi}
+.dense .tally b{font-size:1.7cqi}
+.dense .refs{font-size:1.16cqi;line-height:1.5}
+.dense .panel li{line-height:1.34}
+
+/* resaltado de una pieza del diagrama durante la traza (diapositiva 22).
+   Ambar = «esto es lo que estamos mirando», nunca un tipo de símbolo. */
+.fc g.hot .sh{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc g.hot .fl{stroke:var(--dimp);stroke-width:3}
+.fc g.hot .t{font-weight:600}
+
+/* los dos diagramas comparativos de la diapositiva 20 */
+.trio .panel .fc{max-height:28cqi;margin-top:.4cqi}
+.tag em{font-style:normal;color:var(--muted);text-transform:none;letter-spacing:0}
+
+/* el pseudocódigo, un punto más compacto en las diapositivas .dense */
+.dense pre{font-size:1.26cqi;line-height:1.45;padding:1.1cqi 1.3cqi}
+
+/* filas de la traza todavia no alcanzadas: ocupan sitio, no distraen */
+table.mini tr.pend td{color:var(--line)}
+
+/* diapositiva 26: el diagrama mas complejo del curso necesita ancho */
+.split.ancho{grid-template-columns:1.5fr 1fr}
+.split.ancho .fc{max-height:38cqi}
+
+/* .grande: los diagramas casi cuadrados se reducen mucho al caber en la
+   diapositiva, asi que su tipografia interna se dibuja mas grande para que
+   siga leyendose. Solo cambia el tamano del texto dentro del SVG. */
+.fc.grande .t{font-size:21px}
+.fc.grande .t.sm{font-size:19px}
+.fc.grande .fll{font-size:18px}
+.fc.grande .cap{font-size:16px}
+
+/* nota bajo un diagrama (diapositiva 22) */
+.split > div > .note{margin-top:.8cqi;font-size:1.3cqi}
+
+/* diapositiva 22: la traza ocupa alto fijo; el diagrama cede un poco */
+#trzBody + tr, .slide .panel table.mini{margin-bottom:.2cqi}
+.dense .split .fc.ej1, .split .fc.ej1{max-height:26cqi}
+
+/* el mensaje de la traza reserva su alto: la diapositiva no salta al avanzar */
+#trzMsg{min-height:5.6cqi;margin-top:.5cqi}
+
+/* correcciones de herencia sobre componentes de la 1.4/1.5 -------------
+   .face .txt b es display:block en la hoja base (sirve para el titulo de
+   la ficha); los <b> que van DENTRO del parrafo tienen que seguir en
+   linea. Y el texto de una casilla va en un solo elemento, porque .chk es
+   un contenedor flex y cada nodo suelto se separaria del resto. */
+.face .txt span b, .dense .faces .txt span b{display:inline;font-size:inherit}
+.chk .lbl{flex:1 1 auto}
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 3 — componentes nuevos (código C, consola,
+   ejemplo guiado paso a paso, explorador de etapas). No se modificó ningún
+   token ni ningún tamaño anterior: todo usa los tokens del curso.
+   Regla de color respetada: ámbar = C / lo que cambia / lo que estamos
+   mirando; verde azulado = lo correcto; el color siempre va con texto.
+   ====================================================================== */
+
+/* consola: la salida REAL de un programa. Se distingue del código por
+   el filete verde azulado y la etiqueta «consola», no por un fondo propio. */
+pre.con{background:var(--ground);border-left:4px solid var(--fn);color:var(--ink)}
+pre.con .u{color:var(--accent);font-weight:600}      /* lo que teclea el usuario */
+pre.con .e{color:var(--imp);font-weight:600}         /* error / advertencia */
+pre.cc{border-left:4px solid var(--imp)}             /* código C */
+.dense pre.con, .dense pre.cc{font-size:1.2cqi;line-height:1.42}
+pre.tiny{font-size:1.08cqi !important;line-height:1.38 !important;padding:.8cqi 1cqi !important}
+
+/* líneas de código enlazadas con una figura del diagrama */
+pre .ln{display:inline-block;width:100%;border-radius:3px;cursor:pointer}
+pre .ln:hover, pre .ln.hot{background:var(--imp-soft);outline:1px solid var(--imp)}
+
+/* anatomía del programa: partes pulsables */
+pre .part{cursor:pointer;border-bottom:2px dotted var(--accent);border-radius:2px}
+pre .part.on{background:var(--accent-soft);border-bottom-style:solid}
+
+/* ejemplo guiado: pasos */
+.gsteps{display:flex;gap:.5cqi;flex-wrap:wrap;margin:.2cqi 0 .9cqi}
+.gsteps .tbtn{font-size:1.15cqi;padding:.45cqi .9cqi}
+.gbody{display:grid}
+.gbody > .gpane{grid-area:1/1;visibility:hidden;min-width:0}
+.gbody > .gpane.on{visibility:visible}
+.gcols{display:grid;grid-template-columns:1.1fr 1fr;gap:2cqi;align-items:start}
+.gcols .fc{max-height:33.4cqi}
+.gdiag{position:relative}
+.gdiag.off .fc{opacity:.07}
+.gdiag.off::after{content:"el diagrama se construye en el paso 3";position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;color:var(--muted)}
+.gpane p, .gpane li{font-size:1.36cqi;line-height:1.45}
+.gpane table{font-size:1.25cqi}
+.gpane h4{font-family:"IBM Plex Serif",Georgia,serif;font-size:1.7cqi;margin:0 0 .5cqi}
+
+/* explorador de etapas (diapositiva 7): la figura pulsable */
+.fc .spot:hover .sh, .fc .spot.sel .sh{fill:var(--dimps);stroke:var(--dimp);stroke-width:3.4}
+#etOut{min-height:8cqi}
+
+/* validador de identificadores y tabla de verdad */
+.idgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6cqi}
+.idgrid .opt{font-family:"IBM Plex Mono",monospace;font-size:1.25cqi}
+.kw{display:flex;flex-wrap:wrap;gap:.35cqi .5cqi;font-family:"IBM Plex Mono",monospace;font-size:1.08cqi}
+.kw span{padding:.15cqi .45cqi;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.kw span.new{border-color:var(--imp);color:var(--imp)}
+.tv{display:grid;grid-template-columns:repeat(3,1fr);gap:.8cqi;text-align:center;margin-top:.8cqi}
+.tv .tvc{display:flex;flex-direction:column;align-items:center;gap:.3cqi;border:1px solid var(--line);border-radius:8px;padding:.8cqi;background:var(--surface)}
+.tv .tvc b{font-family:"IBM Plex Mono",monospace;font-size:2.6cqi;line-height:1}
+.tv .tvc span{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted)}
+.tv .tvc.v1 b{color:var(--fn)} .tv .tvc.v0 b{color:var(--imp)}
+
+/* evaluación de expresiones paso a paso */
+.evsteps{font-family:"IBM Plex Mono",monospace;font-size:1.45cqi;line-height:1.7}
+.evsteps div{padding:.1cqi .6cqi;border-radius:4px}
+.evsteps div.pend{color:var(--line)}
+.evsteps div.cur{background:var(--accent-soft)}
+.evsteps u{text-decoration:none;background:var(--imp-soft);outline:1px solid var(--imp);border-radius:3px}
+
+/* callouts y listas un poco más compactos en diapositivas densas */
+.dense .panel p{margin:.3cqi 0}
+.split.w46{grid-template-columns:1fr 1.15fr}
+.split.w64{grid-template-columns:1.3fr 1fr}
+.split .fc.mid{max-height:30cqi}
+.fc.wide{max-height:none !important;flex-shrink:0}
+.mono.b{font-weight:600}
+/* altura fija de los tres diagramas de proceso: no se encogen (flex) ni
+   empujan el resto de la diapositiva fuera del escenario */
+.fc.wide.dciclo{height:22cqi}
+.fc.wide.detapas{height:22cqi}
+.fc.wide.dfallas{height:16cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 4 — sin tocar tokens: tabla ASCII, predicciones
+   y leyenda de rangos. Mismo sistema de color (ámbar = C / lo que se mira;
+   verde azulado = lo correcto), siempre con texto.
+   ====================================================================== */
+.ascii{display:grid;grid-template-columns:repeat(16,1fr);gap:.28cqi}
+.ascii button{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;padding:.35cqi 0;border:1px solid var(--line);
+  border-radius:4px;background:var(--surface);color:var(--ink);cursor:pointer;line-height:1.2}
+.ascii button:hover{border-color:var(--accent)}
+.ascii button.d{border-color:var(--fn)} .ascii button.M{border-color:var(--imp)} .ascii button.m{border-color:var(--accent)}
+.ascii button.sel{background:var(--imp-soft);outline:2px solid var(--imp)}
+.asciiout{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;margin:.3cqi 0;min-height:4.4cqi}
+.rg{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;padding:0 .4cqi;border-radius:3px;border:1px solid var(--line)}
+.rg.d{border-color:var(--fn)} .rg.M{border-color:var(--imp)} .rg.m{border-color:var(--accent)}
+.pred{display:flex;flex-direction:column;gap:.4cqi}
+.pred .row{display:flex;gap:.8cqi;align-items:center}
+.pred pre.con{min-height:2.2cqi;margin:0;flex:1}
+.pred pre.con.hid{color:transparent}
+.pred .tbtn{font-size:1.1cqi;padding:.35cqi .8cqi;white-space:nowrap}
+#bisTab td{padding:.25cqi .8cqi}
+#bisOut, #brkA, #brkB{min-height:5.2cqi}
+#ordA, #ordB{min-height:2.4cqi}
+.tri .panel .refs{margin:.2cqi 0 0;font-size:1cqi}
+.tri .panel pre.con{margin:.1cqi 0 .2cqi}
+.tri .panel .note{margin:.4cqi 0 0}
+table.mini{font-size:1.15cqi}
+table.mini td, table.mini th{padding:.2cqi .6cqi}
+tr.bad td{background:var(--imp-soft)}
+.split > *, .split-r > *, .duo > *, .gcols > *{min-width:0}
+pre.con.wr{white-space:pre-wrap;overflow-wrap:anywhere}
+.cuatro{display:grid;grid-template-columns:repeat(4,1fr);gap:1cqi}
+.cuatro .pred .row{flex-direction:column;align-items:stretch}
+.tri{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:1.4cqi;align-items:start}
+.tri .refs{margin:0 0 .3cqi}
+.tri pre.con{margin:.2cqi 0 .5cqi}
+.tri .panel .note{font-size:1.1cqi;line-height:1.3}
+.split.r16{grid-template-columns:1fr 1.7fr}
+.segunbox .fc{max-height:21cqi;width:100%}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 5 — sin tocar tokens: traza vuelta por vuelta,
+   tres fragmentos en fila, sumatoria y tamaños de los diagramas de ciclo.
+   Mismo sistema de color (ámbar = C / lo que cambia / lo que se mira;
+   verde azulado = lo correcto), siempre con texto.
+   ====================================================================== */
+.tri3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2cqi;margin-bottom:.8cqi}
+.tri3 .panel{display:flex;flex-direction:column;gap:.3cqi}
+.tri3 .panel p{font-size:1.15cqi;line-height:1.35;margin:.2cqi 0}
+table.trz{font-size:1.25cqi;width:100%}
+table.trz td, table.trz th{padding:.25cqi .7cqi;text-align:center}
+table.trz td:first-child, table.trz th:first-child{text-align:left}
+table.trz tr.pend td{color:transparent}
+table.trz tr.cur td{background:var(--imp-soft)}
+#trzMsg{min-height:4.6cqi}
+.sigma{display:flex;align-items:center;gap:.8cqi;margin:.2cqi 0 .6cqi;font-size:1.3cqi}
+.sigma .big{font-family:"IBM Plex Serif",Georgia,serif;font-size:4cqi;line-height:1}
+.sigma .lim{display:flex;flex-direction:column;font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;line-height:1.5}
+.sigma .term{font-family:"IBM Plex Serif",Georgia,serif;font-size:2.2cqi}
+.sigma .arrow{font-size:2cqi;color:var(--muted)}
+.dnota .fc{max-height:34cqi;width:100%}
+.dcua .fc{max-height:34cqi;width:100%}
+.dtri .fc{max-height:36cqi;width:100%}
+.dventas .fc, .split.w64 > div > .fc{max-height:33cqi;width:100%}
+#recOut{min-height:2.4cqi}
+#recMsg{min-height:2.6cqi}
+#triOut{min-height:14cqi}
+.tbtns.rec .tbtn{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi}
+.tbtns.trzb .tbtn{font-size:1.05cqi;padding:.35cqi .7cqi}
+.nowrap td:last-child{white-space:nowrap}
+ul.abrev li{font-size:1.3cqi;line-height:1.5}
+.cuatro.dos{grid-template-columns:repeat(2,1fr);gap:.8cqi 1.4cqi}
+.cuatro.dos .pred{flex-direction:row;align-items:flex-start;gap:1cqi}
+.cuatro.dos .pred > pre.cc{flex:1.4;margin:0}
+.cuatro.dos .pred .row{flex:1;flex-direction:column;align-items:stretch}
+.cuatro.dos .pred .tag{writing-mode:vertical-rl;transform:rotate(180deg)}
+.tri.trg{grid-template-columns:1fr .85fr 1.35fr}
+.cuatro.dos .pred{padding:.8cqi 1cqi}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="armk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+</defs></svg>
+
+<div class="rail">
+  <span class="id"><b>IS284</b> · Programación II</span>
+  <span class="id">Semana 5 · Procesos iterativos en C99</span>
+  <span class="spacer"></span>
+  <span class="counter"><b id="cur">1</b> / 28</span>
+  <button class="btn" id="prev" type="button">← Anterior</button>
+  <button class="btn" id="next" type="button">Siguiente →</button>
+  <button class="btn" id="toggleNotes" type="button" aria-pressed="false">Notas (N)</button>
+</div>
+<div class="progress"><span id="bar" style="width:3.57%"></span></div>
+
+<div class="wrap">
+<div class="stage" id="stage">
+
+<!-- 1 ............................................................. -->
+<section class="slide cover on" data-t="5.1 while · 0:22">
+  <p class="inst">UNIVERSIDAD TECNOLÓGICA DE PEREIRA<br>Facultad de Ingenierías · Ingeniería de Sistemas y Computación</p>
+  <p class="course">Programación II · IS284 · Semana 5 · Cápsulas 5.1 a 5.4</p>
+  <h1>Repetir sin copiar: <span class="mono">while</span>, <span class="mono">do-while</span> y <span class="mono">for</span></h1>
+  <div class="who">
+    <span>Docente<b>Ing. Andres Vargas</b></span>
+    <span>Contenido<b>while · do-while · validación · for · anidados · break · continue</b></span>
+    <span>Video<b>Cuatro bloques de 5 a 6 minutos</b></span>
+    <span>Notación de la semana<b>Diagrama y C99</b></span>
+  </div>
+</section>
+
+<!-- 2 ............................................................. -->
+<section class="slide dense" data-t="5.1 while · 0:43">
+  <p class="eyebrow"><span class="tick"></span> Qué tiene que lograr</p>
+  <h2 class="title">Que el programa repita, y que sepa cuándo parar</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Objetivos observables</span>
+      <ul>
+        <li><b>Escribir</b> un <span class="mono">while</span> con sus piezas completas y <b>explicar</b> por qué termina (5.1).</li>
+        <li><b>Validar</b> un dato con <span class="mono">do-while</span>, también cuando el usuario escribe letras (5.2).</li>
+        <li><b>Traducir</b> una sumatoria, una productoria o una sucesión a un <span class="mono">for</span> (5.3).</li>
+        <li><b>Anidar</b> ciclos, <b>contar</b> sus vueltas y usar <span class="mono">break</span> y <span class="mono">continue</span> con disciplina (5.4).</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Evidencia que se evalúa</span>
+      <p><b>1. Diez ejercicios en C</b> (<span class="mono">S05_actividad_evaluativa.md</span>): usted los programa y los prueba con sus casos de prueba.</p>
+      <p><b>2. Formulario de 20 preguntas.</b> Unas le dan <b>datos</b> para ejecutar <b>su</b> programa; otras muestran un ciclo y preguntan qué imprime o qué ciclo conviene; seis repasan las semanas 1 a 4.</p>
+      <p>Apoyo: <span class="mono">S05_lectura.md</span> (con 12 ejercicios de práctica) y <span class="mono">S05_codigo/</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ............................................................. -->
+<section class="slide dense" data-t="5.1 while · 1:04">
+  <p class="eyebrow"><span class="tick"></span> Bloque A · cápsula 5.1</p>
+  <h2 class="title">Del ciclo del diagrama al <span class="mono">while</span></h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny">inicialización;
+<span class="k">while</span> (condición) {
+    cuerpo;
+    actualización;
+}
+<span class="c">/* si la condición es falsa, sigue aquí */</span></pre>
+      <div class="panel imp">
+        <span class="tag imp">Cómo se ejecuta</span>
+        <ul>
+          <li>Se pregunta la condición <b>antes</b> de cada vuelta.</li>
+          <li>Verdadera: cuerpo y otra vez la pregunta. Falsa: sigue después de <span class="mono">}</span>.</li>
+          <li>Puede dar <b>cero vueltas</b>.</li>
+          <li><b>Regla de oro:</b> algo del cuerpo acerca la condición a falsa.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel">
+      <span class="tag">Cada pieza en su lugar</span>
+      <table>
+        <thead><tr><th>Pieza del diagrama (semana 2)</th><th>En C</th></tr></thead>
+        <tbody>
+          <tr><td>1 · inicialización</td><td>antes del <span class="mono">while</span></td></tr>
+          <tr><td>2 · condición (rombo)</td><td>entre los paréntesis</td></tr>
+          <tr><td>3 · cuerpo</td><td>entre las llaves</td></tr>
+          <tr><td>4 · actualización</td><td>al final del cuerpo</td></tr>
+          <tr><td>5 · la flecha que vuelve</td><td>no se escribe: la pone el <span class="mono">while</span></td></tr>
+        </tbody>
+      </table>
+      <p class="note"><span class="mono">Mientras cond Hacer … FinMientras</span> en pseudocódigo es <span class="mono">while (cond) { … }</span> en C.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ............................................................. -->
+<section class="slide dense" data-t="5.1 while · 0:59">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo guiado · contador y acumulador</p>
+  <h2 class="title">La suma de <span class="mono">n</span> números</h2>
+  <div class="tbtns gsteps" data-g="sm">
+    <button class="tbtn" type="button" aria-pressed="true" data-s="1">1 · Enunciado</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="2">2 · Análisis</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="3">3 · Diagrama</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="4">4 · Código C</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="5">5 · Probar</button>
+  </div>
+  <div class="gcols">
+    <div class="gdiag off" data-g="sm"><svg class="fc" viewBox="0 0 527 636" role="img" aria-label="Ciclo mientras con contador: lee n numeros y muestra su suma"><g id="sm-ini"><rect class="sh" x="46.4" y="14" width="150" height="36" rx="18"/><text class="t" x="121.4" y="32">Inicio</text></g><line class="fl" x1="121.4" y1="50" x2="121.4" y2="72" marker-end="url(#armk)"/><g id="sm-leer"><polygon class="sh" points="57.2,72 227.2,72 185.6,112 15.6,112"/><text class="t" x="121.4" y="92">Leer n</text></g><line class="fl" x1="121.4" y1="112" x2="121.4" y2="134" marker-end="url(#armk)"/><g id="sm-s0"><rect class="sh" x="36.4" y="134" width="170" height="40" rx="3"/><text class="t" x="121.4" y="154">suma ← 0</text></g><line class="fl" x1="121.4" y1="174" x2="121.4" y2="196" marker-end="url(#armk)"/><g id="sm-i0"><rect class="sh" x="36.4" y="196" width="170" height="40" rx="3"/><text class="t" x="121.4" y="216">i ← 1</text></g><line class="fl" x1="121.4" y1="236" x2="121.4" y2="258" marker-end="url(#armk)"/><circle class="jn" cx="121.4" cy="263" r="5"/><line class="fl" x1="121.4" y1="263" x2="121.4" y2="287" marker-end="url(#armk)"/><g id="sm-cond"><polygon class="sh" points="121.4,287 221.4,328 121.4,369 21.4,328"/><text class="t" x="121.4" y="328">i &lt;= n</text></g><line class="fl" x1="221.4" y1="328" x2="264.4" y2="328" marker-end="url(#armk)"/><text class="fll" x="241.4" y="318">Sí</text><g id="sm-lx"><polygon class="sh" points="309,308 479,308 437.4,348 267.4,348"/><text class="t" x="373.2" y="328">Leer x</text></g><line class="fl" x1="373.2" y1="348" x2="373.2" y2="370" marker-end="url(#armk)"/><g id="sm-acu"><rect class="sh" x="286.95" y="370" width="172.5" height="40" rx="3"/><text class="t" x="373.2" y="390">suma ← suma + x</text></g><line class="fl" x1="373.2" y1="410" x2="373.2" y2="432" marker-end="url(#armk)"/><g id="sm-inc"><rect class="sh" x="288.2" y="432" width="170" height="40" rx="3"/><text class="t" x="373.2" y="452">i ← i + 1</text></g><polyline class="fl" points="373.2,472 373.2,488 507,488 507,263 128.4,263" marker-end="url(#armk)"/><line class="fl" x1="121.4" y1="369" x2="121.4" y2="502"/><text class="fll" x="139.4" y="387">No</text><line class="fl" x1="121.4" y1="502" x2="121.4" y2="524" marker-end="url(#armk)"/><g id="sm-mos"><polygon class="sh" points="55.6,524 228.8,524 187.2,564 14,564"/><text class="t" x="121.4" y="544">Mostrar suma</text></g><line class="fl" x1="121.4" y1="564" x2="121.4" y2="586" marker-end="url(#armk)"/><g id="sm-fin"><rect class="sh" x="46.4" y="586" width="150" height="36" rx="18"/><text class="t" x="121.4" y="604">Fin</text></g></svg></div>
+    <div class="gbody" data-g="sm">
+      <div class="gpane on" data-s="1">
+        <h4>El enunciado</h4>
+        <p>«Lea cuántos números va a sumar, <span class="mono">n</span>; después lea los <span class="mono">n</span> números enteros, uno por uno, y muestre su suma.»</p>
+        <p>Lo que no dice y hay que decidir: si <span class="mono">n</span> es 0, no se lee ningún número y la suma es 0.</p>
+      </div>
+      <div class="gpane" data-s="2">
+        <h4>Dos variables con oficio</h4>
+        <table>
+          <thead><tr><th>variable</th><th>oficio</th><th>empieza en</th><th>en cada vuelta</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">i</td><td><b>contador</b></td><td class="mono">1</td><td class="mono">i ← i + 1</td></tr>
+            <tr><td class="mono">suma</td><td><b>acumulador</b></td><td class="mono">0</td><td class="mono">suma ← suma + x</td></tr>
+          </tbody>
+        </table>
+        <p>Condición: <span class="mono">i &lt;= n</span> → exactamente <span class="mono">n</span> vueltas. Casos de prueba: <span class="mono">n = 3</span> (normal) y <span class="mono">n = 0</span> (cero vueltas).</p>
+      </div>
+      <div class="gpane" data-s="3">
+        <h4>El diagrama</h4>
+        <p>Las cinco piezas de la semana 2: la inicialización antes del <b>punto de retorno</b>, el rombo, el cuerpo a la derecha y la <b>flecha que vuelve</b> por el carril exterior.</p>
+        <p>La salida <b>No</b> baja por el eje hasta mostrar la suma.</p>
+      </div>
+      <div class="gpane" data-s="4">
+        <pre class="cc tiny" data-g="sm" data-src="suma_n.c"><span class="ln" data-m="leer">printf(<span class="s">"Cuantos numeros: "</span>);</span>
+<span class="ln" data-m="leer">scanf(<span class="s">"%d"</span>, &amp;n);</span>
+
+<span class="ln" data-m="s0">suma = <span class="n">0</span>;</span>
+<span class="ln" data-m="i0">i = <span class="n">1</span>;</span>
+<span class="ln" data-m="cond"><span class="k">while</span> (i &lt;= n) {</span>
+<span class="ln" data-m="lx">    printf(<span class="s">"Numero %d: "</span>, i);</span>
+<span class="ln" data-m="lx">    scanf(<span class="s">"%d"</span>, &amp;x);</span>
+<span class="ln" data-m="acu">    suma = suma + x;</span>
+<span class="ln" data-m="inc">    i = i + <span class="n">1</span>;</span>
+}
+<span class="ln" data-m="mos">printf(<span class="s">"Suma: %d\n"</span>, suma);</span></pre>
+        <p class="note">Pase el cursor por cada línea: se resalta su figura. Programa: <span class="mono">suma_n.c</span>.</p>
+      </div>
+      <div class="gpane" data-s="5">
+        <pre class="con tiny">Cuantos numeros: <span class="u">3</span>
+Numero 1: <span class="u">5</span>
+Numero 2: <span class="u">-2</span>
+Numero 3: <span class="u">9</span>
+Suma: 12</pre>
+        <pre class="con tiny">Cuantos numeros: <span class="u">0</span>
+Suma: 0</pre>
+        <p class="note">Con <span class="mono">n = 0</span> el cuerpo no se ejecuta nunca: <b>cero vueltas</b>, suma 0. Todo ciclo se prueba también así. Cero advertencias.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 ............................................................. -->
+<section class="slide dense" data-t="5.1 while · 0:41">
+  <p class="eyebrow"><span class="tick"></span> Traza</p>
+  <h2 class="title">¿Cuántos dígitos tiene un número?</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="digitos.c">cantidad = <span class="n">0</span>;
+copia = n;
+<span class="k">while</span> (copia &gt; <span class="n">0</span>) {
+    copia = copia / <span class="n">10</span>;
+    cantidad = cantidad + <span class="n">1</span>;
+}
+printf(<span class="s">"Digitos: %d\n"</span>, cantidad);</pre>
+      <div class="duo">
+        <pre class="con tiny">Entero (0 o mayor): <span class="u">4075</span>
+Digitos: 4</pre>
+        <pre class="con tiny">Entero (0 o mayor): <span class="u">0</span>
+Digitos: 0</pre>
+      </div>
+      <p class="note">Con <b>0</b> la condición es falsa desde el principio: el programa dice <b>0 dígitos</b>. Es un error; se arregla en el bloque B.</p>
+      <p class="refs">Los valores de la tabla los imprimió una copia de <span class="mono">digitos.c</span> con un <span class="mono">printf</span> en cada vuelta; no se calcularon a mano.</p>
+    </div>
+    <div class="panel">
+      <span class="tag">Traza con n = 4075</span>
+      <div class="tbtns trzb" id="trzBtns"><button class="tbtn" type="button" aria-pressed="false" data-i="0">inicio</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">vuelta 1</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">vuelta 2</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">vuelta 3</button><button class="tbtn" type="button" aria-pressed="false" data-i="4">vuelta 4</button></div>
+      <table class="trz" id="trzTab"><thead><tr><th>momento</th><th>condición</th><th class="mono">copia</th><th class="mono">cantidad</th></tr></thead><tbody><tr><td>antes del ciclo</td><td class="mono">verdadera</td><td class="mono">4075</td><td class="mono">0</td></tr><tr><td>tras la vuelta 1</td><td class="mono">verdadera</td><td class="mono">407</td><td class="mono">1</td></tr><tr><td>tras la vuelta 2</td><td class="mono">verdadera</td><td class="mono">40</td><td class="mono">2</td></tr><tr><td>tras la vuelta 3</td><td class="mono">verdadera</td><td class="mono">4</td><td class="mono">3</td></tr><tr><td>tras la vuelta 4</td><td class="mono">falsa</td><td class="mono">0</td><td class="mono">4</td></tr></tbody></table>
+      <p class="note" id="trzMsg"></p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ............................................................. -->
+<section class="slide dense" data-t="5.1 while · 0:52">
+  <p class="eyebrow"><span class="tick"></span> Patrón · centinela</p>
+  <h2 class="title">Repetir hasta un valor que significa «ya no hay más»</h2>
+  <div class="split w64">
+    <div>
+      <pre class="cc tiny" data-src="ventas.c">total = <span class="n">0</span>;
+cantidad = <span class="n">0</span>;
+printf(<span class="s">"Venta (0 para terminar): "</span>);
+scanf(<span class="s">"%d"</span>, &amp;venta);
+<span class="k">while</span> (venta != CENTINELA) {
+    total = total + venta;
+    cantidad = cantidad + <span class="n">1</span>;
+    printf(<span class="s">"Venta (0 para terminar): "</span>);
+    scanf(<span class="s">"%d"</span>, &amp;venta);
+}</pre>
+      <div class="duo">
+        <pre class="con tiny">Venta (0 para terminar): <span class="u">1500</span>
+Venta (0 para terminar): <span class="u">2300</span>
+Venta (0 para terminar): <span class="u">800</span>
+Venta (0 para terminar): <span class="u">0</span>
+Ventas: 3
+Total: 4600</pre>
+        <pre class="con tiny">Venta (0 para terminar): <span class="u">0</span>
+Ventas: 0
+Total: 0</pre>
+      </div>
+      <p class="note"><b>Dos lecturas:</b> la primera <b>antes</b> del ciclo; la siguiente, al <b>final</b> del cuerpo. Así el 0 no se suma ni se cuenta. <span class="mono">#define CENTINELA 0</span>. Programa: <span class="mono">ventas.c</span>.</p>
+    </div>
+    <div><svg class="fc" viewBox="0 0 612 574" role="img" aria-label="Ciclo con centinela: la primera lectura va antes del ciclo y la siguiente al final del cuerpo"><g id="vt-ini"><rect class="sh" x="96.45" y="14" width="150" height="36" rx="18"/><text class="t" x="171.45" y="32">Inicio</text></g><line class="fl" x1="171.45" y1="50" x2="171.45" y2="72" marker-end="url(#armk)"/><g id="vt-ini2"><rect class="sh" x="48.8" y="72" width="245.3" height="40" rx="3"/><text class="t" x="171.45" y="92">total ← 0, cantidad ← 0</text></g><line class="fl" x1="171.45" y1="112" x2="171.45" y2="134" marker-end="url(#armk)"/><g id="vt-l1"><polygon class="sh" points="107.25,134 277.25,134 235.65,174 65.65,174"/><text class="t" x="171.45" y="154">Leer venta</text></g><line class="fl" x1="171.45" y1="174" x2="171.45" y2="196" marker-end="url(#armk)"/><circle class="jn" cx="171.45" cy="201" r="5"/><line class="fl" x1="171.45" y1="201" x2="171.45" y2="225" marker-end="url(#armk)"/><g id="vt-cond"><polygon class="sh" points="171.45,225 281.45,266 171.45,307 61.45,266"/><text class="t" x="171.45" y="266">venta &lt;&gt; 0</text></g><line class="fl" x1="281.45" y1="266" x2="324.45" y2="266" marker-end="url(#armk)"/><text class="fll" x="301.45" y="256">Sí</text><g id="vt-acu"><rect class="sh" x="327.45" y="246" width="227.1" height="40" rx="3"/><text class="t" x="441" y="266">total ← total + venta</text></g><line class="fl" x1="441" y1="286" x2="441" y2="308" marker-end="url(#armk)"/><g id="vt-cnt"><rect class="sh" x="318.35" y="308" width="245.3" height="40" rx="3"/><text class="t" x="441" y="328">cantidad ← cantidad + 1</text></g><line class="fl" x1="441" y1="348" x2="441" y2="370" marker-end="url(#armk)"/><g id="vt-l2"><polygon class="sh" points="376.8,370 546.8,370 505.2,410 335.2,410"/><text class="t" x="441" y="390">Leer venta</text></g><polyline class="fl" points="441,410 441,426 591.65,426 591.65,201 178.45,201" marker-end="url(#armk)"/><line class="fl" x1="171.45" y1="307" x2="171.45" y2="440"/><text class="fll" x="189.45" y="325">No</text><line class="fl" x1="171.45" y1="440" x2="171.45" y2="462" marker-end="url(#armk)"/><g id="vt-mos"><polygon class="sh" points="55.6,462 328.9,462 287.3,502 14,502"/><text class="t" x="171.45" y="482">Mostrar cantidad, total</text></g><line class="fl" x1="171.45" y1="502" x2="171.45" y2="524" marker-end="url(#armk)"/><g id="vt-fin"><rect class="sh" x="96.45" y="524" width="150" height="36" rx="18"/><text class="t" x="171.45" y="542">Fin</text></g></svg></div>
+  </div>
+</section>
+
+<!-- 7 ............................................................. -->
+<section class="slide dense" data-t="5.1 while · 0:38">
+  <p class="eyebrow"><span class="tick"></span> Cuidado</p>
+  <h2 class="title">Tres ciclos que no terminan, y compilan</h2>
+  <div class="tri3">
+<div class="panel"><span class="tag imp">1 · Sin actualización</span><pre class="cc tiny"><span class="k">int</span> i = <span class="n">1</span>;
+<span class="k">while</span> (i &lt;= <span class="n">10</span>) {
+    printf(<span class="s">"%d\n"</span>, i);
+}</pre><p><span class="mono">i</span> nunca cambia: la condición es verdadera para siempre.</p></div>
+<div class="panel"><span class="tag imp">2 · Hacia el lado equivocado</span><pre class="cc tiny"><span class="k">int</span> i = <span class="n">1</span>;
+<span class="k">while</span> (i &lt;= <span class="n">10</span>) {
+    printf(<span class="s">"%d\n"</span>, i);
+    i = i - <span class="n">1</span>;
+}</pre><p><span class="mono">i</span> baja: se aleja de la frontera 10 en lugar de acercarse.</p></div>
+<div class="panel"><span class="tag imp">3 · Un punto y coma de más</span><pre class="cc tiny"><span class="k">int</span> i = <span class="n">1</span>;
+<span class="k">while</span> (i &lt;= <span class="n">10</span>);
+{
+    printf(<span class="s">"%d\n"</span>, i);
+    i = i + <span class="n">1</span>;
+}</pre><p>El <span class="mono">;</span> es el cuerpo: vacío, repetido para siempre. Las llaves quedan por fuera.</p></div>
+  </div>
+  <div class="panel imp">
+    <span class="tag imp">Si su programa «se queda pegado»</span>
+    <p>Deténgalo con <b>Ctrl + C</b> en la consola (o cierre la ventana) y revise: ¿hay actualización? ¿Va hacia la frontera? ¿Hay un <span class="mono">;</span> después del paréntesis del <span class="mono">while</span>? Los tres fragmentos se compilaron con <span class="mono">-Wall -Wextra</span>: <b>el 1 y el 2, con cero advertencias; el 3, con una sola advertencia de «sangría engañosa» (<span class="mono">-Wmisleading-indentation</span>), fácil de pasar por alto</b>. No se ejecutaron: no terminan.</p>
+  </div>
+</section>
+
+<!-- 8 ............................................................. -->
+<section class="slide dense" data-t="5.2 do-while · 0:41">
+  <p class="eyebrow"><span class="tick"></span> Bloque B · cápsula 5.2</p>
+  <h2 class="title"><span class="mono">do-while</span>: primero hace, después pregunta</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny"><span class="k">do</span> {
+    cuerpo;
+} <span class="k">while</span> (condición);   <span class="c">/* el ; es obligatorio */</span></pre>
+      <div class="panel imp">
+        <span class="tag imp">La única diferencia con <span class="mono">while</span></span>
+        <ul>
+          <li>La condición va <b>al final</b>: el cuerpo se ejecuta <b>al menos una vez</b>.</li>
+          <li>Si la condición es verdadera, vuelve a empezar; si es falsa, sigue después del <span class="mono">;</span>.</li>
+          <li>En pseudocódigo: <span class="mono">Hacer … Mientras cond</span>.</li>
+        </ul>
+      </div>
+      <p class="note">En el diagrama, el <b>punto de retorno</b> está encima del <b>cuerpo</b>, no encima del rombo. La salida Sí vuelve; la No sigue.</p>
+    </div>
+    <div class="dnota"><svg class="fc" viewBox="0 0 489 637" role="img" aria-label="Hacer-mientras: el cuerpo se ejecuta al menos una vez y la condicion va al final"><g id="nt-ini"><rect class="sh" x="46.4" y="14" width="150" height="36" rx="18"/><text class="t" x="121.4" y="32">Inicio</text></g><line class="fl" x1="121.4" y1="50" x2="121.4" y2="72" marker-end="url(#armk)"/><circle class="jn" cx="121.4" cy="77" r="5"/><line class="fl" x1="121.4" y1="77" x2="121.4" y2="101" marker-end="url(#armk)"/><g id="nt-leer"><polygon class="sh" points="57.2,101 227.2,101 185.6,141 15.6,141"/><text class="t" x="121.4" y="121">Leer nota</text></g><line class="fl" x1="121.4" y1="141" x2="121.4" y2="163" marker-end="url(#armk)"/><g id="nt-dec"><polygon class="sh" points="121.4,163 221.4,215 121.4,267 21.4,215"/><text class="t" x="121.4" y="206.5">nota &lt; 0</text><text class="t" x="121.4" y="223.5">O nota &gt; 5</text></g><polyline class="fl" points="221.4,215 303.26,215 303.26,275" marker-end="url(#armk)"/><text class="fll" x="262.33" y="205">Sí</text><g id="nt-msg"><polygon class="sh" points="237.72,275 429.12,275 368.8,333 177.4,333"/><text class="t" x="303.26" y="295.5">Mostrar «Fuera</text><text class="t" x="303.26" y="312.5">de rango»</text></g><polyline class="fl" points="303.26,333 303.26,357 130.4,357" marker-end="url(#armk)"/><line class="fl" x1="121.4" y1="267" x2="121.4" y2="351" marker-end="url(#armk)"/><text class="fll" x="139.4" y="285">No</text><circle class="jn" cx="121.4" cy="357" r="5"/><line class="fl" x1="121.4" y1="357" x2="121.4" y2="379" marker-end="url(#armk)"/><g id="nt-cond"><polygon class="sh" points="121.4,379 221.4,431 121.4,483 21.4,431"/><text class="t" x="121.4" y="422.5">nota &lt; 0</text><text class="t" x="121.4" y="439.5">O nota &gt; 5</text></g><polyline class="fl" points="221.4,431 469.12,431 469.12,77 128.4,77" marker-end="url(#armk)"/><text class="fll" x="241.4" y="421">Sí</text><line class="fl" x1="121.4" y1="483" x2="121.4" y2="503"/><text class="fll" x="139.4" y="501">No</text><line class="fl" x1="121.4" y1="503" x2="121.4" y2="525" marker-end="url(#armk)"/><g id="nt-mos"><polygon class="sh" points="55.6,525 228.8,525 187.2,565 14,565"/><text class="t" x="121.4" y="545">Mostrar nota</text></g><line class="fl" x1="121.4" y1="565" x2="121.4" y2="587" marker-end="url(#armk)"/><g id="nt-fin"><rect class="sh" x="46.4" y="587" width="150" height="36" rx="18"/><text class="t" x="121.4" y="605">Fin</text></g></svg></div>
+  </div>
+</section>
+
+<!-- 9 ............................................................. -->
+<section class="slide dense" data-t="5.2 do-while · 0:44">
+  <p class="eyebrow"><span class="tick"></span> Compruébelo</p>
+  <h2 class="title">Condición falsa desde el principio</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="while_vs_do.c">i = <span class="n">10</span>;
+<span class="k">while</span> (i &lt; <span class="n">5</span>) {
+    printf(<span class="s">"while: %d\n"</span>, i);
+    i = i + <span class="n">1</span>;
+}
+
+i = <span class="n">10</span>;
+<span class="k">do</span> {
+    printf(<span class="s">"do-while: %d\n"</span>, i);
+    i = i + <span class="n">1</span>;
+} <span class="k">while</span> (i &lt; <span class="n">5</span>);</pre>
+      <pre class="con tiny">do-while: 10
+Fin</pre>
+      <p class="note">El <span class="mono">while</span> da <b>cero</b> vueltas; el <span class="mono">do-while</span>, <b>una</b>. Programa: <span class="mono">while_vs_do.c</span>.</p>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">El arreglo del bloque A</span>
+      <pre class="cc tiny" data-src="digitos_do.c"><span class="k">do</span> {
+    copia = copia / <span class="n">10</span>;
+    cantidad = cantidad + <span class="n">1</span>;
+} <span class="k">while</span> (copia &gt; <span class="n">0</span>);</pre>
+      <pre class="con tiny">Entero (0 o mayor): <span class="u">0</span>
+Digitos: 1</pre>
+      <pre class="con tiny">Entero (0 o mayor): <span class="u">4075</span>
+Digitos: 4</pre>
+      <p>Con <b>0</b>, el cuerpo se ejecuta una vez: <b>1 dígito</b>, correcto. Con cualquier otro número, las dos versiones coinciden. Programa: <span class="mono">digitos_do.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 ............................................................ -->
+<section class="slide dense" data-t="5.2 do-while · 0:46">
+  <p class="eyebrow"><span class="tick"></span> Validación · rango</p>
+  <h2 class="title">Pedir la nota hasta que esté entre 0 y 5</h2>
+  <div class="split w64">
+    <div>
+      <pre class="cc tiny" data-src="nota_rango.c"><span class="k">do</span> {
+    printf(<span class="s">"Nota (0 a 5): "</span>);
+    scanf(<span class="s">"%lf"</span>, &amp;nota);
+    <span class="k">if</span> (nota &lt; NOTA_MIN || nota &gt; NOTA_MAX) {
+        printf(<span class="s">"Fuera de rango\n"</span>);
+    }
+} <span class="k">while</span> (nota &lt; NOTA_MIN || nota &gt; NOTA_MAX);
+
+printf(<span class="s">"Nota aceptada: %.1f\n"</span>, nota);</pre>
+      <p class="note">La condición describe el dato <b>inválido</b>. Con <span class="mono">while</span> habría que escribir la lectura dos veces; con <span class="mono">do-while</span>, una. Programa: <span class="mono">nota_rango.c</span>.</p>
+    </div>
+    <div>
+      <pre class="con tiny">Nota (0 a 5): <span class="u">7</span>
+Fuera de rango
+Nota (0 a 5): <span class="u">-1</span>
+Fuera de rango
+Nota (0 a 5): <span class="u">4.5</span>
+Nota aceptada: 4.5</pre>
+      <div class="panel imp">
+        <span class="tag imp">Punto débil</span>
+        <p>Este programa supone que el usuario escribe <b>números</b>. ¿Y si escribe letras? La respuesta está en lo que <span class="mono">scanf</span> devuelve.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 ............................................................ -->
+<section class="slide dense" data-t="5.2 do-while · 0:42">
+  <p class="eyebrow"><span class="tick"></span> Lo que no se veía</p>
+  <h2 class="title"><span class="mono">scanf</span> devuelve cuántos datos leyó</h2>
+  <pre class="cc tiny" data-src="scanf_retorno.c">n = -<span class="n">1</span>;
+printf(<span class="s">"Escriba un entero: "</span>);
+leidos = scanf(<span class="s">"%d"</span>, &amp;n);
+printf(<span class="s">"scanf devolvio: %d\n"</span>, leidos);
+printf(<span class="s">"n vale: %d\n"</span>, n);</pre>
+  <div class="tri">
+    <div><p class="refs">se teclea <span class="mono">7</span></p><pre class="con tiny">Escriba un entero: <span class="u">7</span>
+scanf devolvio: 1
+n vale: 7</pre></div>
+    <div><p class="refs">se teclea <span class="mono">abc</span></p><pre class="con tiny">Escriba un entero: <span class="u">abc</span>
+scanf devolvio: 0
+n vale: -1</pre></div>
+    <div><p class="refs">se teclea <span class="mono">12abc</span></p><pre class="con tiny">Escriba un entero: <span class="u">12abc</span>
+scanf devolvio: 1
+n vale: 12</pre></div>
+  </div>
+  <div class="panel imp">
+    <span class="tag imp">Por qué importa en un ciclo</span>
+    <p>Con <span class="mono">abc</span>, <span class="mono">scanf</span> devuelve <b>0</b>, la variable <b>no cambia</b> y las letras <b>se quedan</b> en la entrada. En la siguiente vuelta, <span class="mono">scanf</span> tropieza con las mismas letras: el ciclo de validación repite su mensaje <b>sin parar</b>. Con <span class="mono">12abc</span> lee el 12 y deja <span class="mono">abc</span> para la próxima lectura. Programa: <span class="mono">scanf_retorno.c</span>.</p>
+  </div>
+</section>
+
+<!-- 12 ............................................................ -->
+<section class="slide dense" data-t="5.2 do-while · 0:54">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo guiado · validación robusta</p>
+  <h2 class="title">Rango <b>y</b> entrada no numérica</h2>
+  <div class="tbtns gsteps" data-g="nr">
+    <button class="tbtn" type="button" aria-pressed="true" data-s="1">1 · Enunciado</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="2">2 · Análisis</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="3">3 · La limpieza</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="4">4 · Código C</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="5">5 · Probar</button>
+  </div>
+  <div class="gbody" data-g="nr">
+    <div class="gpane on" data-s="1">
+      <h4>El enunciado</h4>
+      <p>«Pida una nota entre 0 y 5 hasta que sea válida. Si el usuario escribe algo que no es un número, muestre <span class="mono">Eso no es un numero</span>; si es un número fuera del rango, <span class="mono">Fuera de rango</span>. Al final, muestre la nota aceptada con un decimal.»</p>
+    </div>
+    <div class="gpane" data-s="2">
+      <h4>Tres casos, dos mensajes</h4>
+      <table>
+        <thead><tr><th>se teclea</th><th><span class="mono">scanf</span> devuelve</th><th>¿se acepta?</th><th>mensaje</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">abc</td><td class="mono">0</td><td>no</td><td class="mono">Eso no es un numero</td></tr>
+          <tr><td class="mono">7</td><td class="mono">1</td><td>no</td><td class="mono">Fuera de rango</td></tr>
+          <tr><td class="mono">4.5</td><td class="mono">1</td><td><b>sí</b></td><td>—</td></tr>
+        </tbody>
+      </table>
+      <p>Se repite si <span class="mono">leidos != 1</span> <b>o</b> la nota está fuera de rango. El orden importa: si no se leyó nada, la nota no se mira.</p>
+    </div>
+    <div class="gpane" data-s="3">
+      <h4>Descartar el resto de la línea</h4>
+      <pre class="cc tiny" data-src="nota_robusta.c"><span class="k">do</span> {
+    c = getchar();
+} <span class="k">while</span> (c != <span class="s">'\n'</span> &amp;&amp; c != EOF);</pre>
+      <p><span class="mono">getchar()</span> lee <b>un</b> carácter de la entrada. Este pequeño ciclo lee y descarta todo hasta el Enter (<span class="mono">'\n'</span>), incluido. Se hace <b>siempre</b>, después de cada <span class="mono">scanf</span>: así nada queda esperando.</p>
+      <p><span class="mono">EOF</span> («fin de la entrada») aparece si el usuario cierra la entrada con <b>Ctrl+Z</b> y Enter en Windows o <b>Ctrl+D</b> en macOS y Linux; el programa lo atiende y termina. <span class="mono">c</span> es <span class="mono">int</span>, no <span class="mono">char</span>, porque <span class="mono">getchar()</span> devuelve un <span class="mono">int</span>: así <span class="mono">EOF</span> se distingue de cualquier carácter.</p>
+    </div>
+    <div class="gpane" data-s="4">
+      <pre class="cc tiny" data-src="nota_robusta.c"><span class="k">do</span> {
+    printf(<span class="s">"Nota (0 a 5): "</span>);
+    leidos = scanf(<span class="s">"%lf"</span>, &amp;nota);
+    <span class="k">if</span> (leidos == EOF) {
+<span class="c">...</span>
+    }
+    <span class="c">/* descarta lo que quedo en la linea, Enter incluido */</span>
+    <span class="k">do</span> {
+        c = getchar();
+    } <span class="k">while</span> (c != <span class="s">'\n'</span> &amp;&amp; c != EOF);
+
+    <span class="k">if</span> (leidos != <span class="n">1</span>) {
+        printf(<span class="s">"Eso no es un numero\n"</span>);
+    } <span class="k">else</span> <span class="k">if</span> (nota &lt; NOTA_MIN || nota &gt; NOTA_MAX) {
+        printf(<span class="s">"Fuera de rango\n"</span>);
+    }
+} <span class="k">while</span> (leidos != <span class="n">1</span> || nota &lt; NOTA_MIN || nota &gt; NOTA_MAX);</pre>
+    </div>
+    <div class="gpane" data-s="5">
+      <div class="duo">
+        <pre class="con tiny">Nota (0 a 5): <span class="u">abc</span>
+Eso no es un numero
+Nota (0 a 5): <span class="u">7</span>
+Fuera de rango
+Nota (0 a 5): <span class="u">4.5</span>
+Nota aceptada: 4.5</pre>
+        <div>
+          <p>Tres intentos, dos mensajes, una nota aceptada. Cero advertencias. Programa: <span class="mono">nota_robusta.c</span>.</p>
+          <p class="note"><b>Límite honesto:</b> <span class="mono">3abc</span> se lee como <b>3</b> y se acepta, y <span class="mono">4,5</span> (con coma) se lee como <b>4</b>. Los dos casos se ejecutaron. Rechazar esos casos exige leer texto, que llega en la semana 7.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 ............................................................ -->
+<section class="slide dense" data-t="5.2 do-while · 0:47">
+  <p class="eyebrow"><span class="tick"></span> Patrón · menú</p>
+  <h2 class="title">Un menú que se repite hasta elegir salir</h2>
+  <div class="split">
+    <pre class="cc tiny" data-src="menu.c"><span class="k">do</span> {
+    printf(<span class="s">"1. Celsius a Fahrenheit\n"</span>);
+    printf(<span class="s">"2. Fahrenheit a Celsius\n"</span>);
+    printf(<span class="s">"0. Salir\n"</span>);
+    printf(<span class="s">"Opcion: "</span>);
+    scanf(<span class="s">"%d"</span>, &amp;opcion);
+    <span class="k">switch</span> (opcion) {
+        <span class="k">case</span> <span class="n">1</span>:
+<span class="c">...</span>
+            <span class="k">break</span>;
+        <span class="k">case</span> <span class="n">2</span>:
+<span class="c">...</span>
+            <span class="k">break</span>;
+        <span class="k">case</span> <span class="n">0</span>:
+            printf(<span class="s">"Hasta luego\n"</span>);
+            <span class="k">break</span>;
+        <span class="k">default</span>:
+            printf(<span class="s">"Opcion no valida\n"</span>);
+            <span class="k">break</span>;
+    }
+} <span class="k">while</span> (opcion != <span class="n">0</span>);</pre>
+    <pre class="con tiny wr">1. Celsius a Fahrenheit
+2. Fahrenheit a Celsius
+0. Salir
+Opcion: <span class="u">1</span>
+Grados Celsius: <span class="u">100</span>
+Resultado: 212.0 F
+1. Celsius a Fahrenheit
+2. Fahrenheit a Celsius
+0. Salir
+Opcion: <span class="u">2</span>
+Grados Fahrenheit: <span class="u">32</span>
+Resultado: 0.0 C
+1. Celsius a Fahrenheit
+2. Fahrenheit a Celsius
+0. Salir
+Opcion: <span class="u">5</span>
+Opcion no valida
+1. Celsius a Fahrenheit
+2. Fahrenheit a Celsius
+0. Salir
+Opcion: <span class="u">0</span>
+Hasta luego</pre>
+  </div>
+  <p class="refs">El <span class="mono">switch</span> es el de la semana 4: un <span class="mono">case</span> por opción, cada uno con su <span class="mono">break</span>, y <span class="mono">default</span> para lo que no existe. Programa completo: <span class="mono">menu.c</span>.</p>
+</section>
+
+<!-- 14 ............................................................ -->
+<section class="slide dense" data-t="5.2 do-while · 0:39">
+  <p class="eyebrow"><span class="tick"></span> Criterio</p>
+  <h2 class="title">¿<span class="mono">while</span> o <span class="mono">do-while</span>?</h2>
+  <div class="split">
+    <div class="panel imp">
+      <span class="tag imp">Una sola pregunta</span>
+      <p style="font-size:1.9cqi;line-height:1.35">¿El cuerpo debe ejecutarse <b>al menos una vez</b>, pase lo que pase?</p>
+      <p><b>Sí</b> → <span class="mono">do-while</span>. &nbsp; <b>Puede haber cero vueltas</b> → <span class="mono">while</span>.</p>
+      <p class="note">Los dos son igual de poderosos. La elección correcta evita lecturas duplicadas y casos especiales, como el del 0 en el conteo de dígitos.</p>
+    </div>
+    <div class="panel">
+      <span class="tag">Casos frecuentes</span>
+      <table class="nowrap">
+        <thead><tr><th>situación</th><th>ciclo</th></tr></thead>
+        <tbody>
+          <tr><td>pedir un dato hasta que sea válido</td><td class="mono">do-while</td></tr>
+          <tr><td>mostrar un menú hasta elegir salir</td><td class="mono">do-while</td></tr>
+          <tr><td>leer datos hasta un centinela</td><td class="mono">while</td></tr>
+          <tr><td>pagar una deuda que puede ser 0</td><td class="mono">while</td></tr>
+          <tr><td>ahorrar mes a mes hasta llegar a una meta</td><td class="mono">while</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 15 ............................................................ -->
+<section class="slide dense" data-t="5.3 for · 0:55">
+  <p class="eyebrow"><span class="tick"></span> Bloque C · cápsula 5.3</p>
+  <h2 class="title">El <span class="mono">for</span>: las tres piezas en una línea</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny"><span class="k">for</span> (inicialización; condición; actualización) {
+    cuerpo;
+}</pre>
+      <pre class="cc tiny" data-src="para_mientras.c">i = <span class="n">1</span>;
+<span class="k">while</span> (i &lt;= <span class="n">5</span>) {
+    printf(<span class="s">" %d"</span>, i);
+    i = i + <span class="n">1</span>;
+}
+<span class="c">...</span>
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= <span class="n">5</span>; i++) {
+    printf(<span class="s">" %d"</span>, i);
+}</pre>
+      <pre class="con tiny">while: 1 2 3 4 5
+for: 1 2 3 4 5</pre>
+      <p class="note">En pseudocódigo: <span class="mono">Para i ← 1 Hasta n Hacer</span>. En el diagrama, el «para» se dibuja como un mientras con sus tres piezas a la vista.</p>
+    </div>
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Orden de ejecución</span>
+        <p><b>1</b> inicialización (una sola vez) → <b>2</b> condición → <b>3</b> cuerpo → <b>4</b> actualización → de nuevo <b>2</b>. Cuando la condición es falsa, sigue después de <span class="mono">}</span>.</p>
+      </div>
+      <div class="panel">
+        <span class="tag">Abreviaturas nuevas</span>
+        <ul class="abrev">
+          <li><span class="mono">i++</span> &nbsp;→&nbsp; <span class="mono">i = i + 1</span> · <span class="mono">i--</span> &nbsp;→&nbsp; <span class="mono">i = i - 1</span></li>
+          <li><span class="mono">suma += x</span> &nbsp;→&nbsp; <span class="mono">suma = suma + x</span></li>
+          <li><span class="mono">i -= 3</span> &nbsp;→&nbsp; <span class="mono">i = i - 3</span></li>
+          <li><span class="mono">fact *= i</span> &nbsp;→&nbsp; <span class="mono">fact = fact * i</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 16 ............................................................ -->
+<section class="slide dense" data-t="5.3 for · 0:47">
+  <p class="eyebrow"><span class="tick"></span> Recorridos</p>
+  <h2 class="title">Dónde empieza, cuándo para y cuánto avanza</h2>
+  <div class="split">
+    <div class="panel">
+      <span class="tag">Elija una cabecera</span>
+      <div class="tbtns rec" id="recBtns"><button class="tbtn" type="button" aria-pressed="false" data-i="0">for (i = 1; i &lt;= 10; i++)</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">for (i = 10; i &gt;= 1; i--)</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">for (i = 0; i &lt;= 10; i += 2)</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">for (i = 5; i &lt;= 50; i += 5)</button></div>
+      <p class="refs">salida real de <span class="mono">recorridos.c</span></p>
+      <pre class="con tiny" id="recOut"></pre>
+      <p class="note" id="recMsg"></p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Regla para leer un <span class="mono">for</span></span>
+      <ul>
+        <li><b>Empieza</b>: lo que dice la inicialización.</li>
+        <li><b>Para</b>: cuando la condición deja de cumplirse.</li>
+        <li><b>Avanza</b>: lo que dice la actualización.</li>
+        <li>Si sube, la condición es <span class="mono">&lt;=</span> (o <span class="mono">&lt;</span>); si baja, <span class="mono">&gt;=</span> (o <span class="mono">&gt;</span>). Mezclarlas da un ciclo que <b>no se ejecuta</b> o que <b>no termina</b>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 17 ............................................................ -->
+<section class="slide dense" data-t="5.3 for · 0:37">
+  <p class="eyebrow"><span class="tick"></span> Sumatoria</p>
+  <h2 class="title">De la notación matemática al <span class="mono">for</span></h2>
+  <div class="split w64">
+    <div>
+      <div class="sigma"><span class="big">Σ</span><span class="lim"><span>n</span><span>i = 1</span></span><span class="term">i²</span>
+        <span class="arrow">→</span><span class="mono">for (i = 1; i &lt;= n; i++) { suma += i * i; }</span></div>
+      <table>
+        <tbody>
+          <tr><td>índice de abajo, <span class="mono">i = 1</span></td><td>inicialización</td></tr>
+          <tr><td>índice de arriba, <span class="mono">n</span></td><td>condición <span class="mono">i &lt;= n</span></td></tr>
+          <tr><td>lo que está a la derecha de Σ</td><td>lo que se acumula</td></tr>
+          <tr><td>el acumulador</td><td>empieza en <b>0</b></td></tr>
+        </tbody>
+      </table>
+      <pre class="cc tiny" data-src="sumatoria.c">suma = <span class="n">0</span>;
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= n; i++) {
+    suma += i * i;
+}
+printf(<span class="s">"Suma de cuadrados: %d\n"</span>, suma);
+printf(<span class="s">"Con la formula: %d\n"</span>, n * (n + <span class="n">1</span>) * (<span class="n">2</span> * n + <span class="n">1</span>) / <span class="n">6</span>);</pre>
+      <pre class="con tiny">n: <span class="u">10</span>
+Suma de cuadrados: 385
+Con la formula: 385</pre>
+    </div>
+    <div class="dcua"><svg class="fc" viewBox="0 0 524 574" role="img" aria-label="El para dibujado como mientras: inicializacion, condicion, cuerpo y actualizacion"><g id="cu-ini"><rect class="sh" x="46.4" y="14" width="150" height="36" rx="18"/><text class="t" x="121.4" y="32">Inicio</text></g><line class="fl" x1="121.4" y1="50" x2="121.4" y2="72" marker-end="url(#armk)"/><g id="cu-leer"><polygon class="sh" points="57.2,72 227.2,72 185.6,112 15.6,112"/><text class="t" x="121.4" y="92">Leer n</text></g><line class="fl" x1="121.4" y1="112" x2="121.4" y2="134" marker-end="url(#armk)"/><g id="cu-s0"><rect class="sh" x="36.4" y="134" width="170" height="40" rx="3"/><text class="t" x="121.4" y="154">suma ← 0</text></g><line class="fl" x1="121.4" y1="174" x2="121.4" y2="196" marker-end="url(#armk)"/><g id="cu-i0"><rect class="sh" x="36.4" y="196" width="170" height="40" rx="3"/><text class="t" x="121.4" y="216">i ← 1</text></g><line class="fl" x1="121.4" y1="236" x2="121.4" y2="258" marker-end="url(#armk)"/><circle class="jn" cx="121.4" cy="263" r="5"/><line class="fl" x1="121.4" y1="263" x2="121.4" y2="287" marker-end="url(#armk)"/><g id="cu-cond"><polygon class="sh" points="121.4,287 221.4,328 121.4,369 21.4,328"/><text class="t" x="121.4" y="328">i &lt;= n</text></g><line class="fl" x1="221.4" y1="328" x2="264.4" y2="328" marker-end="url(#armk)"/><text class="fll" x="241.4" y="318">Sí</text><g id="cu-acu"><rect class="sh" x="267.4" y="308" width="208.9" height="40" rx="3"/><text class="t" x="371.85" y="328">suma ← suma + i * i</text></g><line class="fl" x1="371.85" y1="348" x2="371.85" y2="370" marker-end="url(#armk)"/><g id="cu-inc"><rect class="sh" x="286.85" y="370" width="170" height="40" rx="3"/><text class="t" x="371.85" y="390">i ← i + 1</text></g><polyline class="fl" points="371.85,410 371.85,426 504.3,426 504.3,263 128.4,263" marker-end="url(#armk)"/><line class="fl" x1="121.4" y1="369" x2="121.4" y2="440"/><text class="fll" x="139.4" y="387">No</text><line class="fl" x1="121.4" y1="440" x2="121.4" y2="462" marker-end="url(#armk)"/><g id="cu-mos"><polygon class="sh" points="55.6,462 228.8,462 187.2,502 14,502"/><text class="t" x="121.4" y="482">Mostrar suma</text></g><line class="fl" x1="121.4" y1="502" x2="121.4" y2="524" marker-end="url(#armk)"/><g id="cu-fin"><rect class="sh" x="46.4" y="524" width="150" height="36" rx="18"/><text class="t" x="121.4" y="542">Fin</text></g></svg></div>
+  </div>
+</section>
+
+<!-- 18 ............................................................ -->
+<section class="slide dense" data-t="5.3 for · 0:53">
+  <p class="eyebrow"><span class="tick"></span> Productoria</p>
+  <h2 class="title">El factorial: el acumulador empieza en 1</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="factorial.c"><span class="k">if</span> (n &lt; <span class="n">0</span> || n &gt; N_MAX) {
+    printf(<span class="s">"Fuera de rango\n"</span>);
+} <span class="k">else</span> {
+    fact = <span class="n">1</span>;
+    <span class="k">for</span> (i = <span class="n">2</span>; i &lt;= n; i++) {
+        fact *= i;
+    }
+    printf(<span class="s">"%d! = %d\n"</span>, n, fact);
+}</pre>
+      <div class="tri">
+        <pre class="con tiny">n (0 a 12): <span class="u">5</span>
+5! = 120</pre>
+        <pre class="con tiny">n (0 a 12): <span class="u">0</span>
+0! = 1</pre>
+        <pre class="con tiny">n (0 a 12): <span class="u">12</span>
+12! = 479001600</pre>
+      </div>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Por qué el programa no acepta 13</span>
+      <p>13! = <b>6 227 020 800</b>. El mayor <span class="mono">int</span> de 4 bytes es <b>2 147 483 647</b> (en Linux y en Windows el <span class="mono">int</span> mide 4 bytes, cápsula 1.4).</p>
+      <p>C <b>no avisa</b> cuando un resultado no cabe: por eso se valida el rango <b>antes</b> de calcular.</p>
+      <p class="note">El ciclo empieza en 2 porque multiplicar por 1 no cambia nada; con <span class="mono">n = 0</span> o <span class="mono">n = 1</span> da cero vueltas y el resultado es 1, que es lo correcto (0! = 1). <span class="mono">#define N_MAX 12</span>.</p>
+      <p class="refs">13! se calculó con un programa en C usando <span class="mono">double</span>; el máximo del <span class="mono">int</span> lo imprimió <span class="mono">INT_MAX</span> de <span class="mono">&lt;limits.h&gt;</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 19 ............................................................ -->
+<section class="slide dense" data-t="5.3 for · 0:54">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo guiado · sucesión</p>
+  <h2 class="title">Los primeros <span class="mono">n</span> términos de Fibonacci</h2>
+  <div class="tbtns gsteps" data-g="fb">
+    <button class="tbtn" type="button" aria-pressed="true" data-s="1">1 · Enunciado</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="2">2 · Análisis</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="3">3 · La idea</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="4">4 · Código C</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="5">5 · Traza y prueba</button>
+  </div>
+  <div class="gbody" data-g="fb">
+    <div class="gpane on" data-s="1">
+      <h4>El enunciado</h4>
+      <p>«La sucesión de Fibonacci empieza en 0 y 1; cada término siguiente es la suma de los dos anteriores: 0, 1, 1, 2, 3, 5, 8… Lea <span class="mono">n</span> (de 1 a 40) y muestre los primeros <span class="mono">n</span> términos en una línea.»</p>
+    </div>
+    <div class="gpane" data-s="2">
+      <h4>Cuántas vueltas y qué recordar</h4>
+      <p><b>Vueltas:</b> se sabe antes de empezar, <span class="mono">n</span> → <span class="mono">for</span>.</p>
+      <p><b>Qué recordar:</b> solo los <b>dos últimos</b> términos, <span class="mono">a</span> y <span class="mono">b</span>. No hace falta guardar toda la sucesión.</p>
+      <p><b>Por qué hasta 40:</b> con 40 términos, el mayor valor que calcula el programa es <span class="mono">165580141</span>, que cabe de sobra en un <span class="mono">int</span>.</p>
+    </div>
+    <div class="gpane" data-s="3">
+      <h4>Correr dos variables un puesto</h4>
+      <p>En cada vuelta: mostrar <span class="mono">a</span>; calcular <span class="mono">siguiente ← a + b</span>; después <span class="mono">a ← b</span> y <span class="mono">b ← siguiente</span>.</p>
+      <p>Es el problema del <b>intercambio</b> de la semana 1: si se hiciera <span class="mono">a ← b</span> antes de sumar, el valor viejo de <span class="mono">a</span> se perdería. La tercera variable, <span class="mono">siguiente</span>, lo evita.</p>
+    </div>
+    <div class="gpane" data-s="4">
+      <pre class="cc tiny" data-src="fibonacci.c">a = <span class="n">0</span>;
+b = <span class="n">1</span>;
+printf(<span class="s">"Fibonacci:"</span>);
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= n; i++) {
+    printf(<span class="s">" %d"</span>, a);
+    siguiente = a + b;
+    a = b;
+    b = siguiente;
+}
+printf(<span class="s">"\n"</span>);</pre>
+    </div>
+    <div class="gpane" data-s="5">
+      <div class="duo">
+        <table class="mini"><thead><tr><th class="mono">i</th><th>muestra</th><th class="mono">siguiente</th><th class="mono">a</th><th class="mono">b</th></tr></thead><tbody><tr><td class="mono">1</td><td class="mono">0</td><td class="mono">1</td><td class="mono">1</td><td class="mono">1</td></tr><tr><td class="mono">2</td><td class="mono">1</td><td class="mono">2</td><td class="mono">1</td><td class="mono">2</td></tr><tr><td class="mono">3</td><td class="mono">1</td><td class="mono">3</td><td class="mono">2</td><td class="mono">3</td></tr><tr><td class="mono">4</td><td class="mono">2</td><td class="mono">5</td><td class="mono">3</td><td class="mono">5</td></tr><tr><td class="mono">5</td><td class="mono">3</td><td class="mono">8</td><td class="mono">5</td><td class="mono">8</td></tr><tr><td class="mono">6</td><td class="mono">5</td><td class="mono">13</td><td class="mono">8</td><td class="mono">13</td></tr></tbody></table>
+        <div>
+          <pre class="con tiny wr">Cuantos terminos (1 a 40): <span class="u">10</span>
+Fibonacci: 0 1 1 2 3 5 8 13 21 34</pre>
+          <pre class="con tiny wr">Cuantos terminos (1 a 40): <span class="u">1</span>
+Fibonacci: 0</pre>
+          <p class="refs">La tabla la imprimió una copia de <span class="mono">fibonacci.c</span> con un <span class="mono">printf</span> al final de cada vuelta (<span class="mono">n = 6</span>).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 20 ............................................................ -->
+<section class="slide dense" data-t="5.3 for · 0:50">
+  <p class="eyebrow"><span class="tick"></span> Compruebe · errores de frontera</p>
+  <h2 class="title">¿Qué muestra cada fragmento?</h2>
+  <p class="note">Decida primero; después pulse <b>Ver salida</b>. Cada fragmento se compiló y ejecutó al generar esta presentación: la salida es la real.</p>
+  <div class="cuatro dos">
+<div class="panel pred"><span class="tag">Fragmento 1</span><pre class="cc tiny"><span class="k">int</span> i;
+<span class="k">for</span> (i = <span class="n">0</span>; i &lt; <span class="n">5</span>; i++) {
+    printf(<span class="s">"%d "</span>, i);
+}
+printf(<span class="s">"\n"</span>);</pre><div class="row"><button class="tbtn" type="button" data-o="pc1">Ver salida</button><pre class="con tiny hid" id="pc1">0 1 2 3 4 </pre></div></div>
+<div class="panel pred"><span class="tag">Fragmento 2</span><pre class="cc tiny"><span class="k">int</span> i;
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= <span class="n">5</span>; i += <span class="n">2</span>) {
+    printf(<span class="s">"%d "</span>, i);
+}
+printf(<span class="s">"\n"</span>);</pre><div class="row"><button class="tbtn" type="button" data-o="pc2">Ver salida</button><pre class="con tiny hid" id="pc2">1 3 5 </pre></div></div>
+<div class="panel pred"><span class="tag">Fragmento 3</span><pre class="cc tiny"><span class="k">int</span> i, s = <span class="n">0</span>;
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= <span class="n">4</span>; i++);
+{
+    s = s + i;
+}
+printf(<span class="s">"%d %d\n"</span>, i, s);</pre><div class="row"><button class="tbtn" type="button" data-o="pc3">Ver salida</button><pre class="con tiny hid" id="pc3">5 5</pre></div></div>
+<div class="panel pred"><span class="tag">Fragmento 4</span><pre class="cc tiny"><span class="k">int</span> i, c = <span class="n">0</span>;
+<span class="k">for</span> (i = <span class="n">10</span>; i &gt;= <span class="n">0</span>; i -= <span class="n">2</span>) {
+    c++;
+}
+printf(<span class="s">"%d\n"</span>, c);</pre><div class="row"><button class="tbtn" type="button" data-o="pc4">Ver salida</button><pre class="con tiny hid" id="pc4">6</pre></div></div>
+  </div>
+</section>
+
+<!-- 21 ............................................................ -->
+<section class="slide dense" data-t="5.3 for · 0:32">
+  <p class="eyebrow"><span class="tick"></span> Criterio</p>
+  <h2 class="title">¿<span class="mono">for</span> o <span class="mono">while</span>?</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn"><span class="mono">for</span>: sé cuántas vueltas antes de empezar</span>
+      <ul>
+        <li>procesar <span class="mono">n</span> datos</li>
+        <li>los 12 meses del año</li>
+        <li>de <span class="mono">a</span> hasta <span class="mono">b</span>, de <span class="mono">k</span> en <span class="mono">k</span></li>
+        <li>una sumatoria o una productoria</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp"><span class="mono">while</span> / <span class="mono">do-while</span>: depende de lo que pase dentro</span>
+      <ul>
+        <li>hasta el centinela</li>
+        <li>hasta que el número llegue a 0</li>
+        <li>hasta alcanzar una meta</li>
+        <li>hasta que el dato sea válido (<span class="mono">do-while</span>)</li>
+      </ul>
+    </div>
+  </div>
+  <p class="refs">Cualquiera de los dos funciona en los dos casos (la diapositiva 15 lo mostró). El que corresponde <b>se lee mejor</b>, y eso es lo que se evalúa.</p>
+</section>
+
+<!-- 22 ............................................................ -->
+<section class="slide dense" data-t="5.4 anidados · 0:53">
+  <p class="eyebrow"><span class="tick"></span> Bloque D · cápsula 5.4</p>
+  <h2 class="title">Un ciclo completo dentro de otro</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="tabla.c">vueltas = <span class="n">0</span>;
+<span class="k">for</span> (fila = <span class="n">1</span>; fila &lt;= n; fila++) {
+    <span class="k">for</span> (col = <span class="n">1</span>; col &lt;= n; col++) {
+        printf(<span class="s">"%4d"</span>, fila * col);
+        vueltas++;
+    }
+    printf(<span class="s">"\n"</span>);
+}
+printf(<span class="s">"Vueltas del ciclo interno: %d\n"</span>, vueltas);</pre>
+      <p class="note"><span class="mono">%4d</span> reserva 4 espacios por número: las columnas quedan alineadas. El salto de línea va <b>después</b> del ciclo interno, cuando la fila está completa.</p>
+    </div>
+    <div>
+      <pre class="con tiny">n: <span class="u">4</span>
+   1   2   3   4
+   2   4   6   8
+   3   6   9  12
+   4   8  12  16
+Vueltas del ciclo interno: 16</pre>
+      <div class="panel imp">
+        <span class="tag imp">Contar vueltas</span>
+        <p>Por <b>cada</b> vuelta del externo, el interno da <b>todas</b> las suyas: <span class="mono">n × n</span>. Con <span class="mono">n = 4</span>, 16; con <span class="mono">n = 10</span>, 100 (ejecutado). Esta cuenta es la base del análisis de complejidad de la semana 12.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 23 ............................................................ -->
+<section class="slide dense" data-t="5.4 anidados · 0:47">
+  <p class="eyebrow"><span class="tick"></span> Anidados · el interno depende del externo</p>
+  <h2 class="title">Un triángulo: la fila <span class="mono">k</span> tiene <span class="mono">k</span> asteriscos</h2>
+  <div class="tri trg">
+    <div>
+      <pre class="cc tiny" data-src="triangulo.c"><span class="k">for</span> (fila = <span class="n">1</span>; fila &lt;= n; fila++) {
+    <span class="k">for</span> (col = <span class="n">1</span>; col &lt;= fila; col++) {
+        printf(<span class="s">"*"</span>);
+        asteriscos++;
+    }
+    printf(<span class="s">"\n"</span>);
+}</pre>
+      <p class="note">El interno va hasta <span class="mono">fila</span>, no hasta <span class="mono">n</span>. Total: 1 + 2 + … + n = <span class="mono">n(n + 1)/2</span>.</p>
+    </div>
+    <div class="panel">
+      <span class="tag">Elija el número de filas</span>
+      <div class="tbtns" id="triBtns"><button class="tbtn" type="button" aria-pressed="false" data-i="0">3 filas</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">4 filas</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">5 filas</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">6 filas</button></div>
+      <pre class="con tiny" id="triOut"></pre>
+    </div>
+    <div class="dtri"><svg class="fc" viewBox="0 0 780 676" role="img" aria-label="Ciclos anidados: el ciclo interno esta completo dentro del cuerpo del externo"><g id="tr-leer"><polygon class="sh" points="55.6,14 225.6,14 184,54 14,54"/><text class="t" x="119.8" y="34">Leer n</text></g><line class="fl" x1="119.8" y1="54" x2="119.8" y2="76" marker-end="url(#armk)"/><g id="tr-f0"><rect class="sh" x="34.8" y="76" width="170" height="40" rx="3"/><text class="t" x="119.8" y="96">fila ← 1</text></g><line class="fl" x1="119.8" y1="116" x2="119.8" y2="138" marker-end="url(#armk)"/><circle class="jn" cx="119.8" cy="143" r="5"/><line class="fl" x1="119.8" y1="143" x2="119.8" y2="167" marker-end="url(#armk)"/><g id="tr-cext"><polygon class="sh" points="119.8,167 214.8,208 119.8,249 24.8,208"/><text class="t" x="119.8" y="208">fila &lt;= n</text></g><line class="fl" x1="214.8" y1="208" x2="257.8" y2="208" marker-end="url(#armk)"/><text class="fll" x="234.8" y="198">Sí</text><g id="tr-c0"><rect class="sh" x="260.8" y="188" width="170" height="40" rx="3"/><text class="t" x="345.8" y="208">col ← 1</text></g><line class="fl" x1="345.8" y1="228" x2="345.8" y2="250" marker-end="url(#armk)"/><circle class="jn" cx="345.8" cy="255" r="5"/><line class="fl" x1="345.8" y1="255" x2="345.8" y2="279" marker-end="url(#armk)"/><g id="tr-cint"><polygon class="sh" points="345.8,279 440.8,320 345.8,361 250.8,320"/><text class="t" x="345.8" y="320">col &lt;= fila</text></g><line class="fl" x1="440.8" y1="320" x2="483.8" y2="320" marker-end="url(#armk)"/><text class="fll" x="460.8" y="310">Sí</text><g id="tr-ast"><polygon class="sh" points="528.4,300 698.4,300 656.8,340 486.8,340"/><text class="t" x="592.6" y="320">Mostrar «*»</text></g><line class="fl" x1="592.6" y1="340" x2="592.6" y2="362" marker-end="url(#armk)"/><g id="tr-cinc"><rect class="sh" x="507.6" y="362" width="170" height="40" rx="3"/><text class="t" x="592.6" y="382">col ← col + 1</text></g><polyline class="fl" points="592.6,402 592.6,418 726.4,418 726.4,255 352.8,255" marker-end="url(#armk)"/><line class="fl" x1="345.8" y1="361" x2="345.8" y2="432"/><text class="fll" x="363.8" y="379">No</text><line class="fl" x1="345.8" y1="432" x2="345.8" y2="454" marker-end="url(#armk)"/><g id="tr-salto"><polygon class="sh" points="284.81,454 467.11,454 406.79,512 224.49,512"/><text class="t" x="345.8" y="474.5">Mostrar salto</text><text class="t" x="345.8" y="491.5">de línea</text></g><line class="fl" x1="345.8" y1="512" x2="345.8" y2="534" marker-end="url(#armk)"/><g id="tr-finc"><rect class="sh" x="259.55" y="534" width="172.5" height="40" rx="3"/><text class="t" x="345.8" y="554">fila ← fila + 1</text></g><polyline class="fl" points="345.8,574 345.8,590 760.4,590 760.4,143 126.8,143" marker-end="url(#armk)"/><line class="fl" x1="119.8" y1="249" x2="119.8" y2="604"/><text class="fll" x="137.8" y="267">No</text><line class="fl" x1="119.8" y1="604" x2="119.8" y2="626" marker-end="url(#armk)"/><g id="tr-fin"><rect class="sh" x="44.8" y="626" width="150" height="36" rx="18"/><text class="t" x="119.8" y="644">Fin</text></g></svg></div>
+  </div>
+</section>
+
+<!-- 24 ............................................................ -->
+<section class="slide dense" data-t="5.4 anidados · 0:44">
+  <p class="eyebrow"><span class="tick"></span> <span class="mono">break</span></p>
+  <h2 class="title">Salir del ciclo en cuanto se tiene la respuesta</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="divisor.c">divisor = n;
+vueltas = <span class="n">0</span>;
+<span class="k">for</span> (d = <span class="n">2</span>; d &lt; n; d++) {
+    vueltas++;
+    <span class="k">if</span> (n % d == <span class="n">0</span>) {
+        divisor = d;
+        <span class="k">break</span>;
+    }
+}
+printf(<span class="s">"Menor divisor: %d\n"</span>, divisor);
+printf(<span class="s">"Vueltas: %d\n"</span>, vueltas);</pre>
+      <div class="duo">
+        <pre class="con tiny">Entero (2 o mayor): <span class="u">91</span>
+Menor divisor: 7
+Vueltas: 6</pre>
+        <pre class="con tiny">Entero (2 o mayor): <span class="u">97</span>
+Menor divisor: 97
+Vueltas: 95</pre>
+      </div>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Qué hace <span class="mono">break</span></span>
+      <ul>
+        <li>Termina el ciclo <b>de inmediato</b>, aunque la condición siga siendo verdadera. El programa sigue después de la <span class="mono">}</span> del ciclo.</li>
+        <li>Con 91 encuentra el 7 en la vuelta 6 y deja de buscar.</li>
+        <li>Con 97 no encuentra ninguno: 95 vueltas. 97 es primo.</li>
+        <li><b>Valor inicial útil:</b> <span class="mono">divisor = n</span>. Si el ciclo termina sin encontrar otro, ya es la respuesta.</li>
+      </ul>
+      <p class="refs">Es el mismo <span class="mono">break</span> del <span class="mono">switch</span>: sale de la estructura en la que está. Programa: <span class="mono">divisor.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 25 ............................................................ -->
+<section class="slide dense" data-t="5.4 anidados · 0:44">
+  <p class="eyebrow"><span class="tick"></span> <span class="mono">continue</span></p>
+  <h2 class="title">Saltar lo que falta de esta vuelta</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="saltar.c"><span class="k">for</span> (i = <span class="n">1</span>; i &lt;= n; i++) {
+    <span class="k">if</span> (i % <span class="n">3</span> == <span class="n">0</span>) {
+        <span class="k">continue</span>;
+    }
+    printf(<span class="s">" %d"</span>, i);
+    suma += i;
+}</pre>
+      <pre class="con tiny">n: <span class="u">10</span>
+Sumados: 1 2 4 5 7 8 10
+Suma: 37</pre>
+      <p class="note">En un <span class="mono">for</span>, <span class="mono">continue</span> salta a la <b>actualización</b> (<span class="mono">i++</span>) y el ciclo sigue normal. Programa: <span class="mono">saltar.c</span>.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">La trampa: <span class="mono">continue</span> en un <span class="mono">while</span></span>
+      <pre class="cc tiny"><span class="k">int</span> i = <span class="n">1</span>, suma = <span class="n">0</span>;
+<span class="k">while</span> (i &lt;= <span class="n">5</span>) {
+    <span class="k">if</span> (i == <span class="n">3</span>) {
+        <span class="k">continue</span>;
+    }
+    suma = suma + i;
+    i = i + <span class="n">1</span>;
+}</pre>
+      <p>Cuando <span class="mono">i</span> llega a 3, <span class="mono">continue</span> salta también el <span class="mono">i = i + 1</span>: <span class="mono">i</span> se queda en 3 y el ciclo <b>no termina</b>. Compila con cero advertencias; no se ejecutó.</p>
+      <p><b>Regla:</b> en un <span class="mono">while</span>, actualice <b>antes</b> del <span class="mono">continue</span>, o use un <span class="mono">for</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 26 ............................................................ -->
+<section class="slide dense" data-t="5.4 anidados · 0:41">
+  <p class="eyebrow"><span class="tick"></span> <span class="mono">break</span> en ciclos anidados</p>
+  <h2 class="title"><span class="mono">break</span> solo sale del ciclo en el que está</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="primos.c"><span class="k">for</span> (k = <span class="n">2</span>; k &lt;= n; k++) {
+    es_primo = <span class="n">1</span>;
+    <span class="k">for</span> (d = <span class="n">2</span>; d &lt; k; d++) {
+        <span class="k">if</span> (k % d == <span class="n">0</span>) {
+            es_primo = <span class="n">0</span>;
+            <span class="k">break</span>;
+        }
+    }
+    <span class="k">if</span> (es_primo == <span class="n">1</span>) {
+        printf(<span class="s">" %d"</span>, k);
+        cantidad++;
+    }
+}</pre>
+      <pre class="con tiny wr">Hasta: <span class="u">30</span>
+Primos: 2 3 5 7 11 13 17 19 23 29
+Cantidad: 10</pre>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Qué pasa con el <span class="mono">break</span></span>
+      <ul>
+        <li>Está en el ciclo <b>interno</b>: deja de probar divisores de <b>ese</b> <span class="mono">k</span>.</li>
+        <li>El ciclo <b>externo</b> sigue con el siguiente candidato.</li>
+        <li><span class="mono">es_primo</span> es una <b>bandera</b>: empieza en 1 («sí») y el interno la baja a 0 si encuentra un divisor.</li>
+        <li>Para salir de los <b>dos</b> ciclos a la vez, <span class="mono">break</span> no basta: el externo tendría que preguntar también por una bandera.</li>
+      </ul>
+      <p class="refs"><b>Disciplina:</b> uno por ciclo, y solo cuando simplifica. Programa: <span class="mono">primos.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 27 ............................................................ -->
+<section class="slide dense" data-t="5.4 anidados · 0:28">
+  <p class="eyebrow"><span class="tick"></span> Compruebe antes de la actividad</p>
+  <h2 class="title">¿Qué muestra cada fragmento?</h2>
+  <p class="note">Decida primero; después pulse <b>Ver salida</b>. Si falla: traza, una fila por vuelta.</p>
+  <div class="cuatro dos">
+<div class="panel pred"><span class="tag">Fragmento 1</span><pre class="cc tiny"><span class="k">int</span> i, j, c = <span class="n">0</span>;
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= <span class="n">3</span>; i++) {
+    <span class="k">for</span> (j = <span class="n">1</span>; j &lt;= <span class="n">4</span>; j++) {
+        c++;
+    }
+}
+printf(<span class="s">"%d\n"</span>, c);</pre><div class="row"><button class="tbtn" type="button" data-o="pd1">Ver salida</button><pre class="con tiny hid" id="pd1">12</pre></div></div>
+<div class="panel pred"><span class="tag">Fragmento 2</span><pre class="cc tiny"><span class="k">int</span> i, j;
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= <span class="n">3</span>; i++) {
+    <span class="k">for</span> (j = <span class="n">1</span>; j &lt;= i; j++) {
+        printf(<span class="s">"%d"</span>, j);
+    }
+    printf(<span class="s">"\n"</span>);
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pd2">Ver salida</button><pre class="con tiny hid" id="pd2">1
+12
+123</pre></div></div>
+<div class="panel pred"><span class="tag">Fragmento 3</span><pre class="cc tiny"><span class="k">int</span> i;
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= <span class="n">10</span>; i++) {
+    <span class="k">if</span> (i * i &gt; <span class="n">20</span>) {
+        <span class="k">break</span>;
+    }
+    printf(<span class="s">"%d "</span>, i);
+}
+printf(<span class="s">"\n"</span>);</pre><div class="row"><button class="tbtn" type="button" data-o="pd3">Ver salida</button><pre class="con tiny hid" id="pd3">1 2 3 4 </pre></div></div>
+<div class="panel pred"><span class="tag">Fragmento 4</span><pre class="cc tiny"><span class="k">int</span> i, s = <span class="n">0</span>;
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= <span class="n">6</span>; i++) {
+    <span class="k">if</span> (i % <span class="n">2</span> == <span class="n">0</span>) {
+        <span class="k">continue</span>;
+    }
+    s += i;
+}
+printf(<span class="s">"%d\n"</span>, s);</pre><div class="row"><button class="tbtn" type="button" data-o="pd4">Ver salida</button><pre class="con tiny hid" id="pd4">9</pre></div></div>
+  </div>
+</section>
+
+<!-- 28 ............................................................ -->
+<section class="slide dense" data-t="5.4 anidados · 0:50">
+  <p class="eyebrow"><span class="tick"></span> Cierre · la actividad de la semana</p>
+  <h2 class="title">Diez programas y un formulario de 20 preguntas</h2>
+  <div class="split">
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Cómo funciona</span>
+        <ul>
+          <li><b>1–3</b> <span class="mono">while</span> · <b>4–5</b> <span class="mono">do-while</span> · <b>6–8</b> <span class="mono">for</span> · <b>9–10</b> anidados, <span class="mono">break</span> y <span class="mono">continue</span> (<span class="mono">S05_actividad_evaluativa.md</span>).</li>
+          <li>Programe <b>los diez</b> y páselos por <b>todos</b> sus casos de prueba.</li>
+          <li>En el <b>formulario</b>: unas preguntas le dan datos para ejecutar <b>su</b> programa; otras muestran un ciclo en una <b>imagen</b> y preguntan qué imprime o qué ciclo conviene; <b>seis</b> repasan las semanas 1 a 4.</li>
+        </ul>
+      </div>
+      <p class="refs"><b>Materiales:</b> <span class="mono">S05_lectura.md</span> (con 12 ejercicios de práctica, pistas y soluciones) · <span class="mono">S05_codigo/</span>. <b>Esta semana también:</b> Entrevista 1 y Entrega 1 del proyecto. <b>Semana 6:</b> funciones.</p>
+    </div>
+    <div class="panel">
+      <span class="tag fn">Antes de abrir el formulario</span>
+      <div class="checks" id="lista">
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Los <b>diez</b> programas compilan con <b>cero advertencias</b>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Pasan <b>todos</b> sus casos de prueba, también el de <b>cero vueltas</b>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Ningún ciclo se queda pegado: cada uno <b>acerca</b> su condición a falsa.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">La validación rechaza <b>letras</b> sin repetir el mensaje sin fin.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Revisé las <b>fronteras</b>: <span class="mono">&lt;</span> o <span class="mono">&lt;=</span>, empezar en 0 o en 1.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Salidas con el <b>formato exacto</b> del enunciado.</span></button>
+      </div>
+      <p class="tally"><b id="tallyN">0</b> / 6 · <span id="tallyMsg">empiece por la primera</span></p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="notes" id="notesBox">
+  <h5>Guion del presentador · <span class="time" id="notesTime"></span></h5>
+  <p id="notesText"></p>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var notesBox = document.getElementById('notesBox');
+  var notesText = document.getElementById('notesText');
+  var notesTime = document.getElementById('notesTime');
+  function $(id){ return document.getElementById(id); }
+  function all(sel, root){ return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  /* El panel de notas es guion de narración: los cuatro bloques llevan
+     video. El texto es el mismo del libreto S05_libreto.md, generado desde
+     la misma fuente (guion_data.py), y el campo de tiempo es la duración
+     de cada diapositiva dentro de su bloque.                              */
+  var NOTES = [
+  "Semana cinco: procesos iterativos. Hasta ahora cada instrucción de sus programas se ejecutaba una vez, o ninguna. Esta semana el programa aprende a repetir: con while, con do-while y con for. Son cuatro videos cortos, uno por cápsula. Este es el primero: el ciclo while.",
+  "Cuatro objetivos. Escribir un while con sus piezas completas y sin ciclos infinitos. Validar datos con do-while, también cuando el usuario escribe letras. Traducir una sumatoria o una sucesión a un for. Y anidar ciclos, usando break y continue con disciplina. La evidencia es como la de la semana cuatro: usted programa diez ejercicios y responde un formulario de veinte preguntas. Unas le piden ejecutar su programa con unos datos; otras, leer un ciclo y decir qué muestra, o elegir qué ciclo conviene. Y hay preguntas de las semanas anteriores.",
+  "En la semana dos ya dibujó ciclos. Recuerde las piezas: inicialización, condición, cuerpo, actualización y la flecha que vuelve. En C, la condición va entre paréntesis después de la palabra while, y el cuerpo entre llaves. Antes de cada vuelta se pregunta la condición: si es verdadera, se ejecuta el cuerpo y se vuelve a preguntar; si es falsa, el programa sigue después de la llave de cierre. Por eso un while puede no ejecutarse ni una vez. Y la regla de oro: algo dentro del cuerpo tiene que acercar la condición a falsa. Mire la tabla de la derecha: cada pieza del diagrama tiene su lugar en el código. La inicialización va antes del while; la condición, entre los paréntesis; el cuerpo y la actualización, entre las llaves. La flecha que vuelve no se escribe: la pone el while.",
+  "Primer ejemplo guiado: leer n números y mostrar su suma. Dos variables tienen oficio. El contador, i, cuenta las vueltas: empieza en uno y sube de uno en uno. El acumulador, suma, guarda el total: empieza en cero y en cada vuelta se le suma el número leído. La condición, i menor o igual que n, da exactamente n vueltas. Fíjese en el paso cinco: con n igual a tres se leyeron tres números; y con n igual a cero el cuerpo no se ejecutó nunca, y la suma es cero. Ese segundo caso no es un detalle: un ciclo siempre se prueba también con cero vueltas. Pase el cursor por cada línea del código en el paso cuatro y verá su figura en el diagrama.",
+  "Ahora una traza. Este programa cuenta los dígitos de un número dividiendo entre diez hasta que no queda nada. Avance con el botón y mire la tabla: cada fila es una vuelta, con el valor de copia y de cantidad al terminarla. Con cuatro mil setenta y cinco hay cuatro vueltas, y al salir copia vale cero. Pero pruebe con cero: la condición es falsa desde el principio y el programa dice que el cero tiene cero dígitos. Ese error lo arreglamos en el siguiente video.",
+  "Cuando no se sabe cuántos datos van a llegar se usa un centinela: un valor especial que significa «ya no hay más». Aquí las ventas del día terminan con un cero. El patrón tiene dos lecturas: la primera va antes del ciclo, para que la condición tenga algo que preguntar, y la siguiente va al final del cuerpo. Así el cero nunca se suma ni se cuenta. Con tres ventas, el total es cuatro mil seiscientos, y si el primer dato ya es cero, el ciclo no se ejecuta. Elija como centinela un valor que no pueda ser un dato real: una venta de cero pesos no existe, por eso sirve.",
+  "Tres maneras de escribir un ciclo que no termina. Primera: olvidar la actualización; la condición nunca cambia. Segunda: actualizar hacia el lado equivocado; i se aleja de la frontera en lugar de acercarse. Tercera: un punto y coma después del paréntesis del while; ese punto y coma es un cuerpo vacío que se repite para siempre, y las llaves quedan por fuera. Los tres compilan. Si su programa se queda pegado, deténgalo con Control C y revise estas tres cosas.",
+  "Segundo video: el do-while. Su diferencia con el while es una sola: la condición va al final. Primero se ejecuta el cuerpo y después se pregunta si hay que repetir. Por eso el cuerpo se ejecuta al menos una vez. Mire el diagrama: el punto de retorno está encima del cuerpo, no encima del rombo. Y mire el código: la palabra do abre el ciclo, la condición va después de la llave de cierre, y termina en punto y coma. Ese punto y coma es obligatorio.",
+  "Compruébelo con una condición que es falsa desde el principio: i vale diez y se pregunta si es menor que cinco. El while no muestra nada. El do-while muestra una línea, porque ejecutó el cuerpo antes de preguntar. Y aquí está el arreglo del video anterior: el conteo de dígitos con do-while. Con cero, el cuerpo se ejecuta una vez y el programa responde que el cero tiene un dígito, que es lo correcto. Con cualquier otro número, las dos versiones dan lo mismo: la diferencia aparece solo cuando la primera pregunta da falso.",
+  "El uso más común del do-while es validar. Hay que pedir la nota al menos una vez, y volver a pedirla mientras esté fuera de rango. Con un while habría que escribir la lectura dos veces, antes y dentro del ciclo; con do-while se escribe una sola. La condición del ciclo describe el dato inválido: menor que cero o mayor que cinco. Dentro, un if avisa por qué se repite. Con siete y con menos uno el programa vuelve a preguntar; con cuatro punto cinco acepta y sigue. Pero este programa tiene un punto débil, y lo vemos ahora.",
+  "¿Qué pasa si el usuario escribe letras? Hay que saber algo de scanf: devuelve un número, la cantidad de datos que logró leer. Si escribe siete, devuelve uno. Si escribe a, be, ce, devuelve cero, la variable no cambia y las letras se quedan esperando en la entrada. En un ciclo de validación eso es grave: la siguiente vuelta tropieza con las mismas letras, y el programa repite el mensaje sin parar. Con doce a be ce, en cambio, lee el doce y deja las letras.",
+  "El ejemplo guiado junta las dos ideas. Se guarda lo que devuelve scanf en la variable leidos. Después, siempre, se descarta el resto de la línea con un pequeño ciclo que lee carácter por carácter hasta el Enter. Si leidos no es uno, el mensaje es «Eso no es un número»; si lo es pero está fuera de rango, «Fuera de rango». La condición del do-while repite en los dos casos: leidos distinto de uno, o nota fuera del rango. El orden de esa condición importa: si scanf no leyó nada, la nota no se mira. En el paso cinco: a be ce, siete y cuatro punto cinco. Tres intentos, dos mensajes, una nota aceptada.",
+  "El otro uso típico: un menú. Se muestra al menos una vez y se repite hasta que el usuario elige salir. Por dentro hay un switch, el de la semana cuatro, con un caso por opción y un default para las opciones que no existen. La condición del do-while es «la opción no es cero». Mire la ejecución: dos conversiones, una opción inválida y la salida. Cuatro vueltas del mismo código. Fíjese en que el caso cero también tiene su break, y en que el mensaje de despedida se muestra dentro del switch, antes de que la condición termine el ciclo.",
+  "¿Cómo decidir? Hágase una pregunta: ¿el cuerpo debe ejecutarse al menos una vez, pase lo que pase? Si la respuesta es sí, do-while: pedir un dato, mostrar un menú. Si puede haber cero vueltas, while: leer con centinela, procesar una lista que puede venir vacía, pagar una deuda que puede ser cero. Los dos son igual de poderosos; la elección correcta evita lecturas duplicadas y casos especiales. En la tabla de la derecha están los casos que más va a encontrar.",
+  "Tercer video: el for. No hace nada que un while no pueda hacer; lo que hace es reunir en una sola línea las tres piezas del ciclo: la inicialización, la condición y la actualización, separadas por punto y coma. Compare los dos programas: imprimen lo mismo. El orden de ejecución es este: primero la inicialización, una sola vez; después la condición; si es verdadera, el cuerpo; después la actualización, y de nuevo la condición. Y dos abreviaturas nuevas que va a ver en todo for: i más más significa i igual a i más uno, y más igual suma al valor que ya tenía la variable. También existen i menos menos, por igual y menos igual.",
+  "El for sirve para cualquier recorrido regular. Ascendente, de uno a diez. Descendente, de diez a uno, con i menos menos y la condición mayor o igual. De dos en dos, con i más igual dos. Pulse cada botón y compare la cabecera con lo que imprime. Y de cinco en cinco, de cinco a cincuenta. La regla para leer un for: mire dónde empieza, cuándo se detiene y cuánto avanza. Si avanza hacia arriba, la condición es menor o igual; si avanza hacia abajo, mayor o igual. Mezclarlas da un ciclo que no se ejecuta o que no termina.",
+  "Una sumatoria se traduce casi palabra por palabra. El índice de abajo es la inicialización; el de arriba, la condición; el cuerpo es lo que está a la derecha del símbolo. Aquí, la suma de los cuadrados de uno a n. El acumulador empieza en cero, y el programa compara su resultado con la fórmula cerrada: con n igual a diez, los dos dan trescientos ochenta y cinco. Ese tipo de comprobación es una buena prueba.",
+  "La productoria es igual, con dos cambios: el acumulador empieza en uno, no en cero, y en cada vuelta se multiplica. Así se calcula el factorial. Doce factorial da cuatrocientos setenta y nueve millones y algo. ¿Por qué el programa no acepta trece? Porque trece factorial pasa de seis mil millones, y un int de cuatro bytes llega solo hasta dos mil ciento cuarenta y siete millones, como midió en la semana uno. Los ciclos hacen crecer los números muy rápido, y C no avisa cuando un resultado no cabe: por eso el programa valida el rango antes de empezar. Note también que el ciclo empieza en dos: multiplicar por uno no cambia nada.",
+  "Ejemplo guiado: los primeros n términos de Fibonacci. Cada término es la suma de los dos anteriores, así que el programa recuerda solo dos: a y b. En cada vuelta muestra a, calcula el siguiente y corre las dos variables un puesto. En la traza del paso cinco se ve cómo a toma el valor de b, y b el del siguiente. El orden de esas dos asignaciones es la clave: si se invierte, la sucesión se daña. Es el mismo problema del intercambio de la semana uno: hace falta una tercera variable, siguiente, para no perder un valor. Con diez términos el último es treinta y cuatro; con cuarenta, sesenta y tres millones.",
+  "El error más frecuente con for es dar una vuelta de más o de menos. Antes de pulsar, decida qué muestra cada fragmento. Menor que contra menor o igual que. Empezar en cero o en uno. Un punto y coma después del paréntesis del for. Cuente las vueltas con calma; después compruebe con la salida real. El tercer fragmento merece atención: ese punto y coma convierte el for en un ciclo sin cuerpo, y el bloque entre llaves se ejecuta una sola vez, después de terminar el ciclo. Compila; gcc solo lo advierte por la sangría, que parece decir otra cosa. Por eso una advertencia nunca se ignora.",
+  "¿Cuándo for y cuándo while? Use for cuando sabe cuántas vueltas va a dar antes de empezar: n datos, doce meses, de a hasta b. Use while cuando las vueltas dependen de lo que pase dentro: hasta el centinela, hasta que el número llegue a cero, hasta alcanzar una meta. Cualquiera de los dos funciona en los dos casos; el que corresponde se lee mejor.",
+  "Último video: ciclos anidados, break y continue. Un ciclo anidado es un ciclo completo dentro del cuerpo de otro. Por cada vuelta del externo, el interno da todas las suyas. En la tabla de multiplicar, la fila es el ciclo externo y la columna el interno. Con n igual a cuatro, el interno da cuatro vueltas por cada una de las cuatro filas: dieciséis en total. Contar vueltas así es la base del análisis de la semana doce. Dos detalles del código: el salto de línea va después del ciclo interno, cuando la fila está completa; y el formato por ciento cuatro de, que reserva cuatro espacios para cada número y alinea las columnas.",
+  "A veces el ciclo interno depende del externo. En este triángulo, la fila uno tiene un asterisco, la fila dos tiene dos, y así: el interno va hasta fila, no hasta n. Pulse los botones y mire cómo crece. Con cuatro filas hay diez asteriscos: uno más dos más tres más cuatro. Con seis, veintiuno. En general, n por n más uno sobre dos: la mitad, más o menos, que la tabla cuadrada. El diagrama muestra la regla del anidamiento: el ciclo interno está completo dentro del cuerpo del externo, con su propio punto de retorno y su propia flecha.",
+  "break termina el ciclo de inmediato, aunque la condición siga siendo verdadera. Sirve para buscar: en cuanto se encuentra la respuesta, no tiene sentido seguir. Este programa busca el menor divisor de n. Con noventa y uno lo encuentra en la sexta vuelta: es siete. Con noventa y siete no encuentra ninguno y da noventa y cinco vueltas: noventa y siete es primo. Observe el truco del valor inicial: divisor empieza en n. Si el ciclo termina sin encontrar otro, ese valor ya es la respuesta correcta, y no hace falta un caso especial.",
+  "continue no termina el ciclo: salta lo que falta del cuerpo y pasa a la siguiente vuelta. Aquí se suman los números de uno a n, pero los múltiplos de tres se saltan. Con n igual a diez se suman siete números y la suma es treinta y siete. Ojo con una trampa: en un for, continue salta a la actualización, y todo sigue bien. En un while, si la actualización está al final del cuerpo, continue se la salta, y el ciclo no termina. Si usa continue en un while, actualice antes.",
+  "Un detalle importante: break solo sale del ciclo en el que está escrito. En este programa de primos, el break está en el ciclo interno: cuando aparece un divisor, deja de probar divisores de ese número, pero el ciclo externo sigue con el siguiente candidato. Hasta treinta hay diez primos. Si quisiera salir de los dos ciclos a la vez, break no basta: haría falta una variable bandera que el ciclo externo también pregunte. Use break y continue con disciplina: uno por ciclo, y solo cuando simplifica.",
+  "Antes de la actividad, compruebe. Cuatro fragmentos con ciclos anidados, break y continue. Decida qué muestra cada uno y después pulse para ver la salida real. Si se equivoca, haga la traza en una tabla, como en el bloque A: una fila por vuelta, una columna por variable. Es exactamente el tipo de pregunta que trae el formulario.",
+  "La actividad: diez ejercicios. Tres de while, dos de do-while, tres de for y dos de ciclos anidados, break y continue. Prográmelos todos y páselos por sus casos de prueba antes de abrir el formulario. El formulario tiene veinte preguntas: unas le dan datos para ejecutar sus programas; otras le muestran un ciclo en una imagen y preguntan qué imprime, o qué ciclo conviene; y seis repasan las semanas uno a cuatro. Antes de abrir el formulario, use la lista de la diapositiva. Y recuerde que esta semana también tiene la primera entrevista oral y la primera entrega del proyecto. Nos vemos en la semana seis, con funciones."
+];
+
+  function show(n){
+    if(n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('on');
+    slides[i].scrollTop = 0;
+    cur.textContent = String(i + 1);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    notesText.textContent = NOTES[i];
+    notesTime.textContent = slides[i].getAttribute('data-t');
+  }
+  $('next').addEventListener('click', function(){ show(i + 1); });
+  $('prev').addEventListener('click', function(){ show(i - 1); });
+  var tn = $('toggleNotes');
+  tn.addEventListener('click', function(){
+    var on = notesBox.classList.toggle('on');
+    tn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ show(i - 1); }
+    else if(e.key === 'n' || e.key === 'N'){ tn.click(); }
+  });
+
+  /* ====== pasos de los ejemplos guiados (4, 12 y 19) ==================
+     Todos los paneles ocupan la misma celda de la rejilla; solo cambia
+     cuál es visible. Por eso la diapositiva no cambia de alto al avanzar. */
+  all('.gsteps[data-g]').forEach(function(bx){
+    var g = bx.getAttribute('data-g');
+    var body = document.querySelector('.gbody[data-g="' + g + '"]');
+    var diag = document.querySelector('.gdiag[data-g="' + g + '"]');
+    var btns = all('.tbtn', bx);
+    btns.forEach(function(b){
+      b.addEventListener('click', function(){
+        var s = b.getAttribute('data-s');
+        btns.forEach(function(o){ o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+        all('.gpane', body).forEach(function(p){ p.classList.toggle('on', p.getAttribute('data-s') === s); });
+        if(diag){ diag.classList.toggle('off', +s < 3); }
+      });
+    });
+  });
+
+  /* línea de código ↔ figura del diagrama (paso 4 del ejemplo 4) */
+  all('pre[data-g] .ln').forEach(function(ln){
+    var g = ln.parentNode.getAttribute('data-g');
+    var m = ln.getAttribute('data-m');
+    function on(v){
+      all('pre[data-g="' + g + '"] .ln').forEach(function(o){ o.classList.toggle('hot', v && o.getAttribute('data-m') === m); });
+      var fig = document.getElementById(g + '-' + m);
+      all('svg g.hot').forEach(function(x){ x.classList.remove('hot'); });
+      if(v && fig){ fig.classList.add('hot'); }
+    }
+    ln.addEventListener('mouseenter', function(){ on(true); });
+    ln.addEventListener('mouseleave', function(){ on(false); });
+    ln.addEventListener('click', function(){ on(true); });
+  });
+
+  var DATA = {"trz": ["Antes de entrar: <span class=\"mono\">copia = 4075</span>, <span class=\"mono\">cantidad = 0</span>. La condición es verdadera: entra.", "La división entera quitó el último dígito: <span class=\"mono\">copia = 407</span>. <span class=\"mono\">cantidad = 1</span>. Sigue siendo mayor que 0: otra vuelta.", "La división entera quitó el último dígito: <span class=\"mono\">copia = 40</span>. <span class=\"mono\">cantidad = 2</span>. Sigue siendo mayor que 0: otra vuelta.", "La división entera quitó el último dígito: <span class=\"mono\">copia = 4</span>. <span class=\"mono\">cantidad = 3</span>. Sigue siendo mayor que 0: otra vuelta.", "<span class=\"mono\">copia = 0</span>: la condición es falsa y el ciclo termina. <b>4 vueltas, 4 dígitos.</b>"], "rec": [{"out": "Ascendente: 1 2 3 4 5 6 7 8 9 10", "m": "Empieza en 1, para cuando <span class=\"mono\">i</span> pasa de 10, avanza de a 1: <b>10 vueltas</b>."}, {"out": "Descendente: 10 9 8 7 6 5 4 3 2 1", "m": "Baja: la condición es <span class=\"mono\">&gt;=</span> y la actualización <span class=\"mono\">i--</span>. <b>10 vueltas</b>."}, {"out": "De dos en dos: 0 2 4 6 8 10", "m": "Empieza en 0 y avanza de a 2: <b>6 vueltas</b> (0 y 10 incluidos)."}, {"out": "De cinco en cinco: 5 10 15 20 25 30 35 40 45 50", "m": "Los múltiplos de 5 hasta 50: <b>10 vueltas</b>."}], "tri": ["Filas: <span class=\"u\">3</span>\n*\n**\n***\nAsteriscos: 6", "Filas: <span class=\"u\">4</span>\n*\n**\n***\n****\nAsteriscos: 10", "Filas: <span class=\"u\">5</span>\n*\n**\n***\n****\n*****\nAsteriscos: 15", "Filas: <span class=\"u\">6</span>\n*\n**\n***\n****\n*****\n******\nAsteriscos: 21"]};
+
+  /* ====== 5 · traza vuelta por vuelta ==================================
+     Todas las filas existen desde el principio (las no alcanzadas, en
+     blanco): la tabla no crece y la diapositiva no cambia de alto.       */
+  function pintarTrz(k){
+    all('#trzBtns .tbtn').forEach(function(o){ o.setAttribute('aria-pressed', +o.getAttribute('data-i') === k ? 'true' : 'false'); });
+    all('#trzTab tbody tr').forEach(function(tr, j){
+      tr.classList.toggle('pend', j > k);
+      tr.classList.toggle('cur', j === k);
+    });
+    $('trzMsg').innerHTML = DATA.trz[k];
+  }
+  all('#trzBtns .tbtn').forEach(function(b){ b.addEventListener('click', function(){ pintarTrz(+b.getAttribute('data-i')); }); });
+  pintarTrz(0);
+
+  /* ====== 16 · recorridos ============================================== */
+  function pintarRec(k){
+    all('#recBtns .tbtn').forEach(function(o){ o.setAttribute('aria-pressed', +o.getAttribute('data-i') === k ? 'true' : 'false'); });
+    $('recOut').textContent = DATA.rec[k].out;
+    $('recMsg').innerHTML = DATA.rec[k].m;
+  }
+  all('#recBtns .tbtn').forEach(function(b){ b.addEventListener('click', function(){ pintarRec(+b.getAttribute('data-i')); }); });
+  pintarRec(0);
+
+  /* ====== 23 · triángulo =============================================== */
+  function pintarTri(k){
+    all('#triBtns .tbtn').forEach(function(o){ o.setAttribute('aria-pressed', +o.getAttribute('data-i') === k ? 'true' : 'false'); });
+    $('triOut').innerHTML = DATA.tri[k];
+  }
+  all('#triBtns .tbtn').forEach(function(b){ b.addEventListener('click', function(){ pintarTri(+b.getAttribute('data-i')); }); });
+  pintarTri(0);
+
+  /* ====== 20 y 27 · predicciones ======================================= */
+  all('.pred .tbtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var pre = document.getElementById(b.getAttribute('data-o'));
+      var oculto = pre.classList.toggle('hid');
+      b.textContent = oculto ? 'Ver salida' : 'Ocultar';
+    });
+  });
+
+  /* ====== 28 · lista de verificación =================================== */
+  var chks = all('#lista .chk');
+  var MSG = ['empiece por la primera', 'siga', 'va bien', 'la mitad', 'ya casi', 'falta una', 'listo para el formulario'];
+  chks.forEach(function(c){
+    c.addEventListener('click', function(){
+      c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      var n = chks.filter(function(x){ return x.getAttribute('aria-pressed') === 'true'; }).length;
+      $('tallyN').textContent = n;
+      $('tallyMsg').textContent = MSG[n];
+    });
+  });
+
+  show(0);
+})();
+</script>
