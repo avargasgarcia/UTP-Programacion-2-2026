@@ -1,0 +1,2131 @@
+<meta charset="utf-8">
+<title>Divide y Nombra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F2F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#EBEDF3;
+  --line:#D6D9E4;
+  --ink:#141828;
+  --muted:#5B6278;
+  --accent:#4557C9;
+  --accent-soft:#E3E6F8;
+  --fn:#0B7C71;
+  --fn-soft:#DCF0ED;
+  --imp:#A2620E;
+  --imp-soft:#F6E8D3;
+  --shadow:0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.08);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1120;
+    --surface:#171B2C;
+    --surface-2:#1F2438;
+    --line:#2E3448;
+    --ink:#E8EAF4;
+    --muted:#98A0BA;
+    --accent:#8494F2;
+    --accent-soft:#232A48;
+    --fn:#3FC7B4;
+    --fn-soft:#12312F;
+    --imp:#E9A94A;
+    --imp-soft:#33270F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1120;
+  --surface:#171B2C;
+  --surface-2:#1F2438;
+  --line:#2E3448;
+  --ink:#E8EAF4;
+  --muted:#98A0BA;
+  --accent:#8494F2;
+  --accent-soft:#232A48;
+  --fn:#3FC7B4;
+  --fn-soft:#12312F;
+  --imp:#E9A94A;
+  --imp-soft:#33270F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:"IBM Plex Serif", Georgia, "Times New Roman", serif;font-weight:600}
+p{margin:0}
+code,pre,.mono{font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace}
+
+/* ============ CHROME ============ */
+.rail{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  font-size:12px;
+}
+.rail .id{font-family:"IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rail .id b{color:var(--ink);font-weight:600}
+.rail .spacer{flex:1}
+.btn{
+  font:inherit;font-size:12px;
+  background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.counter{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.counter b{color:var(--ink)}
+
+.progress{height:3px;background:var(--surface-2);position:relative}
+.progress span{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .25s ease}
+
+/* ============ STAGE ============ */
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px}
+.stage{
+  width:min(100%,1180px);
+  aspect-ratio:16/9;
+  max-height:calc(100vh - 150px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  container-type:inline-size;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;
+  padding:4.4cqi 5cqi 4cqi;
+  display:none;
+  flex-direction:column;
+  gap:2.2cqi;
+  overflow-y:auto;
+}
+.slide.on{display:flex}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:1.25cqi;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:1cqi;
+}
+.eyebrow .tick{width:2.6cqi;height:1px;background:var(--line)}
+h2.title{font-size:3.9cqi;line-height:1.12;letter-spacing:-.01em}
+h3.sub{font-size:2.05cqi;line-height:1.25}
+.lead{font-size:1.95cqi;line-height:1.5;color:var(--ink);max-width:62ch}
+.note{font-size:1.5cqi;line-height:1.5;color:var(--muted);max-width:70ch}
+.slide ul{margin:0;padding-left:2.2cqi;display:flex;flex-direction:column;gap:1.1cqi}
+.slide li{font-size:1.8cqi;line-height:1.42}
+.slide li::marker{color:var(--accent)}
+
+/* two-world grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;align-items:start}
+.panel{
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+  padding:2cqi 2.2cqi;
+  display:flex;flex-direction:column;gap:1.2cqi;
+  min-width:0;
+}
+.panel.fn{border-top:3px solid var(--fn)}
+.panel.imp{border-top:3px solid var(--imp)}
+.tag{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+.tag.fn{color:var(--fn)}
+.tag.imp{color:var(--imp)}
+.panel h4{margin:0;font-size:1.85cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.panel p{font-size:1.5cqi;line-height:1.45;color:var(--muted)}
+.panel ul{padding-left:2cqi;gap:.7cqi}
+.panel li{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1.4cqi 1.6cqi;font-size:1.42cqi;line-height:1.55;
+  overflow-x:auto;white-space:pre;
+}
+pre .k{color:var(--accent);font-weight:500}
+pre .c{color:var(--muted);font-style:italic}
+pre .n{color:var(--imp)}
+pre .s{color:var(--fn)}
+.filename{
+  font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted);
+  display:flex;justify-content:space-between;gap:1cqi;
+}
+.filename em{font-style:normal;color:var(--fn)}
+
+/* trace machine */
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqi;align-items:stretch}
+.cell{
+  display:flex;gap:1.2cqi;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+}
+.box{
+  border:2px solid var(--imp);border-radius:6px;background:var(--imp-soft);
+  padding:.8cqi 1.6cqi;font-size:2.4cqi;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;min-width:7cqi;text-align:center;
+}
+.box.flash{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.expr{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;line-height:1.7;
+  color:var(--ink);word-break:break-word;
+}
+.expr .old{color:var(--muted)}
+.steps{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:1cqi;align-items:center;flex-wrap:wrap}
+.ctl{
+  font-family:"IBM Plex Sans",sans-serif;font-size:1.4cqi;
+  padding:.8cqi 1.6cqi;border-radius:6px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;cursor:pointer;
+}
+.ctl.ghost{background:transparent;color:var(--accent)}
+.ctl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctl:disabled{opacity:.45;cursor:default}
+
+/* comparison table */
+table{border-collapse:collapse;width:100%;font-size:1.5cqi}
+th,td{text-align:left;padding:1cqi 1.2cqi;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+thead th.cfn{color:var(--fn)}
+thead th.cimp{color:var(--imp)}
+tbody th{font-weight:500;color:var(--muted);font-family:"IBM Plex Sans",sans-serif}
+
+/* cover */
+.cover{justify-content:center;gap:1.6cqi;background:
+  linear-gradient(105deg, var(--fn-soft) 0%, transparent 42%),
+  linear-gradient(255deg, var(--imp-soft) 0%, transparent 42%);}
+.cover .inst{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);line-height:1.7;letter-spacing:.04em}
+.cover h1{font-size:5.4cqi;line-height:1.05;letter-spacing:-.02em;max-width:20ch}
+.cover .course{font-size:2cqi;color:var(--accent);font-weight:600}
+.cover .who{display:flex;gap:3cqi;flex-wrap:wrap;font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+.cover .who b{display:block;color:var(--ink);font-weight:600;font-size:1.75cqi}
+
+/* q&a */
+.qa{display:flex;flex-direction:column;gap:1.4cqi}
+.q{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi}
+.q p{font-size:1.6cqi;line-height:1.4}
+.q .ans{font-size:1.45cqi;color:var(--fn);line-height:1.45;display:none}
+.q.open .ans{display:block}
+.q button{align-self:flex-start;font:inherit;font-size:1.25cqi;background:none;border:1px solid var(--line);border-radius:5px;padding:.5cqi 1.1cqi;color:var(--muted);cursor:pointer}
+.q button:hover{color:var(--accent);border-color:var(--accent)}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:1.4cqi 1.8cqi;border-radius:0 7px 7px 0;font-size:1.55cqi;line-height:1.45;
+}
+.refs{font-size:1.3cqi;line-height:1.6;color:var(--muted)}
+.refs b{color:var(--ink);font-weight:500}
+
+/* notes drawer */
+.notes{
+  width:min(100%,1180px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);padding:14px 18px;
+  font-size:14px;line-height:1.55;color:var(--ink);
+  display:none;
+}
+.notes.on{display:block}
+.notes h5{margin:0 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notes p{color:var(--muted)}
+.notes .time{color:var(--accent);font-family:"IBM Plex Mono",monospace}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+@media (max-width:720px){
+  .duo,.trace{grid-template-columns:1fr}
+  .stage{aspect-ratio:auto;height:auto;min-height:520px}
+  .slide{position:relative;padding:22px}
+  .slide:not(.on){display:none}
+}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.3 — componentes que no existían en la 1.1.
+   No se modificó ningún token de color ni ningún tamaño anterior.
+   ====================================================================== */
+
+/* retícula de tres columnas (los tres intercambios) */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.6cqi;align-items:start}
+.trio .panel{padding:1.5cqi 1.6cqi;gap:.9cqi}
+.trio pre{font-size:1.24cqi;padding:1.1cqi 1.2cqi}
+.trio li{font-size:1.35cqi}
+.trio .tag{font-size:1.05cqi}
+
+/* retícula de dos columnas desiguales */
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:2.2cqi;align-items:start}
+.split-r{display:grid;grid-template-columns:.85fr 1.15fr;gap:2.2cqi;align-items:start}
+
+/* celdas de memoria con desvanecimiento del valor anterior */
+.mem{display:flex;gap:2.6cqi;align-items:flex-end;flex-wrap:wrap}
+.memcell{display:flex;flex-direction:column;align-items:center;gap:.5cqi;position:relative}
+.memcell .name{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--imp);font-weight:600}
+.memcell .addr{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;color:var(--muted)}
+.memcell .box{min-width:8.4cqi}
+.memcell .box.empty{color:var(--muted);border-style:dashed;background:transparent}
+.memcell .gone{
+  position:absolute;left:0;right:0;top:2.1cqi;
+  font-family:"IBM Plex Mono",monospace;font-size:2.4cqi;font-weight:600;
+  color:var(--muted);text-align:center;pointer-events:none;
+  text-decoration:line-through;
+  animation:vanish 1.1s ease forwards;
+}
+@keyframes vanish{
+  0%{opacity:.9;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-3.2cqi) scale(.8)}
+}
+
+/* registro de transiciones del simulador */
+.log{
+  font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;line-height:1.6;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1cqi 1.2cqi;height:15cqi;overflow:auto;color:var(--ink);
+  white-space:pre;
+}
+.log .dim{color:var(--muted)}
+
+/* indicador de estado actual */
+.statebar{display:flex;align-items:center;gap:1.2cqi;flex-wrap:wrap}
+.statebar .lab{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:1.7cqi;font-weight:600;
+  border:2px solid var(--imp);background:var(--imp-soft);color:var(--ink);
+  border-radius:999px;padding:.5cqi 1.6cqi;
+}
+.chip.flash{animation:pop .35s ease}
+
+/* diagramas de estados en SVG */
+.fsm{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fsm .node{fill:var(--dsurf);stroke:var(--dimp);stroke-width:2.5}
+.fsm .node.on{fill:var(--dimps);stroke-width:6}
+.fsm .inner{fill:none;stroke:var(--dfn);stroke-width:2}
+.fsm .lbl{fill:var(--dink);font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;text-anchor:middle}
+.fsm .edge{fill:none;stroke:var(--dmut);stroke-width:2}
+.fsm .elbl{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:15px;text-anchor:middle}
+.fsm .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fsm .cap.acc{fill:var(--dfn)}
+.fsm marker path{fill:var(--dmut)}
+.fsm.big .lbl{font-size:21px}
+.fsm.big .elbl{font-size:17px}
+.fsm.big .cap{font-size:15px}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.4 — componentes que no existían en la 1.3.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* las tres caras de un tipo (diapositiva 3) */
+.faces{display:flex;flex-direction:column;gap:1.2cqi}
+.face{display:flex;gap:1.3cqi;align-items:baseline}
+.face .num{font-family:"IBM Plex Mono",monospace;font-size:1.6cqi;font-weight:600;color:var(--accent);min-width:2.4cqi}
+.face .txt{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+.face .txt b{display:block;font-size:1.65cqi}
+.face .txt span{color:var(--muted);font-size:1.32cqi}
+
+/* matriz 2 × 2 del tipado (diapositiva 4) */
+.matrix{display:grid;grid-template-columns:4.6cqi 1fr 1fr;gap:.9cqi;align-items:stretch}
+.axis{
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);line-height:1.35;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+}
+.axis.side{writing-mode:vertical-rl;transform:rotate(180deg)}
+.mcell{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1.2cqi 1.3cqi;display:flex;flex-direction:column;gap:.45cqi;min-width:0;
+}
+.mcell:hover{border-color:var(--accent)}
+.mcell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mcell .lang{font-family:"IBM Plex Mono",monospace;font-size:1.75cqi;font-weight:600;color:var(--ink)}
+.mcell.c .lang{color:var(--imp)}
+.mcell.r .lang{color:var(--fn)}
+.mcell .kind{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.mcell .mk{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);visibility:hidden}
+.mcell[aria-pressed="true"]{background:var(--accent-soft);border:3px solid var(--accent);padding:1cqi 1.1cqi}
+.mcell[aria-pressed="true"] .mk{visibility:visible}
+
+/* explorador de tipos y barra de bytes (diapositiva 7) */
+.tbtns{display:flex;flex-wrap:wrap;gap:.6cqi}
+.tbtn{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.55cqi 1.05cqi;cursor:pointer;
+}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.bytebar{display:flex;gap:.35cqi;flex-wrap:wrap;align-items:center}
+.byte{
+  width:2.5cqi;height:2.5cqi;border-radius:4px;
+  border:1px solid var(--imp);background:var(--imp-soft);
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.bignum{font-family:"IBM Plex Mono",monospace;font-size:3.2cqi;font-weight:600;color:var(--imp);line-height:1}
+.bignum small{font-size:1.4cqi;color:var(--muted);font-weight:400;margin-left:.6cqi}
+
+/* banda de la advertencia intencional (diapositiva 6) */
+.warnband{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.2cqi 1.6cqi;
+  display:flex;flex-direction:column;gap:.55cqi;
+}
+.warnband .hd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.1cqi;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--imp);font-weight:600;
+}
+.warnband .msg{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;line-height:1.5;color:var(--ink);word-break:break-word}
+.warnband .why{font-size:1.32cqi;line-height:1.45;color:var(--muted)}
+
+/* predictor de conversiones (diapositiva 9) */
+.opts{display:flex;gap:.9cqi;flex-wrap:wrap}
+.opt{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.75cqi 1.5cqi;cursor:pointer;
+}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt.good{background:var(--fn-soft);border:2px solid var(--fn);font-weight:600;padding:.65cqi 1.4cqi}
+.opt.bad{background:var(--surface-2);border-color:var(--muted);color:var(--muted);text-decoration:line-through}
+.opt:disabled{cursor:default}
+.verdict{font-size:1.4cqi;line-height:1.45;color:var(--ink);min-height:7cqi}
+.verdict .head{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:.5cqi}
+.verdict .head.ok{color:var(--fn)}
+.verdict .head.no{color:var(--imp)}
+
+/* columna que difiere entre modelos de datos (diapositiva 10) */
+th.diff,td.diff{background:var(--imp-soft)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.5 — componentes que no existían en la 1.4.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* cadena de las cinco piezas (diapositiva 3) */
+.chain{display:flex;align-items:stretch;gap:.8cqi;flex-wrap:nowrap}
+.link{
+  flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface-2);padding:1.1cqi 1cqi;
+  display:flex;flex-direction:column;gap:.5cqi;text-align:center;
+}
+.link .n{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.link .w{font-size:1.42cqi;font-weight:600;line-height:1.2;color:var(--ink)}
+.link .d{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.link.hot{border-color:var(--imp);background:var(--imp-soft)}
+.arrowmini{display:flex;align-items:center;color:var(--muted);font-size:1.6cqi;flex:0 0 auto}
+
+/* comparación de las dos versiones (diapositiva 5) */
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:2cqi;align-items:stretch}
+.vcard{
+  border:1px solid var(--line);border-radius:8px;padding:1.6cqi 1.8cqi;
+  display:flex;flex-direction:column;gap:.9cqi;background:var(--surface-2);
+}
+.vcard.bad{border:2px solid var(--muted);opacity:.82}
+.vcard.good{border:2px solid var(--fn);background:var(--fn-soft)}
+.vcard .vh{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.vcard.bad .vh{color:var(--muted)}
+.vcard.good .vh{color:var(--fn)}
+.vcard h4{margin:0;font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif}
+.vrow{display:flex;justify-content:space-between;gap:1cqi;font-size:1.3cqi;line-height:1.4;border-bottom:1px solid var(--line);padding-bottom:.5cqi}
+.vrow:last-of-type{border-bottom:0}
+.vrow span:first-child{color:var(--muted)}
+.vrow span:last-child{text-align:right;font-family:"IBM Plex Mono",monospace;color:var(--ink)}
+.vcard.good .vrow span:last-child{font-weight:600}
+
+/* selector de ruta por sistema operativo (diapositiva 6) */
+.osbtns{display:flex;gap:.8cqi;flex-wrap:wrap}
+.osbtn{
+  font:inherit;font-family:"IBM Plex Sans",sans-serif;font-size:1.45cqi;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);padding:.85cqi 1.6cqi;cursor:pointer;
+  display:flex;align-items:center;gap:.7cqi;
+}
+.osbtn:hover{border-color:var(--accent);color:var(--accent)}
+.osbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.osbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ospanel{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:1cqi;min-height:26cqi;
+}
+.ospanel .oh{font-size:1.9cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;color:var(--ink)}
+.ospanel .ol{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.ospanel ol{margin:0;padding-left:2.4cqi;display:flex;flex-direction:column;gap:.7cqi}
+.ospanel li{font-size:1.42cqi;line-height:1.4}
+.ospanel .nope{font-size:1.28cqi;line-height:1.45;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.2cqi}
+
+/* teclas (diapositiva 8) */
+.kbd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.35cqi;font-weight:600;
+  border:1px solid var(--line);border-bottom-width:3px;border-radius:5px;
+  background:var(--surface);padding:.35cqi .9cqi;color:var(--ink);white-space:nowrap;
+}
+.keyrow{display:flex;flex-direction:column;gap:1cqi}
+.keyline{display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi}
+.keyline .txt{color:var(--ink)}
+.keyline .txt em{font-style:normal;color:var(--muted);font-size:1.25cqi}
+
+/* lista de verificación pulsable (diapositiva 12) */
+.checks{display:flex;flex-direction:column;gap:.85cqi}
+.chk{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1cqi 1.4cqi;display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi;
+}
+.chk:hover{border-color:var(--accent)}
+.chk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chk .mk{
+  flex:0 0 auto;width:2.2cqi;height:2.2cqi;border-radius:5px;
+  border:2px solid var(--line);display:flex;align-items:center;
+  justify-content:center;font-size:1.3cqi;color:transparent;
+}
+.chk[aria-pressed="true"]{background:var(--fn-soft);border-color:var(--fn)}
+.chk[aria-pressed="true"] .mk{background:var(--fn);border-color:var(--fn);color:#fff}
+.tally{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.tally b{color:var(--fn);font-size:2cqi}
+
+/* modificador de densidad: para las diapositivas cuyo contenido es
+   irreducible sin perder información (la tabla de los cinco tipos de
+   entorno y la comparación de macOS). Solo ajusta espaciados y escala
+   tipográfica dentro de la diapositiva; no toca ningún token. */
+.dense{gap:1.6cqi}
+.dense table{font-size:1.36cqi}
+.dense th,.dense td{padding:.6cqi 1cqi}
+.dense .alert{font-size:1.36cqi;padding:1cqi 1.4cqi}
+.dense .note{font-size:1.34cqi}
+.dense .lead{font-size:1.78cqi}
+.dense .panel li{font-size:1.38cqi}
+.dense .panel p{font-size:1.38cqi}
+.dense pre{font-size:1.3cqi}
+
+/* banda de advertencia sobria (varias diapositivas) */
+.alert{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.3cqi 1.7cqi;
+  font-size:1.5cqi;line-height:1.45;
+}
+.alert b{color:var(--imp)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 2.1 / 2.2 — componentes que no existían en la
+   1.5. No se modificó ningún token de color ni ningún tamaño anterior;
+   todo lo que sigue son componentes nuevos que usan los mismos tokens.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos se dibujan en tinta neutra; el ámbar marca «esto es lo
+   que estamos mirando» o «esto está mal», y el verde azulado marca
+   «esto está bien». Siempre acompañado de etiqueta de texto.
+   ====================================================================== */
+
+/* diagramas de flujo en SVG */
+.fc{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fc .sh{fill:var(--dsurf);stroke:var(--dink);stroke-width:2.4}
+.fc .sh.hot{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc .sh.ok{fill:var(--dfns);stroke:var(--dfn);stroke-width:3.4}
+.fc .sh.err{fill:var(--dimps);stroke:var(--dimp);stroke-width:4;stroke-dasharray:7 5}
+.fc .t{
+  fill:var(--dink);font-family:"IBM Plex Mono",monospace;
+  font-size:15px;text-anchor:middle;dominant-baseline:middle;
+}
+.fc .t.sm{font-size:13px}
+.fc .fl{fill:none;stroke:var(--dmut);stroke-width:2.2}
+.fc .fl.err{stroke:var(--dimp);stroke-width:3.2;stroke-dasharray:7 5}
+.fc .fll{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fc .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:12px;text-anchor:middle}
+.fc .spot{cursor:pointer}
+.fc .spot .ring{fill:none;stroke:var(--dimp);stroke-width:3;opacity:0}
+.fc .spot[data-found="1"] .ring{opacity:1}
+.fc .mark{fill:var(--dimp);font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;text-anchor:middle;opacity:0}
+.fc .spot[data-found="1"] .mark{opacity:1}
+#armk path{fill:var(--muted)}
+
+/* vitrina de un solo símbolo (diapositiva 5) */
+.symstage{
+  border:1px solid var(--line);border-radius:8px;background:var(--surface-2);
+  padding:1.2cqi;display:flex;align-items:center;justify-content:center;
+  min-height:19cqi;
+}
+.symstage svg{width:100%;max-height:17cqi}
+
+/* fila de equivalencias pseudocódigo ↔ símbolo */
+.eq{display:flex;flex-direction:column;gap:.7cqi}
+.eqrow{
+  display:grid;grid-template-columns:1.1fr 1.4cqi 1fr;gap:1.1cqi;align-items:center;
+  border-bottom:1px solid var(--line);padding-bottom:.6cqi;
+}
+.eqrow:last-child{border-bottom:0}
+.eqrow .k1{font-family:"IBM Plex Mono",monospace;font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2{font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2 em{font-style:normal;color:var(--muted);font-size:1.2cqi;display:block}
+.eqrow .to{color:var(--muted);font-size:1.3cqi;text-align:center}
+
+/* reglas numeradas de trazado */
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:1.1cqi 2cqi}
+.rule{display:flex;gap:1.1cqi;align-items:flex-start}
+.rule .rn{
+  flex:0 0 auto;width:2.5cqi;height:2.5cqi;border-radius:50%;
+  border:2px solid var(--accent);color:var(--accent);
+  font-family:"IBM Plex Mono",monospace;font-size:1.25cqi;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+}
+.rule .rt{font-size:1.42cqi;line-height:1.38}
+.rule .rt b{display:block;font-size:1.5cqi;margin-bottom:.15cqi}
+.rule .rt span{color:var(--muted);font-size:1.26cqi}
+
+/* marcador del cazador de errores */
+.hunt{display:flex;align-items:center;gap:1.4cqi;flex-wrap:wrap}
+.hunt .score{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.hunt .score b{color:var(--imp);font-size:2.1cqi}
+.huntmsg{font-size:1.38cqi;line-height:1.42;color:var(--ink);min-height:6.4cqi}
+.huntmsg .head{
+  font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.1em;
+  text-transform:uppercase;display:block;margin-bottom:.4cqi;
+}
+.huntmsg .head.no{color:var(--imp)}
+.huntmsg .head.ok{color:var(--fn)}
+
+/* separador de cápsula dentro de la misma presentación */
+.divider{
+  justify-content:center;gap:1.4cqi;
+  background:linear-gradient(115deg, var(--accent-soft) 0%, transparent 55%);
+}
+.divider .big{font-size:4.6cqi;line-height:1.06;letter-spacing:-.02em}
+.divider .kicker{
+  font-family:"IBM Plex Mono",monospace;font-size:1.4cqi;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);font-weight:600;
+}
+
+/* ficha de herramienta (diapositiva 20) */
+.tool{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi;min-height:27cqi;
+}
+.tool .th{font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.tool .tf{font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.tool .tp{font-size:1.4cqi;line-height:1.42;color:var(--ink)}
+.tool .tlim{font-size:1.26cqi;line-height:1.42;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.1cqi}
+.tool .tsrc{font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;color:var(--muted);line-height:1.5}
+
+/* el modificador .dense de la cápsula 1.5, extendido a los componentes
+   nuevos de esta cápsula. Sigue sin tocar ningún token de color. */
+.dense .rules{gap:.8cqi 1.6cqi}
+.dense .rule .rt{font-size:1.32cqi}
+.dense .rule .rt b{font-size:1.4cqi}
+.dense .rule .rt span{font-size:1.18cqi}
+.dense .vrow{font-size:1.22cqi}
+.dense .vcard{padding:1.2cqi 1.4cqi;gap:.7cqi}
+.dense .vcard h4{font-size:1.8cqi}
+.dense .tool{min-height:24cqi;padding:1.2cqi 1.5cqi;gap:.7cqi}
+.dense .tp{font-size:1.3cqi}
+.dense .eqrow .k1,.dense .eqrow .k2{font-size:1.26cqi}
+.dense .callout{font-size:1.38cqi;padding:1.1cqi 1.5cqi}
+.dense .refs{font-size:1.2cqi}
+.dense .fc .t{font-size:14px}
+
+/* el diagrama vertical completo, cuando comparte diapositiva con texto */
+.fc.fit{max-height:40cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LAS CÁPSULAS 2.3 / 2.4 / CICLOS — componentes que no
+   existían en la 2.1-2.2. No se modificó ningún token de color ni ningún
+   tamaño anterior: todo lo que sigue usa los mismos tokens del curso.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos van en tinta neutra; el ámbar marca «esto está mal» y el
+   verde azulado «esto está bien», siempre con etiqueta de texto.
+   ====================================================================== */
+
+/* punto de reunión / de retorno: la unión de dos caminos en uno */
+.fc .jn{fill:var(--dmut);stroke:none}
+
+/* los diagramas de esta cápsula son más altos que los de la 2.1: se
+   limita su altura para que nunca desborden la diapositiva. El ancho
+   sigue mandando; la altura solo recorta cuando el diagrama es vertical. */
+.slide .fc{max-height:34cqi}
+.dense .fc{max-height:32cqi}
+.trio .fc{max-height:28cqi}
+.split .fc, .split-r .fc{max-height:34cqi}
+
+/* tabla compacta para la traza del ciclo (diapositiva 22) */
+table.mini{font-size:1.3cqi;font-variant-numeric:tabular-nums}
+table.mini th, table.mini td{padding:.42cqi .8cqi}
+table.mini thead th{font-size:1.05cqi}
+table.mini td.mono{font-family:"IBM Plex Mono",monospace}
+table.mini tr.on td{background:var(--accent-soft)}
+table.mini tr.out td{color:var(--muted)}
+
+/* reglas numeradas en una sola columna (diapositiva 27) */
+.rules.one{grid-template-columns:1fr;gap:1cqi}
+
+/* ficha de las cinco piezas / los cinco pasos */
+.faces .txt b{margin-bottom:.1cqi}
+
+/* separador de bloque: el mismo de la 2.2, con la variante de ciclos */
+.divider .lead{max-width:56ch}
+
+/* pseudocódigo dentro de una tarjeta de comparación */
+.vcard pre{background:var(--surface);font-size:1.3cqi}
+.vcard .note{font-size:1.32cqi;line-height:1.45}
+.vcard h4{font-size:1.75cqi;line-height:1.25}
+
+/* el panel de la traza no debe estirarse */
+.controls{margin-top:.8cqi}
+
+/* el modificador .dense, extendido a lo nuevo de esta cápsula */
+.dense .faces .txt{font-size:1.36cqi}
+.dense .faces .txt b{font-size:1.46cqi}
+.dense .faces .txt span{font-size:1.24cqi}
+.dense .versus .vcard{padding:1.2cqi 1.4cqi}
+.dense table.mini{font-size:1.22cqi}
+.dense .verdict{font-size:1.3cqi;min-height:5cqi}
+
+/* lista de verificación compacta (diapositiva 29) */
+.dense .checks{gap:.5cqi}
+.dense .chk{padding:.5cqi .85cqi;font-size:1.22cqi;line-height:1.3}
+.dense .chk .mk{width:1.7cqi;height:1.7cqi;font-size:1.05cqi}
+.dense .tally{font-size:1.3cqi}
+.dense .tally b{font-size:1.7cqi}
+.dense .refs{font-size:1.16cqi;line-height:1.5}
+.dense .panel li{line-height:1.34}
+
+/* resaltado de una pieza del diagrama durante la traza (diapositiva 22).
+   Ambar = «esto es lo que estamos mirando», nunca un tipo de símbolo. */
+.fc g.hot .sh{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc g.hot .fl{stroke:var(--dimp);stroke-width:3}
+.fc g.hot .t{font-weight:600}
+
+/* los dos diagramas comparativos de la diapositiva 20 */
+.trio .panel .fc{max-height:28cqi;margin-top:.4cqi}
+.tag em{font-style:normal;color:var(--muted);text-transform:none;letter-spacing:0}
+
+/* el pseudocódigo, un punto más compacto en las diapositivas .dense */
+.dense pre{font-size:1.26cqi;line-height:1.45;padding:1.1cqi 1.3cqi}
+
+/* filas de la traza todavia no alcanzadas: ocupan sitio, no distraen */
+table.mini tr.pend td{color:var(--line)}
+
+/* diapositiva 26: el diagrama mas complejo del curso necesita ancho */
+.split.ancho{grid-template-columns:1.5fr 1fr}
+.split.ancho .fc{max-height:38cqi}
+
+/* .grande: los diagramas casi cuadrados se reducen mucho al caber en la
+   diapositiva, asi que su tipografia interna se dibuja mas grande para que
+   siga leyendose. Solo cambia el tamano del texto dentro del SVG. */
+.fc.grande .t{font-size:21px}
+.fc.grande .t.sm{font-size:19px}
+.fc.grande .fll{font-size:18px}
+.fc.grande .cap{font-size:16px}
+
+/* nota bajo un diagrama (diapositiva 22) */
+.split > div > .note{margin-top:.8cqi;font-size:1.3cqi}
+
+/* diapositiva 22: la traza ocupa alto fijo; el diagrama cede un poco */
+#trzBody + tr, .slide .panel table.mini{margin-bottom:.2cqi}
+.dense .split .fc.ej1, .split .fc.ej1{max-height:26cqi}
+
+/* el mensaje de la traza reserva su alto: la diapositiva no salta al avanzar */
+#trzMsg{min-height:5.6cqi;margin-top:.5cqi}
+
+/* correcciones de herencia sobre componentes de la 1.4/1.5 -------------
+   .face .txt b es display:block en la hoja base (sirve para el titulo de
+   la ficha); los <b> que van DENTRO del parrafo tienen que seguir en
+   linea. Y el texto de una casilla va en un solo elemento, porque .chk es
+   un contenedor flex y cada nodo suelto se separaria del resto. */
+.face .txt span b, .dense .faces .txt span b{display:inline;font-size:inherit}
+.chk .lbl{flex:1 1 auto}
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 3 — componentes nuevos (código C, consola,
+   ejemplo guiado paso a paso, explorador de etapas). No se modificó ningún
+   token ni ningún tamaño anterior: todo usa los tokens del curso.
+   Regla de color respetada: ámbar = C / lo que cambia / lo que estamos
+   mirando; verde azulado = lo correcto; el color siempre va con texto.
+   ====================================================================== */
+
+/* consola: la salida REAL de un programa. Se distingue del código por
+   el filete verde azulado y la etiqueta «consola», no por un fondo propio. */
+pre.con{background:var(--ground);border-left:4px solid var(--fn);color:var(--ink)}
+pre.con .u{color:var(--accent);font-weight:600}      /* lo que teclea el usuario */
+pre.con .e{color:var(--imp);font-weight:600}         /* error / advertencia */
+pre.cc{border-left:4px solid var(--imp)}             /* código C */
+.dense pre.con, .dense pre.cc{font-size:1.2cqi;line-height:1.42}
+pre.tiny{font-size:1.08cqi !important;line-height:1.38 !important;padding:.8cqi 1cqi !important}
+
+/* líneas de código enlazadas con una figura del diagrama */
+pre .ln{display:inline-block;width:100%;border-radius:3px;cursor:pointer}
+pre .ln:hover, pre .ln.hot{background:var(--imp-soft);outline:1px solid var(--imp)}
+
+/* anatomía del programa: partes pulsables */
+pre .part{cursor:pointer;border-bottom:2px dotted var(--accent);border-radius:2px}
+pre .part.on{background:var(--accent-soft);border-bottom-style:solid}
+
+/* ejemplo guiado: pasos */
+.gsteps{display:flex;gap:.5cqi;flex-wrap:wrap;margin:.2cqi 0 .9cqi}
+.gsteps .tbtn{font-size:1.15cqi;padding:.45cqi .9cqi}
+.gbody{display:grid}
+.gbody > .gpane{grid-area:1/1;visibility:hidden;min-width:0}
+.gbody > .gpane.on{visibility:visible}
+.gcols{display:grid;grid-template-columns:1.1fr 1fr;gap:2cqi;align-items:start}
+.gcols .fc{max-height:33.4cqi}
+.gdiag{position:relative}
+.gdiag.off .fc{opacity:.07}
+.gdiag.off::after{content:"el diagrama se construye en el paso 3";position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;color:var(--muted)}
+.gpane p, .gpane li{font-size:1.36cqi;line-height:1.45}
+.gpane table{font-size:1.25cqi}
+.gpane h4{font-family:"IBM Plex Serif",Georgia,serif;font-size:1.7cqi;margin:0 0 .5cqi}
+
+/* explorador de etapas (diapositiva 7): la figura pulsable */
+.fc .spot:hover .sh, .fc .spot.sel .sh{fill:var(--dimps);stroke:var(--dimp);stroke-width:3.4}
+#etOut{min-height:8cqi}
+
+/* validador de identificadores y tabla de verdad */
+.idgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6cqi}
+.idgrid .opt{font-family:"IBM Plex Mono",monospace;font-size:1.25cqi}
+.kw{display:flex;flex-wrap:wrap;gap:.35cqi .5cqi;font-family:"IBM Plex Mono",monospace;font-size:1.08cqi}
+.kw span{padding:.15cqi .45cqi;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.kw span.new{border-color:var(--imp);color:var(--imp)}
+.tv{display:grid;grid-template-columns:repeat(3,1fr);gap:.8cqi;text-align:center;margin-top:.8cqi}
+.tv .tvc{display:flex;flex-direction:column;align-items:center;gap:.3cqi;border:1px solid var(--line);border-radius:8px;padding:.8cqi;background:var(--surface)}
+.tv .tvc b{font-family:"IBM Plex Mono",monospace;font-size:2.6cqi;line-height:1}
+.tv .tvc span{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted)}
+.tv .tvc.v1 b{color:var(--fn)} .tv .tvc.v0 b{color:var(--imp)}
+
+/* evaluación de expresiones paso a paso */
+.evsteps{font-family:"IBM Plex Mono",monospace;font-size:1.45cqi;line-height:1.7}
+.evsteps div{padding:.1cqi .6cqi;border-radius:4px}
+.evsteps div.pend{color:var(--line)}
+.evsteps div.cur{background:var(--accent-soft)}
+.evsteps u{text-decoration:none;background:var(--imp-soft);outline:1px solid var(--imp);border-radius:3px}
+
+/* callouts y listas un poco más compactos en diapositivas densas */
+.dense .panel p{margin:.3cqi 0}
+.split.w46{grid-template-columns:1fr 1.15fr}
+.split.w64{grid-template-columns:1.3fr 1fr}
+.split .fc.mid{max-height:30cqi}
+.fc.wide{max-height:none !important;flex-shrink:0}
+.mono.b{font-weight:600}
+/* altura fija de los tres diagramas de proceso: no se encogen (flex) ni
+   empujan el resto de la diapositiva fuera del escenario */
+.fc.wide.dciclo{height:22cqi}
+.fc.wide.detapas{height:22cqi}
+.fc.wide.dfallas{height:16cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 4 — sin tocar tokens: tabla ASCII, predicciones
+   y leyenda de rangos. Mismo sistema de color (ámbar = C / lo que se mira;
+   verde azulado = lo correcto), siempre con texto.
+   ====================================================================== */
+.ascii{display:grid;grid-template-columns:repeat(16,1fr);gap:.28cqi}
+.ascii button{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;padding:.35cqi 0;border:1px solid var(--line);
+  border-radius:4px;background:var(--surface);color:var(--ink);cursor:pointer;line-height:1.2}
+.ascii button:hover{border-color:var(--accent)}
+.ascii button.d{border-color:var(--fn)} .ascii button.M{border-color:var(--imp)} .ascii button.m{border-color:var(--accent)}
+.ascii button.sel{background:var(--imp-soft);outline:2px solid var(--imp)}
+.asciiout{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;margin:.3cqi 0;min-height:4.4cqi}
+.rg{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;padding:0 .4cqi;border-radius:3px;border:1px solid var(--line)}
+.rg.d{border-color:var(--fn)} .rg.M{border-color:var(--imp)} .rg.m{border-color:var(--accent)}
+.pred{display:flex;flex-direction:column;gap:.4cqi}
+.pred .row{display:flex;gap:.8cqi;align-items:center}
+.pred pre.con{min-height:2.2cqi;margin:0;flex:1}
+.pred pre.con.hid{color:transparent}
+.pred .tbtn{font-size:1.1cqi;padding:.35cqi .8cqi;white-space:nowrap}
+#bisTab td{padding:.25cqi .8cqi}
+#bisOut, #brkA, #brkB{min-height:5.2cqi}
+#ordA, #ordB{min-height:2.4cqi}
+.tri .panel .refs{margin:.2cqi 0 0;font-size:1cqi}
+.tri .panel pre.con{margin:.1cqi 0 .2cqi}
+.tri .panel .note{margin:.4cqi 0 0}
+table.mini{font-size:1.15cqi}
+table.mini td, table.mini th{padding:.2cqi .6cqi}
+tr.bad td{background:var(--imp-soft)}
+.split > *, .split-r > *, .duo > *, .gcols > *{min-width:0}
+pre.con.wr{white-space:pre-wrap;overflow-wrap:anywhere}
+.cuatro{display:grid;grid-template-columns:repeat(4,1fr);gap:1cqi}
+.cuatro .pred .row{flex-direction:column;align-items:stretch}
+.tri{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:1.4cqi;align-items:start}
+.tri .refs{margin:0 0 .3cqi}
+.tri pre.con{margin:.2cqi 0 .5cqi}
+.tri .panel .note{font-size:1.1cqi;line-height:1.3}
+.split.r16{grid-template-columns:1fr 1.7fr}
+.segunbox .fc{max-height:21cqi;width:100%}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 5 — sin tocar tokens: traza vuelta por vuelta,
+   tres fragmentos en fila, sumatoria y tamaños de los diagramas de ciclo.
+   Mismo sistema de color (ámbar = C / lo que cambia / lo que se mira;
+   verde azulado = lo correcto), siempre con texto.
+   ====================================================================== */
+.tri3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2cqi;margin-bottom:.8cqi}
+.tri3 .panel{display:flex;flex-direction:column;gap:.3cqi}
+.tri3 .panel p{font-size:1.15cqi;line-height:1.35;margin:.2cqi 0}
+table.trz{font-size:1.25cqi;width:100%}
+table.trz td, table.trz th{padding:.25cqi .7cqi;text-align:center}
+table.trz td:first-child, table.trz th:first-child{text-align:left}
+table.trz tr.pend td{color:transparent}
+table.trz tr.cur td{background:var(--imp-soft)}
+#trzMsg{min-height:4.6cqi}
+.sigma{display:flex;align-items:center;gap:.8cqi;margin:.2cqi 0 .6cqi;font-size:1.3cqi}
+.sigma .big{font-family:"IBM Plex Serif",Georgia,serif;font-size:4cqi;line-height:1}
+.sigma .lim{display:flex;flex-direction:column;font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;line-height:1.5}
+.sigma .term{font-family:"IBM Plex Serif",Georgia,serif;font-size:2.2cqi}
+.sigma .arrow{font-size:2cqi;color:var(--muted)}
+.dnota .fc{max-height:34cqi;width:100%}
+.dcua .fc{max-height:34cqi;width:100%}
+.dtri .fc{max-height:36cqi;width:100%}
+.dventas .fc, .split.w64 > div > .fc{max-height:33cqi;width:100%}
+#recOut{min-height:2.4cqi}
+#recMsg{min-height:2.6cqi}
+#triOut{min-height:14cqi}
+.tbtns.rec .tbtn{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi}
+.tbtns.trzb .tbtn{font-size:1.05cqi;padding:.35cqi .7cqi}
+.nowrap td:last-child{white-space:nowrap}
+ul.abrev li{font-size:1.3cqi;line-height:1.5}
+.cuatro.dos{grid-template-columns:repeat(2,1fr);gap:.8cqi 1.4cqi}
+.cuatro.dos .pred{flex-direction:row;align-items:flex-start;gap:1cqi}
+.cuatro.dos .pred > pre.cc{flex:1.4;margin:0}
+.cuatro.dos .pred .row{flex:1;flex-direction:column;align-items:stretch}
+.cuatro.dos .pred .tag{writing-mode:vertical-rl;transform:rotate(180deg)}
+.tri.trg{grid-template-columns:1fr .85fr 1.35fr}
+.cuatro.dos .pred{padding:.8cqi 1cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 6 — sin tocar tokens: árboles de llamadas,
+   memoria de las llamadas (marcos de main y de la función), salida de
+   procedimientos. Verde azulado = función que devuelve un valor;
+   ámbar = procedimiento void / lo que cambia. Siempre con texto.
+   ====================================================================== */
+.fc .sh.fnr{fill:var(--dfns);stroke:var(--dfn);stroke-width:2.6}
+.fc .sh.prc{fill:var(--dimps);stroke:var(--dimp);stroke-width:2.6}
+.fc.arbol .t{font-family:"IBM Plex Mono",monospace;font-size:14px}
+.fc.arbol .t.sm{font-family:"IBM Plex Sans",sans-serif;font-size:12px;fill:var(--dmut)}
+.darbol .fc{width:100%;max-height:22cqi}
+.dmayor{display:grid;grid-template-columns:1fr 1.25fr;gap:1cqi;align-items:start}
+.dmayor .fc{width:100%;max-height:33cqi}
+.marcos{display:grid;grid-template-columns:1fr 1fr;gap:1cqi;margin:.4cqi 0}
+.marco{border:1px solid var(--line);border-radius:6px;padding:.6cqi .9cqi;background:var(--surface)}
+.marco h5{margin:0 0 .4cqi;font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;font-weight:600}
+.marco.fun{border-top:3px solid var(--imp)}
+.marco.main{border-top:3px solid var(--fn)}
+.marco.off{opacity:.35}
+.cajas{display:flex;gap:.8cqi;flex-wrap:wrap}
+.caja{min-width:6.5cqi;border:1px solid var(--line);border-radius:4px;padding:.3cqi .6cqi;text-align:center;font-family:"IBM Plex Mono",monospace}
+.caja b{display:block;font-size:1cqi;color:var(--muted);font-weight:500}
+.caja span{font-size:1.6cqi}
+.caja.cambia{background:var(--imp-soft);border-color:var(--imp)}
+#memMsg, #pilaMsg{min-height:4.4cqi}
+.pila{display:flex;flex-direction:column-reverse;gap:.35cqi;min-height:9.5cqi;justify-content:flex-start}
+.pila .fr{border:1px solid var(--line);border-left:4px solid var(--imp);border-radius:4px;padding:.3cqi .8cqi;font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;background:var(--surface)}
+.pila .fr.main{border-left-color:var(--fn)}
+.pila .fr.vac{visibility:hidden}
+#linOut{min-height:9cqi}
+.errc{font-size:1.05cqi;line-height:1.4;white-space:pre-wrap}
+.pred3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1cqi}
+.pred3 .pred{display:flex;flex-direction:column;gap:.4cqi;padding:.8cqi 1cqi}
+.pred3 .pred > pre.cc{margin:0;font-size:.98cqi !important;line-height:1.34 !important}
+.pred3 .pred .row{display:flex;flex-direction:row;align-items:flex-start;gap:.6cqi}
+.pred3 .pred .row .tbtn{white-space:nowrap}
+.pred3 .pred .row pre.con{flex:1;margin:0}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="armk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+</defs></svg>
+
+<div class="rail">
+  <span class="id"><b>IS284</b> · Programación II</span>
+  <span class="id">Semana 6 · Funciones, procedimientos y programación modular</span>
+  <span class="spacer"></span>
+  <span class="counter"><b id="cur">1</b> / 23</span>
+  <button class="btn" id="prev" type="button">← Anterior</button>
+  <button class="btn" id="next" type="button">Siguiente →</button>
+  <button class="btn" id="toggleNotes" type="button" aria-pressed="false">Notas (N)</button>
+</div>
+<div class="progress"><span id="bar" style="width:4.35%"></span></div>
+
+<div class="wrap">
+<div class="stage" id="stage">
+
+<!-- 1 ............................................................. -->
+<section class="slide cover on" data-t="6.1 funciones · 0:21">
+  <p class="inst">UNIVERSIDAD TECNOLÓGICA DE PEREIRA<br>Facultad de Ingenierías · Ingeniería de Sistemas y Computación</p>
+  <p class="course">Programación II · IS284 · Semana 6 · Cápsulas 6.1 a 6.4</p>
+  <h1>Divide y nombra: funciones, procedimientos y programas modulares</h1>
+  <div class="who">
+    <span>Docente<b>Ing. Andres Vargas</b></span>
+    <span>Contenido<b>prototipo · return · paso por valor · ámbito · void · diseño descendente</b></span>
+    <span>Video<b>Cuatro bloques de unos 4 minutos</b></span>
+    <span>Notación de la semana<b>Diagrama y C99</b></span>
+  </div>
+</section>
+
+<!-- 2 ............................................................. -->
+<section class="slide dense" data-t="6.1 funciones · 0:30">
+  <p class="eyebrow"><span class="tick"></span> Qué tiene que lograr</p>
+  <h2 class="title">Partir el programa en piezas con nombre, y que cada una haga una sola cosa</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Objetivos observables</span>
+      <ul>
+        <li><b>Escribir</b> una función con su prototipo, su definición y su <span class="mono">return</span>, y <b>usar</b> lo que devuelve (6.1).</li>
+        <li><b>Predecir</b> qué pasa con una variable que se pasa como argumento, y <b>explicar</b> por qué el parámetro es una copia (6.2).</li>
+        <li><b>Separar</b> el cálculo de la presentación con procedimientos <span class="mono">void</span> (6.3).</li>
+        <li><b>Descomponer</b> un programa en funciones con un árbol de llamadas y escribir sus prototipos (6.4).</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Evidencia que se evalúa</span>
+      <p><b>1. Diez ejercicios en C</b> (<span class="mono">S06_actividad_evaluativa.md</span>), cada uno con los <b>prototipos exactos</b> que debe usar.</p>
+      <p><b>2. Formulario de 20 preguntas.</b> Unas le dan <b>datos</b> para ejecutar <b>su</b> programa; otras muestran funciones en una imagen; otras piden elegir el <b>prototipo</b> correcto; seis repasan las semanas 1 a 5.</p>
+      <p>Apoyo: <span class="mono">S06_lectura.md</span> (con 12 ejercicios de práctica) y <span class="mono">S06_codigo/</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ............................................................. -->
+<section class="slide dense" data-t="6.1 funciones · 0:45">
+  <p class="eyebrow"><span class="tick"></span> Bloque A · cápsula 6.1</p>
+  <h2 class="title">Una función aparece tres veces</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="area_circulo.c"><span class="k">#define</span> PI <span class="n">3.14159265358979</span>
+
+<span class="k">double</span> area_circulo(<span class="k">double</span> r);          <span class="c">/* prototipo */</span>
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+<span class="c">...</span>
+    area = area_circulo(radio);         <span class="c">/* llamada */</span>
+    printf(<span class="s">"Area: %.2f\n"</span>, area);
+    printf(<span class="s">"Area del doble: %.2f\n"</span>, area_circulo(<span class="n">2</span> * radio));
+    <span class="k">return</span> <span class="n">0</span>;
+}
+
+<span class="k">double</span> area_circulo(<span class="k">double</span> r)           <span class="c">/* definicion */</span>
+{
+    <span class="k">return</span> PI * r * r;
+}</pre>
+      <pre class="con tiny">Radio: <span class="u">3</span>
+Area: 28.27
+Area del doble: 113.10</pre>
+    </div>
+    <div class="panel">
+      <span class="tag">Las piezas</span>
+      <table>
+        <thead><tr><th>Pieza</th><th>Dónde</th><th>Para qué</th></tr></thead>
+        <tbody>
+          <tr><td><b>Prototipo</b></td><td>antes de <span class="mono">main</span>, con <span class="mono">;</span></td><td>anuncia la firma</td></tr>
+          <tr><td><b>Llamada</b></td><td>donde se usa</td><td>entrega datos, recibe el resultado</td></tr>
+          <tr><td><b>Definición</b></td><td>después de <span class="mono">main</span></td><td>el cuerpo</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li><span class="mono">double</span> antes del nombre: el <b>tipo de lo que devuelve</b>.</li>
+        <li><span class="mono">return</span> <b>entrega</b> el valor y <b>termina</b> la función.</li>
+        <li>Se escribe una vez; se llama las veces que haga falta.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ............................................................. -->
+<section class="slide dense" data-t="6.1 funciones · 0:52">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo guiado · de la semana 4 a una función</p>
+  <h2 class="title">El mayor de tres, como función</h2>
+  <div class="tbtns gsteps" data-g="mf">
+    <button class="tbtn" type="button" aria-pressed="true" data-s="1">1 · Enunciado</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="2">2 · Análisis</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="3">3 · Diagramas</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="4">4 · Código C</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="5">5 · Probar</button>
+  </div>
+  <div class="gcols">
+    <div class="gdiag off dmayor" data-g="mf"><div><svg class="fc" viewBox="0 0 329 308" role="img" aria-label="Programa principal: la llamada a la funcion se dibuja con el simbolo de subrutina"><g id="mm-ini"><rect class="sh" x="89.3" y="14" width="150" height="36" rx="18"/><text class="t" x="164.3" y="32">Inicio</text></g><line class="fl" x1="164.3" y1="50" x2="164.3" y2="72" marker-end="url(#armk)"/><g id="mm-leer"><polygon class="sh" points="98.5,72 271.7,72 230.1,112 56.9,112"/><text class="t" x="164.3" y="92">Leer x, y, z</text></g><line class="fl" x1="164.3" y1="112" x2="164.3" y2="134" marker-end="url(#armk)"/><g id="mm-llam"><rect class="sh" x="14" y="134" width="300.6" height="40" rx="3"/><line class="fl" x1="28" y1="134" x2="28" y2="174"/><line class="fl" x1="300.6" y1="134" x2="300.6" y2="174"/><text class="t" x="164.3" y="154">m ← mayor_de_tres(x, y, z)</text></g><line class="fl" x1="164.3" y1="174" x2="164.3" y2="196" marker-end="url(#armk)"/><g id="mm-mos"><polygon class="sh" points="100.1,196 270.1,196 228.5,236 58.5,236"/><text class="t" x="164.3" y="216">Mostrar m</text></g><line class="fl" x1="164.3" y1="236" x2="164.3" y2="258" marker-end="url(#armk)"/><g id="mm-fin"><rect class="sh" x="89.3" y="258" width="150" height="36" rx="18"/><text class="t" x="164.3" y="276">Fin</text></g></svg></div><div><svg class="fc" viewBox="0 0 384 536" role="img" aria-label="Diagrama de la funcion mayor_de_tres: empieza con su nombre y parametros y termina en Retornar m"><g id="mf-cab"><rect class="sh" x="14" y="14" width="260.2" height="36" rx="18"/><text class="t" x="144.1" y="32">mayor_de_tres(a, b, c)</text></g><line class="fl" x1="144.1" y1="50" x2="144.1" y2="72" marker-end="url(#armk)"/><g id="mf-m0"><rect class="sh" x="59.1" y="72" width="170" height="40" rx="3"/><text class="t" x="144.1" y="92">m ← a</text></g><line class="fl" x1="144.1" y1="112" x2="144.1" y2="134" marker-end="url(#armk)"/><g id="mf-d1"><polygon class="sh" points="144.1,134 244.1,175 144.1,216 44.1,175"/><text class="t" x="144.1" y="175">b &gt; m</text></g><polyline class="fl" points="244.1,175 285.1,175 285.1,224" marker-end="url(#armk)"/><text class="fll" x="264.6" y="165">Sí</text><g id="mf-mb"><rect class="sh" x="200.1" y="224" width="170" height="40" rx="3"/><text class="t" x="285.1" y="244">m ← b</text></g><polyline class="fl" points="285.1,264 285.1,288 153.1,288" marker-end="url(#armk)"/><line class="fl" x1="144.1" y1="216" x2="144.1" y2="282" marker-end="url(#armk)"/><text class="fll" x="162.1" y="234">No</text><circle class="jn" cx="144.1" cy="288" r="5"/><line class="fl" x1="144.1" y1="288" x2="144.1" y2="310" marker-end="url(#armk)"/><g id="mf-d2"><polygon class="sh" points="144.1,310 244.1,351 144.1,392 44.1,351"/><text class="t" x="144.1" y="351">c &gt; m</text></g><polyline class="fl" points="244.1,351 285.1,351 285.1,400" marker-end="url(#armk)"/><text class="fll" x="264.6" y="341">Sí</text><g id="mf-mc"><rect class="sh" x="200.1" y="400" width="170" height="40" rx="3"/><text class="t" x="285.1" y="420">m ← c</text></g><polyline class="fl" points="285.1,440 285.1,464 153.1,464" marker-end="url(#armk)"/><line class="fl" x1="144.1" y1="392" x2="144.1" y2="458" marker-end="url(#armk)"/><text class="fll" x="162.1" y="410">No</text><circle class="jn" cx="144.1" cy="464" r="5"/><line class="fl" x1="144.1" y1="464" x2="144.1" y2="486" marker-end="url(#armk)"/><g id="mf-ret"><rect class="sh" x="68.6" y="486" width="151" height="36" rx="18"/><text class="t" x="144.1" y="504">Retornar m</text></g></svg></div></div>
+    <div class="gbody" data-g="mf">
+      <div class="gpane on" data-s="1">
+        <h4>El enunciado</h4>
+        <p>«Lea tres enteros y muestre el mayor.» Ya lo resolvió en la semana 4 dentro de <span class="mono">main</span>. Ahora el cálculo va en una función que se pueda <b>reutilizar</b>.</p>
+      </div>
+      <div class="gpane" data-s="2">
+        <h4>Primero, la firma</h4>
+        <table>
+          <thead><tr><th>pregunta</th><th>respuesta</th></tr></thead>
+          <tbody>
+            <tr><td>¿qué recibe?</td><td>tres enteros: <span class="mono">a, b, c</span></td></tr>
+            <tr><td>¿qué devuelve?</td><td>un entero: el mayor</td></tr>
+            <tr><td>¿nombre?</td><td><span class="mono">mayor_de_tres</span></td></tr>
+          </tbody>
+        </table>
+        <p>Prototipo: <span class="mono">int mayor_de_tres(int a, int b, int c);</span> La función <b>no lee ni imprime</b>: eso lo hace <span class="mono">main</span>.</p>
+      </div>
+      <div class="gpane" data-s="3">
+        <h4>Dos diagramas</h4>
+        <p><b>Izquierda, <span class="mono">main</span>:</b> la llamada se dibuja con el símbolo de <b>subrutina</b>, el rectángulo con dos barras.</p>
+        <p><b>Derecha, la función:</b> empieza con su <b>nombre y parámetros</b> y termina en <b>«Retornar m»</b>.</p>
+      </div>
+      <div class="gpane" data-s="4">
+        <pre class="cc tiny" data-g="mf" data-src="mayor_tres.c"><span class="ln" data-m="cab"><span class="k">int</span> mayor_de_tres(<span class="k">int</span> a, <span class="k">int</span> b, <span class="k">int</span> c)</span>
+{
+    <span class="k">int</span> m;
+
+<span class="ln" data-m="m0">    m = a;</span>
+<span class="ln" data-m="d1">    <span class="k">if</span> (b &gt; m) {</span>
+<span class="ln" data-m="mb">        m = b;</span>
+    }
+<span class="ln" data-m="d2">    <span class="k">if</span> (c &gt; m) {</span>
+<span class="ln" data-m="mc">        m = c;</span>
+    }
+<span class="ln" data-m="ret">    <span class="k">return</span> m;</span>
+}</pre>
+        <p class="note">Pase el cursor por cada línea: se resalta su figura. En <span class="mono">main</span>: <span class="mono">m = mayor_de_tres(x, y, z);</span> Programa: <span class="mono">mayor_tres.c</span>.</p>
+      </div>
+      <div class="gpane" data-s="5">
+        <pre class="con tiny">Tres enteros: <span class="u">4 9 2</span>
+Mayor: 9</pre>
+        <pre class="con tiny">Tres enteros: <span class="u">9 4 12</span>
+Mayor: 12</pre>
+        <pre class="con tiny">Tres enteros: <span class="u">7 7 3</span>
+Mayor: 7</pre>
+        <pre class="con tiny">Tres enteros: <span class="u">-1 -5 -3</span>
+Mayor: -1</pre>
+        <p class="note">El mayor en cada posición, dos iguales y negativos. Una función <b>se prueba sola</b>, antes de usarla en algo grande.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 ............................................................. -->
+<section class="slide dense" data-t="6.1 funciones · 0:42">
+  <p class="eyebrow"><span class="tick"></span> Funciones que responden una pregunta</p>
+  <h2 class="title">Devolver 1 o 0, y usar las de la biblioteca</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="es_primo.c"><span class="k">int</span> es_par(<span class="k">int</span> n)
+{
+    <span class="k">return</span> n % <span class="n">2</span> == <span class="n">0</span>;
+}
+
+<span class="k">int</span> es_primo(<span class="k">int</span> n)
+{
+<span class="c">...</span>
+    <span class="k">if</span> (n &lt; <span class="n">2</span>) {
+        <span class="k">return</span> <span class="n">0</span>;
+    }
+    <span class="k">for</span> (d = <span class="n">2</span>; d * d &lt;= n; d++) {
+        <span class="k">if</span> (n % d == <span class="n">0</span>) {
+            <span class="k">return</span> <span class="n">0</span>;
+        }
+    }
+    <span class="k">return</span> <span class="n">1</span>;
+}</pre>
+      <pre class="con tiny">Hasta: <span class="u">30</span>
+2 3 5 7 11 13 17 19 23 29 
+Primos: 10
+30 es par: 1</pre>
+    </div>
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">Responde sí (1) o no (0)</span>
+        <p>Se usa directamente: <span class="mono">if (es_primo(k)) {</span>. Un <span class="mono">return</span> dentro del ciclo <b>termina la función</b> en cuanto encuentra un divisor.</p>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Funciones que usted no escribió</span>
+        <pre class="cc tiny" data-src="hipotenusa.c"><span class="k">#include</span> &lt;math.h&gt;
+<span class="c">...</span>
+    c = sqrt(pow(a, <span class="n">2</span>) + pow(b, <span class="n">2</span>));</pre>
+        <pre class="con tiny">Cateto a: <span class="u">3</span>
+Cateto b: <span class="u">4</span>
+Hipotenusa: 5.00</pre>
+        <p class="note">En Linux se compila con <span class="mono">-lm</span> al final.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ............................................................. -->
+<section class="slide dense" data-t="6.1 funciones · 0:34">
+  <p class="eyebrow"><span class="tick"></span> Errores típicos</p>
+  <h2 class="title">Dos avisos del compilador</h2>
+  <div class="duo">
+    <div class="panel imp">
+      <span class="tag imp">1 · Falta un <span class="mono">return</span></span>
+      <pre class="cc tiny" data-src="sin_return.c"><span class="k">int</span> signo(<span class="k">int</span> n)
+{
+    <span class="k">if</span> (n &gt; <span class="n">0</span>) {
+        <span class="k">return</span> <span class="n">1</span>;
+    } <span class="k">else</span> <span class="k">if</span> (n &lt; <span class="n">0</span>) {
+        <span class="k">return</span> -<span class="n">1</span>;
+    }
+}</pre>
+      <pre class="con tiny errc">sin_return.c:19:1: warning: control reaches end of non-void function [-Wreturn-type]</pre>
+      <p>Si <span class="mono">n</span> vale 0, ningún <span class="mono">return</span> se ejecuta: el valor devuelto queda <b>indefinido</b>.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">2 · Se llama antes de declararla</span>
+      <pre class="cc tiny" data-src="sin_prototipo.c">    printf(<span class="s">"%.2f\n"</span>, mitad(<span class="n">9</span>));
+<span class="c">...</span>
+<span class="k">double</span> mitad(<span class="k">int</span> n)</pre>
+      <pre class="con tiny errc">sin_prototipo.c:6:22: warning: implicit declaration of function ‘mitad’ [-Wimplicit-function-declaration]
+sin_prototipo.c:6:16: warning: format ‘%f’ expects argument of type ‘double’, but argument 2 has type ‘int’ [-Wformat=]
+sin_prototipo.c:10:8: error: conflicting types for ‘mitad’; have ‘double(int)’</pre>
+      <p>Sin prototipo, el compilador <b>supone</b> que devuelve <span class="mono">int</span>; al ver <span class="mono">double</span>, ya no compila.</p>
+    </div>
+  </div>
+  <p class="note"><b>La regla del curso:</b> prototipos arriba de <span class="mono">main</span>, y <b>cero advertencias</b>. Archivos: <span class="mono">S06_codigo/errores/</span> (errores a propósito).</p>
+</section>
+
+<!-- 7 ............................................................. -->
+<section class="slide dense" data-t="6.2 parámetros y ámbito · 0:40">
+  <p class="eyebrow"><span class="tick"></span> Bloque B · cápsula 6.2</p>
+  <h2 class="title">El parámetro es una copia</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="copia.c"><span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">int</span> x, y;
+
+    x = <span class="n">5</span>;
+    y = duplicar(x);
+    printf(<span class="s">"x = %d, y = %d\n"</span>, x, y);
+    <span class="k">return</span> <span class="n">0</span>;
+}
+
+<span class="k">int</span> duplicar(<span class="k">int</span> n)
+{
+    n = n * <span class="n">2</span>;
+    <span class="k">return</span> n;
+}</pre>
+      <pre class="con tiny">x = 5, y = 10</pre>
+    </div>
+    <div>
+      <div class="marcos">
+        <div class="marco main"><h5>main</h5><div class="cajas"><div class="caja"><b>x</b><span>5</span></div><div class="caja"><b>y</b><span>10</span></div></div></div>
+        <div class="marco fun"><h5>duplicar</h5><div class="cajas"><div class="caja cambia"><b>n</b><span>5 → 10</span></div></div></div>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Paso por valor</span>
+        <ul>
+          <li>La llamada entrega el <b>valor</b> de <span class="mono">x</span> (5), no la variable.</li>
+          <li><span class="mono">n</span> es una variable <b>nueva</b> que nace con esa copia.</li>
+          <li>Cambiar <span class="mono">n</span> no cambia <span class="mono">x</span>.</li>
+          <li>Para que <span class="mono">main</span> tenga el nuevo valor, <b>recíbalo</b>: <span class="mono">y = duplicar(x);</span></li>
+        </ul>
+      </div>
+      <p class="refs">Programa: <span class="mono">copia.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ............................................................. -->
+<section class="slide dense" data-t="6.2 parámetros y ámbito · 0:42">
+  <p class="eyebrow"><span class="tick"></span> Argumentos y parámetros</p>
+  <h2 class="title">Se emparejan por posición, no por nombre</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="argumentos.c"><span class="k">double</span> precio_final(<span class="k">double</span> precio, <span class="k">int</span> descuento);
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    printf(<span class="s">"Bien:     %.1f\n"</span>, precio_final(<span class="n">50000</span>, <span class="n">10</span>));
+    printf(<span class="s">"Al reves: %.1f\n"</span>, precio_final(<span class="n">10</span>, <span class="n">50000</span>));
+    <span class="k">return</span> <span class="n">0</span>;
+}
+
+<span class="k">double</span> precio_final(<span class="k">double</span> precio, <span class="k">int</span> descuento)
+{
+    <span class="k">return</span> precio - precio * descuento / <span class="n">100.0</span>;
+}</pre>
+      <pre class="con tiny">Bien:     45000.0
+Al reves: -4990.0</pre>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Lo que revisa el compilador y lo que revisa usted</span>
+      <table>
+        <thead><tr><th>En la llamada</th><th>En la definición</th></tr></thead>
+        <tbody>
+          <tr><td><b>argumentos</b>: <span class="mono">50000, 10</span></td><td><b>parámetros</b>: <span class="mono">precio, descuento</span></td></tr>
+          <tr><td>1.º argumento</td><td>→ 1.er parámetro</td></tr>
+          <tr><td>2.º argumento</td><td>→ 2.º parámetro</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>La segunda llamada compila con <b>cero advertencias</b> y da un precio <b>negativo</b>.</li>
+        <li>gcc revisa la <b>cantidad</b> y el <b>tipo</b>; el <b>orden</b>, usted.</li>
+        <li>Por eso: nombres <b>claros</b> en el prototipo.</li>
+      </ul>
+      <p class="refs">Programa: <span class="mono">argumentos.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 ............................................................. -->
+<section class="slide dense" data-t="6.2 parámetros y ámbito · 0:41">
+  <p class="eyebrow"><span class="tick"></span> La prueba más clara</p>
+  <h2 class="title">El intercambio que no funciona</h2>
+  <div class="split w64">
+    <div>
+      <pre class="cc tiny" data-src="swap.c">    <span class="k">int</span> x = <span class="n">3</span>, y = <span class="n">8</span>;
+<span class="c">...</span>
+    intercambiar(x, y);
+<span class="c">...</span>
+<span class="k">void</span> intercambiar(<span class="k">int</span> a, <span class="k">int</span> b)
+{
+    <span class="k">int</span> aux;
+
+    aux = a;
+    a = b;
+    b = aux;
+    printf(<span class="s">"dentro:        a = %d, b = %d\n"</span>, a, b);
+}</pre>
+      <pre class="con tiny">main, antes:   x = 3, y = 8
+dentro:        a = 8, b = 3
+main, despues: x = 3, y = 8</pre>
+    </div>
+    <div>
+      <div class="tbtns trzb" id="memBtns"><button class="tbtn" type="button" aria-pressed="false" data-i="0">antes</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">al entrar</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">aux = a</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">a = b</button><button class="tbtn" type="button" aria-pressed="false" data-i="4">b = aux</button><button class="tbtn" type="button" aria-pressed="false" data-i="5">al volver</button></div>
+      <div class="marcos">
+        <div class="marco main"><h5>main</h5><div class="cajas"><div class="caja" id="mx"><b>x</b><span></span></div><div class="caja" id="my"><b>y</b><span></span></div></div></div>
+        <div class="marco fun" id="mfun"><h5>intercambiar</h5><div class="cajas"><div class="caja" id="ma"><b>a</b><span></span></div><div class="caja" id="mb"><b>b</b><span></span></div><div class="caja" id="maux"><b>aux</b><span></span></div></div></div>
+      </div>
+      <p id="memMsg"></p>
+      <p class="note">Los valores los imprimió una copia de <span class="mono">swap.c</span> con un <span class="mono">printf</span> en cada paso. Intercambiar de verdad exige <b>apuntadores</b>, que llegan más adelante.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 ............................................................ -->
+<section class="slide dense" data-t="6.2 parámetros y ámbito · 0:37">
+  <p class="eyebrow"><span class="tick"></span> Ámbito y tiempo de vida</p>
+  <h2 class="title">Cada función tiene sus propias variables</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="ambito.c"><span class="k">int</span> main(<span class="k">void</span>)
+<span class="c">...</span>
+    <span class="k">for</span> (i = <span class="n">1</span>; i &lt;= <span class="n">4</span>; i++) {
+        printf(<span class="s">"i = %d, suma_hasta(i) = %d\n"</span>, i, suma_hasta(i));
+    }
+    printf(<span class="s">"Al salir del ciclo, i = %d\n"</span>, i);
+<span class="c">...</span>
+<span class="k">int</span> suma_hasta(<span class="k">int</span> n)
+{
+    <span class="k">int</span> i, s = <span class="n">0</span>;
+
+    <span class="k">for</span> (i = <span class="n">1</span>; i &lt;= n; i++) {
+        s = s + i;
+    }
+    <span class="k">return</span> s;
+}</pre>
+      <pre class="con tiny">i = 1, suma_hasta(i) = 1
+i = 2, suma_hasta(i) = 3
+i = 3, suma_hasta(i) = 6
+i = 4, suma_hasta(i) = 10
+Al salir del ciclo, i = 5</pre>
+    </div>
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">Variables locales</span>
+        <ul>
+          <li>Se declaran <b>dentro</b> de una función; solo esa función las ve.</li>
+          <li>Nacen al llamar y <b>desaparecen</b> al volver: la <span class="mono">i</span> de <span class="mono">suma_hasta</span> empieza de nuevo en cada llamada.</li>
+          <li>Dos <span class="mono">i</span> con el mismo nombre: <b>dos variables distintas</b>. La de <span class="mono">main</span> sigue contando.</li>
+        </ul>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">¿Y las globales?</span>
+        <p>Se declaran <b>fuera</b> de toda función y cualquiera puede cambiarlas: cuando un valor sale mal, hay que revisar <b>todo</b> el programa. <b>En este curso no se usan</b> (las constantes van con <span class="mono">#define</span>).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 ............................................................ -->
+<section class="slide dense" data-t="6.2 parámetros y ámbito · 0:31">
+  <p class="eyebrow"><span class="tick"></span> Llamadas dentro de llamadas</p>
+  <h2 class="title">Una función que llama a otra</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="llamadas.c">    r = suma_cuadrados(<span class="n">3</span>, <span class="n">4</span>);
+    printf(<span class="s">"Resultado: %d\n"</span>, r);
+<span class="c">...</span>
+
+<span class="k">int</span> cuadrado(<span class="k">int</span> x)
+{
+    <span class="k">return</span> x * x;
+}
+
+<span class="k">int</span> suma_cuadrados(<span class="k">int</span> a, <span class="k">int</span> b)
+{
+    <span class="k">int</span> ca, cb;
+
+    ca = cuadrado(a);
+    cb = cuadrado(b);
+    <span class="k">return</span> ca + cb;
+}</pre>
+      <pre class="con tiny">Resultado: 25</pre>
+    </div>
+    <div class="panel">
+      <span class="tag">Llamadas activas · arriba, la que se ejecuta</span>
+      <div class="tbtns trzb" id="pilaBtns"><button class="tbtn" type="button" aria-pressed="false" data-i="0">inicio</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">paso 1</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">paso 2</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">paso 3</button><button class="tbtn" type="button" aria-pressed="false" data-i="4">paso 4</button><button class="tbtn" type="button" aria-pressed="false" data-i="5">paso 5</button><button class="tbtn" type="button" aria-pressed="false" data-i="6">paso 6</button><button class="tbtn" type="button" aria-pressed="false" data-i="7">paso 7</button></div>
+      <div class="pila" id="pila"><div class="fr main">main</div><div class="fr"></div><div class="fr"></div></div>
+      <p id="pilaMsg"></p>
+      <p class="note">Los eventos los imprimió una copia de <span class="mono">llamadas.c</span> con un <span class="mono">printf</span> al entrar y al salir de cada función.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 ............................................................ -->
+<section class="slide dense" data-t="6.2 parámetros y ámbito · 0:26">
+  <p class="eyebrow"><span class="tick"></span> Compruebe antes de seguir</p>
+  <h2 class="title">¿Qué muestra cada programa?</h2>
+  <p class="note">Decida primero; después pulse <b>Ver salida</b>. Si falla: una columna por función. Se omite el <span class="mono">#include</span>.</p>
+  <div class="pred3">
+<div class="panel pred"><span class="tag">Programa 1</span><pre class="cc tiny"><span class="k">void</span> cambiar(<span class="k">int</span> n)
+{
+    n = <span class="n">100</span>;
+    printf(<span class="s">"dentro: %d\n"</span>, n);
+}
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">int</span> a = <span class="n">7</span>;
+
+    cambiar(a);
+    printf(<span class="s">"%d\n"</span>, a);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pb1">Ver salida</button><pre class="con tiny hid" id="pb1">dentro: 100
+7</pre></div></div>
+<div class="panel pred"><span class="tag">Programa 2</span><pre class="cc tiny"><span class="k">int</span> f(<span class="k">int</span> x)
+{
+    x = x + <span class="n">1</span>;
+    <span class="k">return</span> x * <span class="n">2</span>;
+}
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">int</span> x = <span class="n">3</span>;
+
+    printf(<span class="s">"%d\n"</span>, f(x));
+    printf(<span class="s">"%d\n"</span>, x);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pb2">Ver salida</button><pre class="con tiny hid" id="pb2">8
+3</pre></div></div>
+<div class="panel pred"><span class="tag">Programa 3</span><pre class="cc tiny"><span class="k">int</span> contar(<span class="k">void</span>)
+{
+    <span class="k">int</span> c = <span class="n">0</span>;
+
+    c++;
+    <span class="k">return</span> c;
+}
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    contar();
+    contar();
+    printf(<span class="s">"%d\n"</span>, contar());
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pb3">Ver salida</button><pre class="con tiny hid" id="pb3">1</pre></div></div>
+  </div>
+</section>
+
+<!-- 13 ............................................................ -->
+<section class="slide dense" data-t="6.3 procedimientos · 0:38">
+  <p class="eyebrow"><span class="tick"></span> Bloque C · cápsula 6.3</p>
+  <h2 class="title">Procedimientos: <span class="mono">void</span></h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="linea.c"><span class="k">void</span> linea(<span class="k">char</span> c, <span class="k">int</span> n);
+<span class="c">...</span>
+<span class="k">void</span> linea(<span class="k">char</span> c, <span class="k">int</span> n)
+{
+    <span class="k">int</span> i;
+
+    <span class="k">for</span> (i = <span class="n">1</span>; i &lt;= n; i++) {
+        printf(<span class="s">"%c"</span>, c);
+    }
+    printf(<span class="s">"\n"</span>);
+}</pre>
+      <div class="tbtns rec" id="linBtns"><button class="tbtn" type="button" aria-pressed="false" data-i="0">linea('-', 10);</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">linea('*', 3);</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">linea('=', 24);</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">linea('#', 0);</button></div>
+      <pre class="con tiny" id="linOut"></pre>
+    </div>
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Un procedimiento</span>
+        <ul>
+          <li><span class="mono">void</span> en lugar del tipo: <b>no devuelve valor</b>.</li>
+          <li>Termina al llegar a la llave de cierre; no lleva <span class="mono">return</span> con valor.</li>
+          <li>Se llama como una <b>instrucción</b>: <span class="mono">linea('-', 24);</span></li>
+          <li>Sin parámetros: <span class="mono">void saludar(void);</span></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <span class="tag imp">Error: guardar lo que no existe</span>
+        <pre class="cc tiny" data-src="void_valor.c">x = saludar();</pre>
+        <pre class="con tiny errc">void_valor.c:10:7: error: void value not ignored as it ought to be</pre>
+      </div>
+      <p class="refs">Programas: <span class="mono">linea.c</span> · <span class="mono">errores/void_valor.c</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 14 ............................................................ -->
+<section class="slide dense" data-t="6.3 procedimientos · 0:43">
+  <p class="eyebrow"><span class="tick"></span> La regla más útil de la semana</p>
+  <h2 class="title">Una función que calcula no imprime</h2>
+  <div class="duo">
+    <div class="panel imp">
+      <span class="tag imp">Mezclado: evítelo</span>
+      <pre class="cc tiny" data-src="mezclado.c"><span class="k">void</span> promedio(<span class="k">double</span> a, <span class="k">double</span> b, <span class="k">double</span> c)
+{
+    printf(<span class="s">"Promedio: %.2f\n"</span>, (a + b + c) / <span class="n">3</span>);
+}</pre>
+      <pre class="con tiny">Promedio: 3.43</pre>
+      <p><span class="mono">main</span> ve el número en pantalla, pero <b>no lo tiene</b>: no puede compararlo, guardarlo ni usarlo otra vez.</p>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">Separado: calcular aparte, mostrar aparte</span>
+      <pre class="cc tiny" data-src="separado.c">    p = promedio(<span class="n">4.0</span>, <span class="n">3.5</span>, <span class="n">2.8</span>);
+    mostrar_promedio(p);
+    <span class="k">if</span> (p &gt;= <span class="n">3.0</span>) {
+        printf(<span class="s">"Aprueba\n"</span>);
+    }
+<span class="c">...</span>
+<span class="k">double</span> promedio(<span class="k">double</span> a, <span class="k">double</span> b, <span class="k">double</span> c)
+{
+    <span class="k">return</span> (a + b + c) / <span class="n">3</span>;
+}</pre>
+      <pre class="con tiny">Promedio: 3.43
+Aprueba</pre>
+      <p>Misma salida, programa más útil. Y la función que calcula <b>se prueba</b> comparando lo que devuelve, sin mirar la pantalla.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 15 ............................................................ -->
+<section class="slide dense" data-t="6.3 procedimientos · 0:41">
+  <p class="eyebrow"><span class="tick"></span> Reutilizar la validación de la semana 5</p>
+  <h2 class="title">Una función que lee, valida y devuelve</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="leer_rango.c">    dia = leer_entero_en_rango(<span class="n">1</span>, <span class="n">31</span>);
+    mes = leer_entero_en_rango(<span class="n">1</span>, <span class="n">12</span>);
+<span class="c">...</span>
+<span class="k">int</span> leer_entero_en_rango(<span class="k">int</span> min, <span class="k">int</span> max)
+{
+    <span class="k">int</span> n, leidos, c;
+
+    <span class="k">do</span> {
+        printf(<span class="s">"Entero de %d a %d: "</span>, min, max);
+        leidos = scanf(<span class="s">"%d"</span>, &amp;n);
+        <span class="k">do</span> {
+            c = getchar();
+        } <span class="k">while</span> (c != <span class="s">'\n'</span> &amp;&amp; c != EOF);
+    } <span class="k">while</span> (leidos != <span class="n">1</span> || n &lt; min || n &gt; max);
+    <span class="k">return</span> n;
+}</pre>
+    </div>
+    <div>
+      <pre class="con tiny">Entero de 1 a 31: <span class="u">40</span>
+Entero de 1 a 31: <span class="u">abc</span>
+Entero de 1 a 31: <span class="u">15</span>
+Entero de 1 a 12: <span class="u">13</span>
+Entero de 1 a 12: <span class="u">9</span>
+Fecha: 15/9</pre>
+      <div class="panel fn">
+        <span class="tag fn">Escrita una vez, usada muchas</span>
+        <ul>
+          <li>Los límites llegan como <b>parámetros</b>: sirve para el día, el mes o una opción de menú.</li>
+          <li>El dato leído es su <b>resultado</b>: lo entrega con <span class="mono">return</span>.</li>
+          <li><span class="mono">main</span> no se entera de los intentos fallidos.</li>
+        </ul>
+      </div>
+      <p class="refs">Programa: <span class="mono">leer_rango.c</span>. Le servirá en la actividad.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 16 ............................................................ -->
+<section class="slide dense" data-t="6.3 procedimientos · 0:41">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo guiado · calcular y presentar</p>
+  <h2 class="title">Un recibo de agua</h2>
+  <div class="tbtns gsteps" data-g="ag">
+    <button class="tbtn" type="button" aria-pressed="true" data-s="1">1 · Enunciado</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="2">2 · Análisis</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="3">3 · Árbol</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="4">4 · Código C</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="5">5 · Probar</button>
+  </div>
+  <div class="gcols">
+    <div class="gdiag off darbol" data-g="ag"><svg class="fc arbol" viewBox="0 0 517.6 302" role="img" aria-label="Arbol de llamadas del recibo de agua: main llama a calcular_valor y a imprimir_recibo; imprimir_recibo llama a linea"><rect class="sh fnr" x="153.8" y="12" width="210" height="54" rx="4"/><text class="t" x="258.8" y="32">main</text><text class="t sm" x="258.8" y="52">programa principal</text><rect class="sh fnr" x="12" y="124" width="210" height="54" rx="4"/><text class="t" x="117" y="144">calcular_valor(m3)</text><text class="t sm" x="117" y="164">devuelve int</text><rect class="sh prc" x="248" y="124" width="257.6" height="54" rx="4"/><text class="t" x="376.8" y="144">imprimir_recibo(m3, valor)</text><text class="t sm" x="376.8" y="164">void · hace algo</text><rect class="sh prc" x="271.8" y="236" width="210" height="54" rx="4"/><text class="t" x="376.8" y="256">linea(c, n)</text><text class="t sm" x="376.8" y="276">void · hace algo</text><line class="fl" x1="376.8" y1="178" x2="376.8" y2="207"/><line class="fl" x1="376.8" y1="207" x2="376.8" y2="207"/><line class="fl" x1="376.8" y1="207" x2="376.8" y2="234" marker-end="url(#armk)"/><line class="fl" x1="258.8" y1="66" x2="258.8" y2="95"/><line class="fl" x1="117" y1="95" x2="376.8" y2="95"/><line class="fl" x1="117" y1="95" x2="117" y2="122" marker-end="url(#armk)"/><line class="fl" x1="376.8" y1="95" x2="376.8" y2="122" marker-end="url(#armk)"/></svg></div>
+    <div class="gbody" data-g="ag">
+      <div class="gpane on" data-s="1">
+        <h4>El enunciado</h4>
+        <p>«Lea el consumo del mes en m³. Los primeros <b>20 m³</b> se cobran a <b>2 500</b> pesos; cada m³ adicional, a <b>3 800</b>; y se suma un cargo fijo de <b>9 000</b>. Muestre el recibo entre dos líneas de <span class="mono">=</span>. Si el consumo es negativo, muestre <span class="mono">Consumo no valido</span>.»</p>
+        <p class="note">Tarifas ficticias, propias del ejemplo.</p>
+      </div>
+      <div class="gpane" data-s="2">
+        <h4>Repartir el trabajo</h4>
+        <table>
+          <thead><tr><th>subprograma</th><th>recibe</th><th>devuelve</th><th>hace</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">calcular_valor</td><td class="mono">m3</td><td class="mono">int</td><td>aplica las tarifas</td></tr>
+            <tr><td class="mono">imprimir_recibo</td><td class="mono">m3, valor</td><td class="mono">void</td><td>muestra el recibo</td></tr>
+            <tr><td class="mono">linea</td><td class="mono">c, n</td><td class="mono">void</td><td>dibuja un borde</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gpane" data-s="3">
+        <h4>El árbol de llamadas</h4>
+        <p><span class="mono">main</span> llama a las dos; <span class="mono">imprimir_recibo</span> reutiliza <span class="mono">linea</span>.</p>
+        <p><b>Verde azulado:</b> devuelve un valor. <b>Ámbar:</b> <span class="mono">void</span>, hace algo.</p>
+      </div>
+      <div class="gpane" data-s="4">
+        <pre class="cc tiny" data-src="recibo_agua.c"><span class="k">int</span> calcular_valor(<span class="k">int</span> m3)
+{
+<span class="c">...</span>
+    <span class="k">if</span> (m3 &lt;= BASICO) {
+        valor = m3 * TARIFA_BASICA;
+    } <span class="k">else</span> {
+        valor = BASICO * TARIFA_BASICA;
+        valor = valor + (m3 - BASICO) * TARIFA_EXTRA;
+    }
+    <span class="k">return</span> valor + CARGO_FIJO;
+}
+<span class="k">void</span> imprimir_recibo(<span class="k">int</span> m3, <span class="k">int</span> valor)
+{
+    linea(<span class="s">'='</span>, <span class="n">26</span>);
+    printf(<span class="s">"Consumo: %d m3\n"</span>, m3);
+    printf(<span class="s">"Total a pagar: %d\n"</span>, valor);
+    linea(<span class="s">'='</span>, <span class="n">26</span>);
+}</pre>
+        <p class="note">En <span class="mono">main</span>: <span class="mono">imprimir_recibo(m3, calcular_valor(m3));</span> Programa: <span class="mono">recibo_agua.c</span>.</p>
+      </div>
+      <div class="gpane" data-s="5">
+        <div class="duo">
+          <pre class="con tiny">Consumo en m3: <span class="u">12</span>
+==========================
+Consumo: 12 m3
+Total a pagar: 39000
+==========================</pre>
+          <pre class="con tiny">Consumo en m3: <span class="u">20</span>
+==========================
+Consumo: 20 m3
+Total a pagar: 59000
+==========================</pre>
+          <pre class="con tiny">Consumo en m3: <span class="u">30</span>
+==========================
+Consumo: 30 m3
+Total a pagar: 97000
+==========================</pre>
+          <pre class="con tiny">Consumo en m3: <span class="u">-4</span>
+Consumo no valido</pre>
+        </div>
+        <p class="note">Por debajo, en la frontera (20) y por encima del básico, y un dato no válido.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 17 ............................................................ -->
+<section class="slide dense" data-t="6.3 procedimientos · 0:44">
+  <p class="eyebrow"><span class="tick"></span> Cómo decidir</p>
+  <h2 class="title">¿Función con <span class="mono">return</span> o procedimiento <span class="mono">void</span>?</h2>
+  <div class="split">
+    <div class="panel">
+      <span class="tag">Pregúntese: ¿qué produce?</span>
+      <table class="nowrap">
+        <thead><tr><th>Situación</th><th>Prototipo</th></tr></thead>
+        <tbody>
+          <tr><td>calcular el IVA de un precio</td><td class="mono">double calcular_iva(double precio);</td></tr>
+          <tr><td>saber si un año es bisiesto</td><td class="mono">int es_bisiesto(int anio);</td></tr>
+          <tr><td>leer una opción válida del menú</td><td class="mono">int leer_opcion(void);</td></tr>
+          <tr><td>mostrar el menú</td><td class="mono">void mostrar_menu(void);</td></tr>
+          <tr><td>dibujar un marco de ancho n</td><td class="mono">void marco(int n);</td></tr>
+          <tr><td>imprimir una factura</td><td class="mono">void imprimir_factura(double total);</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">Un dato que alguien va a usar</span>
+        <p>Una nota, un precio, un sí o un no, un dato leído: <b>función con <span class="mono">return</span></b>.</p>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Una acción</span>
+        <p>Mostrar, dibujar, avisar: <b>procedimiento <span class="mono">void</span></b>.</p>
+      </div>
+      <p class="note"><b>Señal de alarma:</b> si devuelve un valor <b>y además</b> imprime, probablemente son dos funciones.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 18 ............................................................ -->
+<section class="slide dense" data-t="6.4 modular · 0:34">
+  <p class="eyebrow"><span class="tick"></span> Bloque D · cápsula 6.4</p>
+  <h2 class="title">Diseño descendente: de lo grande a lo pequeño</h2>
+  <div class="darbol"><svg class="fc arbol" viewBox="0 0 723.8 302" role="img" aria-label="Arbol de llamadas del programa de notas: main llama a leer_nota, definitiva e imprimir_informe; imprimir_informe llama a aprueba"><rect class="sh fnr" x="256.9" y="12" width="210" height="54" rx="4"/><text class="t" x="361.9" y="32">main</text><text class="t sm" x="361.9" y="52">programa principal</text><rect class="sh fnr" x="12" y="124" width="210" height="54" rx="4"/><text class="t" x="117" y="144">leer_nota(numero)</text><text class="t sm" x="117" y="164">devuelve double</text><rect class="sh fnr" x="248" y="124" width="223.2" height="54" rx="4"/><text class="t" x="359.6" y="144">definitiva(n1, n2, n3)</text><text class="t sm" x="359.6" y="164">devuelve double</text><rect class="sh prc" x="497.2" y="124" width="214.6" height="54" rx="4"/><text class="t" x="604.5" y="144">imprimir_informe(def)</text><text class="t sm" x="604.5" y="164">void · hace algo</text><rect class="sh fnr" x="499.5" y="236" width="210" height="54" rx="4"/><text class="t" x="604.5" y="256">aprueba(nota)</text><text class="t sm" x="604.5" y="276">devuelve int</text><line class="fl" x1="604.5" y1="178" x2="604.5" y2="207"/><line class="fl" x1="604.5" y1="207" x2="604.5" y2="207"/><line class="fl" x1="604.5" y1="207" x2="604.5" y2="234" marker-end="url(#armk)"/><line class="fl" x1="361.9" y1="66" x2="361.9" y2="95"/><line class="fl" x1="117" y1="95" x2="604.5" y2="95"/><line class="fl" x1="117" y1="95" x2="117" y2="122" marker-end="url(#armk)"/><line class="fl" x1="359.6" y1="95" x2="359.6" y2="122" marker-end="url(#armk)"/><line class="fl" x1="604.5" y1="95" x2="604.5" y2="122" marker-end="url(#armk)"/></svg></div>
+  <div class="tri3">
+    <div class="panel fn"><span class="tag fn">1 · ¿Qué hace el programa?</span><p>«Lee tres notas, calcula la definitiva (30 %, 30 %, 40 %) e informa si aprueba.» Eso es <span class="mono">main</span>.</p></div>
+    <div class="panel fn"><span class="tag fn">2 · Partir en tareas</span><p>Leer una nota válida · calcular la definitiva · imprimir el informe. Cada tarea, una función.</p></div>
+    <div class="panel fn"><span class="tag fn">3 · ¿Cabe en una función corta?</span><p>Si no, se parte otra vez: el informe necesita saber si aprueba → <span class="mono">aprueba</span>.</p></div>
+  </div>
+</section>
+
+<!-- 19 ............................................................ -->
+<section class="slide dense" data-t="6.4 modular · 0:35">
+  <p class="eyebrow"><span class="tick"></span> Cohesión y acoplamiento, en la práctica</p>
+  <h2 class="title">Tres reglas de una buena función</h2>
+  <div class="split">
+    <div class="panel fn">
+      <span class="tag fn">Las reglas</span>
+      <ol>
+        <li><b>Una sola tarea</b> (cohesión). Su nombre es un <b>verbo</b>: <span class="mono">leer_nota</span>. Si necesita una «y» para describirla, son dos funciones.</li>
+        <li><b>Solo parámetros y <span class="mono">return</span></b> (poco acoplamiento). Lo que entra, en los paréntesis; lo que sale, en el <span class="mono">return</span>. Nada de globales.</li>
+        <li><b>Lo copiado y pegado es una función.</b> Si escribió dos veces el mismo bloque, los datos que cambian son sus <b>parámetros</b>.</li>
+      </ol>
+      <p class="note">A la derecha, la regla 2: las dos versiones imprimen <span class="mono">Total: 3800.0</span>, pero en la segunda la llamada <b>muestra</b> qué cambia.</p>
+    </div>
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Con una global</span>
+        <pre class="cc tiny" data-src="global_mal.c"><span class="k">double</span> total = <span class="n">0.0</span>;            <span class="c">/* global */</span>
+<span class="c">...</span>
+<span class="k">void</span> agregar(<span class="k">double</span> valor)
+{
+    total = total + valor;
+}</pre>
+      </div>
+      <div class="panel fn">
+        <span class="tag fn">Con parámetros</span>
+        <pre class="cc tiny" data-src="global_bien.c">    total = agregar(total, <span class="n">1500.0</span>);
+<span class="c">...</span>
+<span class="k">double</span> agregar(<span class="k">double</span> total, <span class="k">double</span> valor)
+{
+    <span class="k">return</span> total + valor;
+}</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 20 ............................................................ -->
+<section class="slide dense" data-t="6.4 modular · 0:43">
+  <p class="eyebrow"><span class="tick"></span> Organización de un archivo</p>
+  <h2 class="title">Siempre en el mismo orden</h2>
+  <div class="split">
+    <pre class="cc tiny" data-src="notas_modular.c"><span class="k">#include</span> &lt;stdio.h&gt;
+
+<span class="k">#define</span> NOTA_MIN <span class="n">0.0</span>
+<span class="c">...</span>
+
+<span class="c">/* ---- prototipos ---- */</span>
+<span class="k">double</span> leer_nota(<span class="k">int</span> numero);
+<span class="k">double</span> definitiva(<span class="k">double</span> n1, <span class="k">double</span> n2, <span class="k">double</span> n3);
+<span class="k">int</span> aprueba(<span class="k">double</span> nota);
+<span class="k">void</span> imprimir_informe(<span class="k">double</span> def);
+
+<span class="c">/* ---- programa principal ---- */</span>
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+<span class="c">...</span>
+    n1 = leer_nota(<span class="n">1</span>);
+    n2 = leer_nota(<span class="n">2</span>);
+    n3 = leer_nota(<span class="n">3</span>);
+    imprimir_informe(definitiva(n1, n2, n3));
+    <span class="k">return</span> <span class="n">0</span>;
+}
+
+<span class="c">/* ---- definiciones ---- */</span>
+<span class="c">...</span></pre>
+    <div class="panel">
+      <span class="tag">El orden</span>
+      <table>
+        <tbody>
+          <tr><td><b>1</b></td><td><span class="mono">#include</span> y <span class="mono">#define</span></td></tr>
+          <tr><td><b>2</b></td><td>los <b>prototipos</b> de todas las funciones</td></tr>
+          <tr><td><b>3</b></td><td><span class="mono">main</span>, <b>corto</b>: se lee como el índice del programa</td></tr>
+          <tr><td><b>4</b></td><td>las <b>definiciones</b>, en el orden de los prototipos</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Más adelante podrán ir en otro archivo con su cabecera <span class="mono">.h</span> (lectura, sección opcional). Esta semana, <b>un solo archivo</b>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 21 ............................................................ -->
+<section class="slide dense" data-t="6.4 modular · 0:37">
+  <p class="eyebrow"><span class="tick"></span> Ejemplo guiado · refactorizar</p>
+  <h2 class="title">De monolítico a modular</h2>
+  <div class="tbtns gsteps" data-g="nt">
+    <button class="tbtn" type="button" aria-pressed="true" data-s="1">1 · Monolítico</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="2">2 · Tareas</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="3">3 · Árbol</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="4">4 · Funciones</button>
+    <button class="tbtn" type="button" aria-pressed="false" data-s="5">5 · Probar</button>
+  </div>
+  <div class="gcols">
+    <div class="gdiag off darbol" data-g="nt"><svg class="fc arbol" viewBox="0 0 723.8 302" role="img" aria-label="Arbol de llamadas del programa de notas: main llama a leer_nota, definitiva e imprimir_informe; imprimir_informe llama a aprueba"><rect class="sh fnr" x="256.9" y="12" width="210" height="54" rx="4"/><text class="t" x="361.9" y="32">main</text><text class="t sm" x="361.9" y="52">programa principal</text><rect class="sh fnr" x="12" y="124" width="210" height="54" rx="4"/><text class="t" x="117" y="144">leer_nota(numero)</text><text class="t sm" x="117" y="164">devuelve double</text><rect class="sh fnr" x="248" y="124" width="223.2" height="54" rx="4"/><text class="t" x="359.6" y="144">definitiva(n1, n2, n3)</text><text class="t sm" x="359.6" y="164">devuelve double</text><rect class="sh prc" x="497.2" y="124" width="214.6" height="54" rx="4"/><text class="t" x="604.5" y="144">imprimir_informe(def)</text><text class="t sm" x="604.5" y="164">void · hace algo</text><rect class="sh fnr" x="499.5" y="236" width="210" height="54" rx="4"/><text class="t" x="604.5" y="256">aprueba(nota)</text><text class="t sm" x="604.5" y="276">devuelve int</text><line class="fl" x1="604.5" y1="178" x2="604.5" y2="207"/><line class="fl" x1="604.5" y1="207" x2="604.5" y2="207"/><line class="fl" x1="604.5" y1="207" x2="604.5" y2="234" marker-end="url(#armk)"/><line class="fl" x1="361.9" y1="66" x2="361.9" y2="95"/><line class="fl" x1="117" y1="95" x2="604.5" y2="95"/><line class="fl" x1="117" y1="95" x2="117" y2="122" marker-end="url(#armk)"/><line class="fl" x1="359.6" y1="95" x2="359.6" y2="122" marker-end="url(#armk)"/><line class="fl" x1="604.5" y1="95" x2="604.5" y2="122" marker-end="url(#armk)"/></svg></div>
+    <div class="gbody" data-g="nt">
+      <div class="gpane on" data-s="1">
+        <h4>Todo dentro de <span class="mono">main</span></h4>
+        <pre class="cc tiny" data-src="notas_monolitico.c"><span class="k">for</span> (k = <span class="n">1</span>; k &lt;= <span class="n">3</span>; k++) {
+    <span class="k">do</span> {
+        printf(<span class="s">"Nota %d (0 a 5): "</span>, k);
+        leidos = scanf(<span class="s">"%lf"</span>, &amp;nota);
+<span class="c">...</span>
+    } <span class="k">while</span> (leidos != <span class="n">1</span> || nota &lt; <span class="n">0.0</span> || nota &gt; <span class="n">5.0</span>);
+    <span class="k">if</span> (k == <span class="n">3</span>) {
+        peso = <span class="n">0.4</span>;
+<span class="c">...</span>
+    definitiva = definitiva + nota * peso;
+}</pre>
+        <p class="note"><span class="mono">notas_monolitico.c</span>: 31 líneas en <span class="mono">main</span>. Funciona, pero hay que leerlo entero para entenderlo.</p>
+      </div>
+      <div class="gpane" data-s="2">
+        <h4>Identificar las tareas</h4>
+        <table>
+          <thead><tr><th>tarea</th><th>función</th></tr></thead>
+          <tbody>
+            <tr><td>pedir una nota hasta que sea válida</td><td class="mono">double leer_nota(int numero)</td></tr>
+            <tr><td>ponderar las tres notas</td><td class="mono">double definitiva(double, double, double)</td></tr>
+            <tr><td>¿aprueba?</td><td class="mono">int aprueba(double nota)</td></tr>
+            <tr><td>mostrar el resultado</td><td class="mono">void imprimir_informe(double def)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gpane" data-s="3">
+        <h4>El árbol</h4>
+        <p>El mismo de la diapositiva 18. Los pesos desaparecen del ciclo: quedan escritos en <span class="mono">definitiva</span>.</p>
+      </div>
+      <div class="gpane" data-s="4">
+        <pre class="cc tiny" data-src="notas_modular.c"><span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">double</span> n1, n2, n3;
+
+    n1 = leer_nota(<span class="n">1</span>);
+    n2 = leer_nota(<span class="n">2</span>);
+    n3 = leer_nota(<span class="n">3</span>);
+    imprimir_informe(definitiva(n1, n2, n3));
+    <span class="k">return</span> <span class="n">0</span>;
+}
+
+<span class="k">double</span> definitiva(<span class="k">double</span> n1, <span class="k">double</span> n2, <span class="k">double</span> n3)
+{
+    <span class="k">return</span> n1 * <span class="n">0.3</span> + n2 * <span class="n">0.3</span> + n3 * <span class="n">0.4</span>;
+}</pre>
+        <p class="note"><span class="mono">main</span> queda en 6 líneas. Programa: <span class="mono">notas_modular.c</span>.</p>
+      </div>
+      <div class="gpane" data-s="5">
+        <pre class="con tiny">Nota 1 (0 a 5): <span class="u">4.5</span>
+Nota 2 (0 a 5): <span class="u">abc</span>
+Eso no es un numero
+Nota 2 (0 a 5): <span class="u">6</span>
+Fuera de rango
+Nota 2 (0 a 5): <span class="u">3.2</span>
+Nota 3 (0 a 5): <span class="u">2.0</span>
+--------------------
+Definitiva: 3.11
+Estado: Aprobado
+--------------------</pre>
+        <p class="note">Con los mismos datos, <span class="mono">notas_monolitico.c</span> muestra <b>exactamente</b> lo mismo (el script lo comprueba). Modularizar no cambia lo que hace el programa: cambia lo fácil que es entenderlo y corregirlo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 22 ............................................................ -->
+<section class="slide dense" data-t="6.4 modular · 0:23">
+  <p class="eyebrow"><span class="tick"></span> Compruebe antes de la actividad</p>
+  <h2 class="title">¿Qué muestra cada programa?</h2>
+  <p class="note">Decida primero; después pulse <b>Ver salida</b>. Todo empieza en <span class="mono">main</span>. Se omite el <span class="mono">#include</span>.</p>
+  <div class="pred3">
+<div class="panel pred"><span class="tag">Programa 1</span><pre class="cc tiny"><span class="k">int</span> doble(<span class="k">int</span> n)
+{
+    <span class="k">return</span> <span class="n">2</span> * n;
+}
+
+<span class="k">void</span> mostrar(<span class="k">int</span> n)
+{
+    printf(<span class="s">"[%d]\n"</span>, doble(n));
+}
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    mostrar(doble(<span class="n">3</span>));
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pd1">Ver salida</button><pre class="con tiny hid" id="pd1">[12]</pre></div></div>
+<div class="panel pred"><span class="tag">Programa 2</span><pre class="cc tiny"><span class="k">int</span> primero(<span class="k">int</span> lim)
+{
+    <span class="k">int</span> k;
+    <span class="k">for</span> (k = <span class="n">1</span>; k &lt;= <span class="n">10</span>; k++) {
+        <span class="k">if</span> (k * k &gt; lim) {
+            <span class="k">return</span> k;
+        }
+    }
+    <span class="k">return</span> -<span class="n">1</span>;
+}
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    printf(<span class="s">"%d\n"</span>, primero(<span class="n">20</span>));
+    printf(<span class="s">"%d\n"</span>, primero(<span class="n">500</span>));
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pd2">Ver salida</button><pre class="con tiny hid" id="pd2">5
+-1</pre></div></div>
+<div class="panel pred"><span class="tag">Programa 3</span><pre class="cc tiny"><span class="k">void</span> a(<span class="k">void</span>)
+{
+    printf(<span class="s">"A\n"</span>);
+}
+
+<span class="k">void</span> b(<span class="k">void</span>)
+{
+    printf(<span class="s">"B\n"</span>);
+    a();
+}
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    b();
+    printf(<span class="s">"C\n"</span>);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pd3">Ver salida</button><pre class="con tiny hid" id="pd3">B
+A
+C</pre></div></div>
+  </div>
+</section>
+
+<!-- 23 ............................................................ -->
+<section class="slide dense" data-t="6.4 modular · 0:31">
+  <p class="eyebrow"><span class="tick"></span> Cierre · la actividad de la semana</p>
+  <h2 class="title">Diez programas y un formulario</h2>
+  <div class="split">
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Cómo funciona</span>
+        <ul>
+          <li><b>1–3</b> funciones con <span class="mono">return</span> · <b>4–5</b> funciones que llaman a otras · <b>6–8</b> procedimientos y separación cálculo/presentación · <b>9–10</b> programas modulares (<span class="mono">S06_actividad_evaluativa.md</span>).</li>
+          <li>Use los <b>prototipos exactos</b> del enunciado y pase <b>todos</b> los casos de prueba.</li>
+          <li>En el <b>formulario</b>: ejecutar <b>su</b> programa con unos datos; leer funciones en una <b>imagen</b>; elegir el <b>prototipo</b> correcto; y <b>seis</b> de repaso de las semanas 1 a 5.</li>
+        </ul>
+      </div>
+      <p class="refs"><b>Materiales:</b> <span class="mono">S06_lectura.md</span> (12 ejercicios de práctica con pistas y soluciones) · <span class="mono">S06_codigo/</span>. <b>Esta semana también:</b> Entrega 2 del proyecto (modelo de datos). <b>Semana 7:</b> vectores.</p>
+    </div>
+    <div class="panel">
+      <span class="tag fn">Antes de abrir el formulario</span>
+      <div class="checks" id="lista">
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Los <b>diez</b> programas compilan con <b>cero advertencias</b>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Cada función tiene su <b>prototipo</b> arriba de <span class="mono">main</span>, idéntico al del enunciado.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Toda función no <span class="mono">void</span> llega a un <span class="mono">return</span> por <b>todos</b> los caminos.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Las funciones que calculan <b>no imprimen</b>; las que muestran son <span class="mono">void</span>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl"><b>Ninguna</b> variable global.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Pasan <b>todos</b> los casos de prueba, con el <b>formato exacto</b>.</span></button>
+      </div>
+      <p class="tally"><b id="tallyN">0</b> / 6 · <span id="tallyMsg">empiece por la primera</span></p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="notes" id="notesBox">
+  <h5>Guion del presentador · <span class="time" id="notesTime"></span></h5>
+  <p id="notesText"></p>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var notesBox = document.getElementById('notesBox');
+  var notesText = document.getElementById('notesText');
+  var notesTime = document.getElementById('notesTime');
+  function $(id){ return document.getElementById(id); }
+  function all(sel, root){ return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  /* El panel de notas es guion de narración: los cuatro bloques llevan
+     video. El texto es el mismo del libreto S06_libreto.md, generado desde
+     la misma fuente (guion_data.py), y el campo de tiempo es la duración
+     de cada diapositiva dentro de su bloque.                              */
+  var NOTES = [
+  "Semana seis: funciones. Hasta ahora todo su programa vivía dentro de main. Esta semana aprende a partirlo en piezas con nombre, cada una con un solo trabajo. Son cuatro videos cortos. Este primero: qué es una función y cómo devuelve un valor.",
+  "Cuatro objetivos: escribir una función con su prototipo y usar lo que devuelve; explicar por qué un parámetro es una copia; separar el cálculo de la presentación con procedimientos; y descomponer un programa en funciones. La evidencia es la de siempre: diez programas y un formulario de veinte preguntas. Esta vez los enunciados le dan los prototipos exactos que debe usar.",
+  "Una función tiene tres apariciones. El prototipo, arriba de main, anuncia su nombre, qué recibe y qué devuelve, y termina en punto y coma. La llamada, en main, le entrega un dato y recibe el resultado. Y la definición, abajo, es el cuerpo: aquí, return pi por r por r. Return hace dos cosas: entrega el valor y termina la función. El tipo que va antes del nombre, double, es el tipo de lo que devuelve. Fíjese en la última línea de main: la misma función se reutiliza con otro dato, sin copiar el cálculo.",
+  "Ejemplo guiado: el mayor de tres números, que ya resolvió en la semana cuatro, ahora como función. El análisis empieza por la firma: recibe tres enteros y devuelve uno. El diagrama de una función empieza con su nombre y sus parámetros, y termina en «Retornar». En main, la llamada se dibuja con el símbolo de subrutina, el rectángulo con dos barras. En el código, pase el cursor por cada línea y verá su figura. Y pruebe como siempre: con el mayor en la primera, en la segunda y en la tercera posición, con dos iguales y con negativos. Una función se prueba sola, antes de usarla en un programa grande.",
+  "Muchas funciones responden una pregunta. es_par devuelve directamente el resultado de la comparación: uno si es verdadera, cero si es falsa. es_primo devuelve uno si n es primo y cero si no, y por eso se puede poner directamente dentro de un if, sin compararla con nada. Fíjese en los return dentro del ciclo: en cuanto encuentra un divisor, la función termina. A la derecha, funciones que no escribió usted: sqrt y pow, de la biblioteca math punto h. Se usan igual: se llaman y se recibe el resultado.",
+  "Dos errores típicos. Primero: una función que no devuelve nada por algún camino. Aquí, si n vale cero, ningún return se ejecuta, y gcc avisa que el control llega al final de una función que no es void. Segundo: llamar a una función sin prototipo. El compilador supone que devuelve int, y cuando encuentra la definición con double, el programa ya no compila. La regla: prototipos arriba, y cero advertencias.",
+  "Segundo video: parámetros y ámbito. Cuando main llama a duplicar con x, no le entrega la variable x: le entrega su valor, cinco. El parámetro n es una variable nueva que nace con esa copia. duplicar cambia n a diez y lo devuelve, pero x sigue valiendo cinco. A esto se le llama paso por valor, y en C es la única forma de pasar un int o un double. Si quiere que main tenga el nuevo valor, recíbalo: y igual a duplicar de x.",
+  "En la llamada, los valores se llaman argumentos; en la definición, las variables que los reciben se llaman parámetros. Se emparejan por posición, no por nombre: el primer argumento va al primer parámetro, el segundo al segundo. Mire qué pasa si se invierten: precio_final de diez y cincuenta mil compila sin una sola advertencia, porque los dos son números, y devuelve un precio negativo. El compilador revisa la cantidad y el tipo; el orden lo revisa usted. Por eso el prototipo le pone nombres claros a los parámetros.",
+  "La prueba más clara: una función que intenta intercambiar dos variables. Avance paso a paso. main tiene x igual a tres e y igual a ocho. Al llamar, a y b reciben copias. Dentro, el intercambio funciona: a vale ocho y b tres. Pero al volver, las copias desaparecen, y x e y no cambiaron. Para intercambiar de verdad hacen falta apuntadores, que llegan más adelante en el curso. Por ahora, la regla es: una función le entrega resultados a main solo por su return.",
+  "Una variable declarada dentro de una función es local: solo existe mientras la función se ejecuta, y solo esa función la ve. Por eso main y suma_hasta pueden tener cada una su propia i sin estorbarse. La i de suma_hasta nace y muere en cada llamada; la de main sigue contando. ¿Y las variables globales, declaradas fuera de toda función? Cualquier función puede cambiarlas, y encontrar quién lo hizo se vuelve difícil. En este curso no se usan.",
+  "Una función puede llamar a otra. Avance y mire la columna de llamadas activas. main llama a suma_cuadrados con tres y cuatro, y queda esperando. suma_cuadrados llama a cuadrado con tres, que devuelve nueve; luego con cuatro, que devuelve dieciséis. suma_cuadrados devuelve veinticinco y main lo muestra. Cada llamada es una caja nueva encima de la anterior, y se deshace en orden inverso.",
+  "Antes de seguir, compruebe. Tres programas cortos, con lo de este video: copias, variables locales y llamadas dentro de llamadas. Decida qué muestra cada uno, escríbalo en un papel, y solo después pulse «Ver salida». Si falla, haga la traza con una columna por función: qué recibe cada parámetro y qué devuelve cada return.",
+  "Tercer video: procedimientos. Una función void no devuelve nada: hace algo, como mostrar una línea. Su definición no lleva return con valor; termina al llegar a la llave de cierre. Se llama como una instrucción, sola, terminada en punto y coma. linea recibe un carácter y una cantidad; pruebe los botones y mire la salida real, también con cero. Si intenta guardar el resultado de un void en una variable, el programa no compila: no hay valor que guardar.",
+  "La regla más útil de la semana: una función que calcula no imprime. A la izquierda, promedio calcula y muestra al mismo tiempo; main no puede usar el resultado para decidir si aprueba. A la derecha, promedio devuelve el valor y otro procedimiento lo muestra. Ahora main puede mostrarlo, compararlo o guardarlo, y aquí lo usa para decidir si aprueba. La salida es la misma; el programa es más útil. Hay otra ganancia: una función que solo calcula se prueba comparando lo que devuelve con lo esperado, sin mirar la pantalla.",
+  "La validación de la semana cinco era larga, y había que repetirla para cada dato. Ahora se escribe una vez. leer_entero_en_rango recibe el mínimo y el máximo, pide el dato hasta que sea un entero dentro del rango, también si escriben letras, y devuelve el valor leído. main la usa dos veces, para el día y para el mes, con rangos distintos. Mire la ejecución: cuarenta, a be ce y trece se rechazan sin que main se entere. Esta función le va a servir en la actividad.",
+  "Ejemplo guiado: un recibo de agua. Los primeros veinte metros cúbicos tienen una tarifa y el resto otra, más un cargo fijo. El análisis reparte el trabajo: calcular_valor devuelve el total; imprimir_recibo lo muestra, y para los bordes reutiliza linea. El árbol lo resume: verde, lo que devuelve un valor; ámbar, lo que hace algo. Pruebe con menos de veinte, con más, con un consumo negativo y con exactamente veinte, que es la frontera: con veinte se cobra todo a la tarifa básica.",
+  "¿Cómo decidir? Pregúntese qué produce. Si produce un dato que alguien va a usar, una nota, un precio, un sí o un no, es una función con return. Si produce una acción, mostrar, dibujar, avisar, es un procedimiento void. Una función que lee un dato validado, como la del ejemplo anterior, devuelve lo que leyó: el dato es su resultado. Y una señal de alarma: si su función devuelve un valor y además imprime, probablemente son dos funciones. En la tabla de la derecha están los casos que más va a encontrar esta semana.",
+  "Último video: programación modular. Diseñar de arriba hacia abajo es preguntarse primero qué hace el programa completo, y partirlo en tareas grandes; después, cada tarea en otras más pequeñas, hasta que cada una quepa en una función corta. El resultado es un árbol de llamadas. Este es el del programa de notas: main lee tres notas, calcula la definitiva e imprime el informe, que a su vez pregunta si aprueba.",
+  "Tres reglas prácticas. Una: cada función hace una sola tarea, y su nombre la dice con un verbo; si necesita una «y» para describirla, son dos funciones. Dos: se comunica solo por sus parámetros y su return. Mire el ejemplo: con una global, agregar cambia algo que no recibió; con parámetros, todo lo que entra y sale está a la vista. Tres: si copió y pegó un bloque, ese bloque es una función.",
+  "Un archivo punto c modular tiene siempre el mismo orden. Arriba, los include y los define. Después, los prototipos de todas sus funciones. Luego main, corto, que se lee como un índice del programa. Y al final, las definiciones, en el mismo orden de los prototipos. Quien abre el archivo entiende el programa leyendo solo main. Más adelante, cuando el programa crezca, esas funciones se podrán mover a otro archivo con su propia cabecera punto h; la lectura le muestra cómo, pero esta semana todo va en un solo archivo.",
+  "Ejemplo guiado: el programa de notas, escrito todo en main, con validación robusta de la semana cinco. Primero se identifican las tareas; después se dibuja el árbol, se escriben los prototipos y se mueve cada tarea a su función. main queda en seis líneas. En el paso cinco, las dos versiones con los mismos datos: la salida es idéntica. Modularizar no cambia lo que hace el programa, cambia lo fácil que es entenderlo y corregirlo.",
+  "Compruebe otra vez, ahora con varias funciones juntas. Decida primero y después pulse «Ver salida». Siga el orden de las llamadas, no el orden en que están escritas las definiciones: el programa siempre empieza en main, y una definición que nadie llama no se ejecuta nunca.",
+  "La actividad: diez programas, cada uno con los prototipos exactos del enunciado, y el formulario de veinte preguntas. Unas le piden ejecutar su programa con ciertos datos; otras, leer funciones en una imagen; otras, elegir el prototipo correcto; y seis repasan las semanas uno a cinco. Antes de abrirlo, revise la lista de la derecha. Nos vemos en la semana siete, con vectores."
+];
+
+  function show(n){
+    if(n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('on');
+    slides[i].scrollTop = 0;
+    cur.textContent = String(i + 1);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    notesText.textContent = NOTES[i];
+    notesTime.textContent = slides[i].getAttribute('data-t');
+  }
+  $('next').addEventListener('click', function(){ show(i + 1); });
+  $('prev').addEventListener('click', function(){ show(i - 1); });
+  var tn = $('toggleNotes');
+  tn.addEventListener('click', function(){
+    var on = notesBox.classList.toggle('on');
+    tn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ show(i - 1); }
+    else if(e.key === 'n' || e.key === 'N'){ tn.click(); }
+  });
+
+  /* ====== pasos de los ejemplos guiados (4, 16 y 21) ==================
+     Todos los paneles ocupan la misma celda de la rejilla; solo cambia
+     cuál es visible. Por eso la diapositiva no cambia de alto al avanzar. */
+  all('.gsteps[data-g]').forEach(function(bx){
+    var g = bx.getAttribute('data-g');
+    var body = document.querySelector('.gbody[data-g="' + g + '"]');
+    var diag = document.querySelector('.gdiag[data-g="' + g + '"]');
+    var btns = all('.tbtn', bx);
+    btns.forEach(function(b){
+      b.addEventListener('click', function(){
+        var s = b.getAttribute('data-s');
+        btns.forEach(function(o){ o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+        all('.gpane', body).forEach(function(p){ p.classList.toggle('on', p.getAttribute('data-s') === s); });
+        if(diag){ diag.classList.toggle('off', +s < 3); }
+      });
+    });
+  });
+
+  /* línea de código ↔ figura del diagrama (paso 4 del ejemplo de la diapositiva 4) */
+  all('pre[data-g] .ln').forEach(function(ln){
+    var g = ln.parentNode.getAttribute('data-g');
+    var m = ln.getAttribute('data-m');
+    function on(v){
+      all('pre[data-g="' + g + '"] .ln').forEach(function(o){ o.classList.toggle('hot', v && o.getAttribute('data-m') === m); });
+      var fig = document.getElementById(g + '-' + m);
+      all('svg g.hot').forEach(function(x){ x.classList.remove('hot'); });
+      if(v && fig){ fig.classList.add('hot'); }
+    }
+    ln.addEventListener('mouseenter', function(){ on(true); });
+    ln.addEventListener('mouseleave', function(){ on(false); });
+    ln.addEventListener('click', function(){ on(true); });
+  });
+
+  var DATA = {"mem": [{"x": "3", "y": "8", "fun": false, "m": "Antes de la llamada: <span class=\"mono\">x = 3</span>, <span class=\"mono\">y = 8</span>. La función todavía no existe en memoria."}, {"x": "3", "y": "8", "fun": true, "a": "3", "b": "8", "aux": "?", "cam": "", "m": "Al llamar, <span class=\"mono\">a</span> y <span class=\"mono\">b</span> nacen con <b>copias</b> de <span class=\"mono\">x</span> e <span class=\"mono\">y</span>. <span class=\"mono\">aux</span> aún no tiene valor."}, {"x": "3", "y": "8", "fun": true, "a": "3", "b": "8", "aux": "3", "cam": "aux", "m": "<span class=\"mono\">aux = a;</span> guarda el valor de <span class=\"mono\">a</span>."}, {"x": "3", "y": "8", "fun": true, "a": "8", "b": "8", "aux": "3", "cam": "a", "m": "<span class=\"mono\">a = b;</span> la copia <span class=\"mono\">a</span> cambia. <span class=\"mono\">x</span> no se entera."}, {"x": "3", "y": "8", "fun": true, "a": "8", "b": "3", "aux": "3", "cam": "b", "m": "<span class=\"mono\">b = aux;</span> dentro de la función, el intercambio <b>funcionó</b>."}, {"x": "3", "y": "8", "fun": false, "m": "Al volver, <span class=\"mono\">a</span>, <span class=\"mono\">b</span> y <span class=\"mono\">aux</span> <b>desaparecen</b>. <span class=\"mono\">x = 3</span> e <span class=\"mono\">y = 8</span>: no cambiaron."}], "pila": [{"fr": ["main", "", ""], "m": "Empieza <span class=\"mono\">main</span>."}, {"fr": ["main", "suma_cuadrados(3, 4)", ""], "m": "<span class=\"mono\">main</span> llama a <span class=\"mono\">suma_cuadrados(3, 4)</span> y queda <b>esperando</b>."}, {"fr": ["main", "suma_cuadrados(3, 4)", "cuadrado(3)"], "m": "<span class=\"mono\">suma_cuadrados</span> llama a <span class=\"mono\">cuadrado(3)</span> y queda <b>esperando</b>."}, {"fr": ["main", "suma_cuadrados(3, 4)", ""], "m": "<span class=\"mono\">cuadrado</span> <b>devuelve 9</b> y desaparece; sigue <span class=\"mono\">suma_cuadrados</span>."}, {"fr": ["main", "suma_cuadrados(3, 4)", "cuadrado(4)"], "m": "<span class=\"mono\">suma_cuadrados</span> llama a <span class=\"mono\">cuadrado(4)</span> y queda <b>esperando</b>."}, {"fr": ["main", "suma_cuadrados(3, 4)", ""], "m": "<span class=\"mono\">cuadrado</span> <b>devuelve 16</b> y desaparece; sigue <span class=\"mono\">suma_cuadrados</span>."}, {"fr": ["main", "", ""], "m": "<span class=\"mono\">suma_cuadrados</span> <b>devuelve 25</b> y desaparece; sigue <span class=\"mono\">main</span>."}, {"fr": ["main", "", ""], "m": "<span class=\"mono\">main</span> recibe el valor y muestra <span class=\"mono\">Resultado: 25</span>."}], "lin": ["antes\n----------\ndespues", "antes\n***\ndespues", "antes\n========================\ndespues", "antes\n\ndespues\n<span class=\"e\">(con n = 0 el for no da vueltas: solo queda el salto de línea)</span>"]};
+
+  /* ====== 9 · memoria del intercambio =================================
+     Las cajas existen siempre (vacías o atenuadas): la diapositiva no
+     cambia de alto al avanzar. Valores impresos por una copia de swap.c. */
+  function caja(id, v, cambia){
+    var c = $(id); c.querySelector('span').textContent = v;
+    c.classList.toggle('cambia', !!cambia);
+  }
+  function pintarMem(k){
+    var e = DATA.mem[k];
+    all('#memBtns .tbtn').forEach(function(o){ o.setAttribute('aria-pressed', +o.getAttribute('data-i') === k ? 'true' : 'false'); });
+    caja('mx', e.x); caja('my', e.y);
+    $('mfun').classList.toggle('off', !e.fun);
+    caja('ma', e.fun ? e.a : '', e.cam === 'a'); caja('mb', e.fun ? e.b : '', e.cam === 'b'); caja('maux', e.fun ? e.aux : '', e.cam === 'aux');
+    $('memMsg').innerHTML = e.m;
+  }
+  all('#memBtns .tbtn').forEach(function(b){ b.addEventListener('click', function(){ pintarMem(+b.getAttribute('data-i')); }); });
+  pintarMem(0);
+
+  /* ====== 11 · llamadas activas ======================================== */
+  function pintarPila(k){
+    var e = DATA.pila[k];
+    all('#pilaBtns .tbtn').forEach(function(o){ o.setAttribute('aria-pressed', +o.getAttribute('data-i') === k ? 'true' : 'false'); });
+    all('#pila .fr').forEach(function(f, j){
+      var t = e.fr[j];
+      f.classList.toggle('vac', !t);
+      f.textContent = t || '.';
+    });
+    $('pilaMsg').innerHTML = e.m;
+  }
+  all('#pilaBtns .tbtn').forEach(function(b){ b.addEventListener('click', function(){ pintarPila(+b.getAttribute('data-i')); }); });
+  pintarPila(0);
+
+  /* ====== 13 · llamadas a linea ======================================== */
+  function pintarLin(k){
+    all('#linBtns .tbtn').forEach(function(o){ o.setAttribute('aria-pressed', +o.getAttribute('data-i') === k ? 'true' : 'false'); });
+    $('linOut').innerHTML = DATA.lin[k];
+  }
+  all('#linBtns .tbtn').forEach(function(b){ b.addEventListener('click', function(){ pintarLin(+b.getAttribute('data-i')); }); });
+  pintarLin(0);
+
+  /* ====== 12 y 22 · predicciones ======================================= */
+  all('.pred .tbtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var pre = document.getElementById(b.getAttribute('data-o'));
+      var oculto = pre.classList.toggle('hid');
+      b.textContent = oculto ? 'Ver salida' : 'Ocultar';
+    });
+  });
+
+  /* ====== 23 · lista de verificación =================================== */
+  var chks = all('#lista .chk');
+  var MSG = ['empiece por la primera', 'siga', 'va bien', 'la mitad', 'ya casi', 'falta una', 'listo para el formulario'];
+  chks.forEach(function(c){
+    c.addEventListener('click', function(){
+      c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      var n = chks.filter(function(x){ return x.getAttribute('aria-pressed') === 'true'; }).length;
+      $('tallyN').textContent = n;
+      $('tallyMsg').textContent = MSG[n];
+    });
+  });
+
+  show(0);
+})();
+</script>
