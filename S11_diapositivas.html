@@ -1,0 +1,2200 @@
+<meta charset="utf-8">
+<title>Archivos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ground:#F2F3F7;
+  --surface:#FFFFFF;
+  --surface-2:#EBEDF3;
+  --line:#D6D9E4;
+  --ink:#141828;
+  --muted:#5B6278;
+  --accent:#4557C9;
+  --accent-soft:#E3E6F8;
+  --fn:#0B7C71;
+  --fn-soft:#DCF0ED;
+  --imp:#A2620E;
+  --imp-soft:#F6E8D3;
+  --shadow:0 1px 2px rgba(20,24,40,.06), 0 8px 24px rgba(20,24,40,.08);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1120;
+    --surface:#171B2C;
+    --surface-2:#1F2438;
+    --line:#2E3448;
+    --ink:#E8EAF4;
+    --muted:#98A0BA;
+    --accent:#8494F2;
+    --accent-soft:#232A48;
+    --fn:#3FC7B4;
+    --fn-soft:#12312F;
+    --imp:#E9A94A;
+    --imp-soft:#33270F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1120;
+  --surface:#171B2C;
+  --surface-2:#1F2438;
+  --line:#2E3448;
+  --ink:#E8EAF4;
+  --muted:#98A0BA;
+  --accent:#8494F2;
+  --accent-soft:#232A48;
+  --fn:#3FC7B4;
+  --fn-soft:#12312F;
+  --imp:#E9A94A;
+  --imp-soft:#33270F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:"IBM Plex Serif", Georgia, "Times New Roman", serif;font-weight:600}
+p{margin:0}
+code,pre,.mono{font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace}
+
+/* ============ CHROME ============ */
+.rail{
+  display:flex;align-items:center;gap:16px;
+  padding:10px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  font-size:12px;
+}
+.rail .id{font-family:"IBM Plex Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.rail .id b{color:var(--ink);font-weight:600}
+.rail .spacer{flex:1}
+.btn{
+  font:inherit;font-size:12px;
+  background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;
+  padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.counter{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.counter b{color:var(--ink)}
+
+.progress{height:3px;background:var(--surface-2);position:relative}
+.progress span{position:absolute;inset:0 auto 0 0;background:var(--accent);transition:width .25s ease}
+
+/* ============ STAGE ============ */
+.wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:14px}
+.stage{
+  width:min(100%,1180px);
+  aspect-ratio:16/9;
+  max-height:calc(100vh - 150px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  container-type:inline-size;
+  position:relative;
+  overflow:hidden;
+}
+.slide{
+  position:absolute;inset:0;
+  padding:4.4cqi 5cqi 4cqi;
+  display:none;
+  flex-direction:column;
+  gap:2.2cqi;
+  overflow-y:auto;
+}
+.slide.on{display:flex}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:1.25cqi;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);
+  display:flex;align-items:center;gap:1cqi;
+}
+.eyebrow .tick{width:2.6cqi;height:1px;background:var(--line)}
+h2.title{font-size:3.9cqi;line-height:1.12;letter-spacing:-.01em}
+h3.sub{font-size:2.05cqi;line-height:1.25}
+.lead{font-size:1.95cqi;line-height:1.5;color:var(--ink);max-width:62ch}
+.note{font-size:1.5cqi;line-height:1.5;color:var(--muted);max-width:70ch}
+.slide ul{margin:0;padding-left:2.2cqi;display:flex;flex-direction:column;gap:1.1cqi}
+.slide li{font-size:1.8cqi;line-height:1.42}
+.slide li::marker{color:var(--accent)}
+
+/* two-world grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;align-items:start}
+.panel{
+  border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+  padding:2cqi 2.2cqi;
+  display:flex;flex-direction:column;gap:1.2cqi;
+  min-width:0;
+}
+.panel.fn{border-top:3px solid var(--fn)}
+.panel.imp{border-top:3px solid var(--imp)}
+.tag{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+.tag.fn{color:var(--fn)}
+.tag.imp{color:var(--imp)}
+.panel h4{margin:0;font-size:1.85cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.panel p{font-size:1.5cqi;line-height:1.45;color:var(--muted)}
+.panel ul{padding-left:2cqi;gap:.7cqi}
+.panel li{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1.4cqi 1.6cqi;font-size:1.42cqi;line-height:1.55;
+  overflow-x:auto;white-space:pre;
+}
+pre .k{color:var(--accent);font-weight:500}
+pre .c{color:var(--muted);font-style:italic}
+pre .n{color:var(--imp)}
+pre .s{color:var(--fn)}
+.filename{
+  font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted);
+  display:flex;justify-content:space-between;gap:1cqi;
+}
+.filename em{font-style:normal;color:var(--fn)}
+
+/* trace machine */
+.trace{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqi;align-items:stretch}
+.cell{
+  display:flex;gap:1.2cqi;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+}
+.box{
+  border:2px solid var(--imp);border-radius:6px;background:var(--imp-soft);
+  padding:.8cqi 1.6cqi;font-size:2.4cqi;font-weight:600;color:var(--ink);
+  font-variant-numeric:tabular-nums;min-width:7cqi;text-align:center;
+}
+.box.flash{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.expr{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;line-height:1.7;
+  color:var(--ink);word-break:break-word;
+}
+.expr .old{color:var(--muted)}
+.steps{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:1cqi;align-items:center;flex-wrap:wrap}
+.ctl{
+  font-family:"IBM Plex Sans",sans-serif;font-size:1.4cqi;
+  padding:.8cqi 1.6cqi;border-radius:6px;border:1px solid var(--accent);
+  background:var(--accent);color:#fff;cursor:pointer;
+}
+.ctl.ghost{background:transparent;color:var(--accent)}
+.ctl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ctl:disabled{opacity:.45;cursor:default}
+
+/* comparison table */
+table{border-collapse:collapse;width:100%;font-size:1.5cqi}
+th,td{text-align:left;padding:1cqi 1.2cqi;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+thead th.cfn{color:var(--fn)}
+thead th.cimp{color:var(--imp)}
+tbody th{font-weight:500;color:var(--muted);font-family:"IBM Plex Sans",sans-serif}
+
+/* cover */
+.cover{justify-content:center;gap:1.6cqi;background:
+  linear-gradient(105deg, var(--fn-soft) 0%, transparent 42%),
+  linear-gradient(255deg, var(--imp-soft) 0%, transparent 42%);}
+.cover .inst{font-family:"IBM Plex Mono",monospace;font-size:1.3cqi;color:var(--muted);line-height:1.7;letter-spacing:.04em}
+.cover h1{font-size:5.4cqi;line-height:1.05;letter-spacing:-.02em;max-width:20ch}
+.cover .course{font-size:2cqi;color:var(--accent);font-weight:600}
+.cover .who{display:flex;gap:3cqi;flex-wrap:wrap;font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+.cover .who b{display:block;color:var(--ink);font-weight:600;font-size:1.75cqi}
+
+/* q&a */
+.qa{display:flex;flex-direction:column;gap:1.4cqi}
+.q{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi}
+.q p{font-size:1.6cqi;line-height:1.4}
+.q .ans{font-size:1.45cqi;color:var(--fn);line-height:1.45;display:none}
+.q.open .ans{display:block}
+.q button{align-self:flex-start;font:inherit;font-size:1.25cqi;background:none;border:1px solid var(--line);border-radius:5px;padding:.5cqi 1.1cqi;color:var(--muted);cursor:pointer}
+.q button:hover{color:var(--accent);border-color:var(--accent)}
+
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);
+  padding:1.4cqi 1.8cqi;border-radius:0 7px 7px 0;font-size:1.55cqi;line-height:1.45;
+}
+.refs{font-size:1.3cqi;line-height:1.6;color:var(--muted)}
+.refs b{color:var(--ink);font-weight:500}
+
+/* notes drawer */
+.notes{
+  width:min(100%,1180px);
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);padding:14px 18px;
+  font-size:14px;line-height:1.55;color:var(--ink);
+  display:none;
+}
+.notes.on{display:block}
+.notes h5{margin:0 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notes p{color:var(--muted)}
+.notes .time{color:var(--accent);font-family:"IBM Plex Mono",monospace}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+@media (max-width:720px){
+  .duo,.trace{grid-template-columns:1fr}
+  .stage{aspect-ratio:auto;height:auto;min-height:520px}
+  .slide{position:relative;padding:22px}
+  .slide:not(.on){display:none}
+}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.3 — componentes que no existían en la 1.1.
+   No se modificó ningún token de color ni ningún tamaño anterior.
+   ====================================================================== */
+
+/* retícula de tres columnas (los tres intercambios) */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.6cqi;align-items:start}
+.trio .panel{padding:1.5cqi 1.6cqi;gap:.9cqi}
+.trio pre{font-size:1.24cqi;padding:1.1cqi 1.2cqi}
+.trio li{font-size:1.35cqi}
+.trio .tag{font-size:1.05cqi}
+
+/* retícula de dos columnas desiguales */
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:2.2cqi;align-items:start}
+.split-r{display:grid;grid-template-columns:.85fr 1.15fr;gap:2.2cqi;align-items:start}
+
+/* celdas de memoria con desvanecimiento del valor anterior */
+.mem{display:flex;gap:2.6cqi;align-items:flex-end;flex-wrap:wrap}
+.memcell{display:flex;flex-direction:column;align-items:center;gap:.5cqi;position:relative}
+.memcell .name{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--imp);font-weight:600}
+.memcell .addr{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;color:var(--muted)}
+.memcell .box{min-width:8.4cqi}
+.memcell .box.empty{color:var(--muted);border-style:dashed;background:transparent}
+.memcell .gone{
+  position:absolute;left:0;right:0;top:2.1cqi;
+  font-family:"IBM Plex Mono",monospace;font-size:2.4cqi;font-weight:600;
+  color:var(--muted);text-align:center;pointer-events:none;
+  text-decoration:line-through;
+  animation:vanish 1.1s ease forwards;
+}
+@keyframes vanish{
+  0%{opacity:.9;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-3.2cqi) scale(.8)}
+}
+
+/* registro de transiciones del simulador */
+.log{
+  font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;line-height:1.6;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1cqi 1.2cqi;height:15cqi;overflow:auto;color:var(--ink);
+  white-space:pre;
+}
+.log .dim{color:var(--muted)}
+
+/* indicador de estado actual */
+.statebar{display:flex;align-items:center;gap:1.2cqi;flex-wrap:wrap}
+.statebar .lab{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:1.7cqi;font-weight:600;
+  border:2px solid var(--imp);background:var(--imp-soft);color:var(--ink);
+  border-radius:999px;padding:.5cqi 1.6cqi;
+}
+.chip.flash{animation:pop .35s ease}
+
+/* diagramas de estados en SVG */
+.fsm{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fsm .node{fill:var(--dsurf);stroke:var(--dimp);stroke-width:2.5}
+.fsm .node.on{fill:var(--dimps);stroke-width:6}
+.fsm .inner{fill:none;stroke:var(--dfn);stroke-width:2}
+.fsm .lbl{fill:var(--dink);font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:600;text-anchor:middle}
+.fsm .edge{fill:none;stroke:var(--dmut);stroke-width:2}
+.fsm .elbl{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:15px;text-anchor:middle}
+.fsm .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fsm .cap.acc{fill:var(--dfn)}
+.fsm marker path{fill:var(--dmut)}
+.fsm.big .lbl{font-size:21px}
+.fsm.big .elbl{font-size:17px}
+.fsm.big .cap{font-size:15px}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.4 — componentes que no existían en la 1.3.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* las tres caras de un tipo (diapositiva 3) */
+.faces{display:flex;flex-direction:column;gap:1.2cqi}
+.face{display:flex;gap:1.3cqi;align-items:baseline}
+.face .num{font-family:"IBM Plex Mono",monospace;font-size:1.6cqi;font-weight:600;color:var(--accent);min-width:2.4cqi}
+.face .txt{font-size:1.5cqi;line-height:1.4;color:var(--ink)}
+.face .txt b{display:block;font-size:1.65cqi}
+.face .txt span{color:var(--muted);font-size:1.32cqi}
+
+/* matriz 2 × 2 del tipado (diapositiva 4) */
+.matrix{display:grid;grid-template-columns:4.6cqi 1fr 1fr;gap:.9cqi;align-items:stretch}
+.axis{
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);line-height:1.35;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+}
+.axis.side{writing-mode:vertical-rl;transform:rotate(180deg)}
+.mcell{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1.2cqi 1.3cqi;display:flex;flex-direction:column;gap:.45cqi;min-width:0;
+}
+.mcell:hover{border-color:var(--accent)}
+.mcell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mcell .lang{font-family:"IBM Plex Mono",monospace;font-size:1.75cqi;font-weight:600;color:var(--ink)}
+.mcell.c .lang{color:var(--imp)}
+.mcell.r .lang{color:var(--fn)}
+.mcell .kind{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.mcell .mk{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);visibility:hidden}
+.mcell[aria-pressed="true"]{background:var(--accent-soft);border:3px solid var(--accent);padding:1cqi 1.1cqi}
+.mcell[aria-pressed="true"] .mk{visibility:visible}
+
+/* explorador de tipos y barra de bytes (diapositiva 7) */
+.tbtns{display:flex;flex-wrap:wrap;gap:.6cqi}
+.tbtn{
+  font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.55cqi 1.05cqi;cursor:pointer;
+}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.bytebar{display:flex;gap:.35cqi;flex-wrap:wrap;align-items:center}
+.byte{
+  width:2.5cqi;height:2.5cqi;border-radius:4px;
+  border:1px solid var(--imp);background:var(--imp-soft);
+  font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.bignum{font-family:"IBM Plex Mono",monospace;font-size:3.2cqi;font-weight:600;color:var(--imp);line-height:1}
+.bignum small{font-size:1.4cqi;color:var(--muted);font-weight:400;margin-left:.6cqi}
+
+/* banda de la advertencia intencional (diapositiva 6) */
+.warnband{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.2cqi 1.6cqi;
+  display:flex;flex-direction:column;gap:.55cqi;
+}
+.warnband .hd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.1cqi;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--imp);font-weight:600;
+}
+.warnband .msg{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;line-height:1.5;color:var(--ink);word-break:break-word}
+.warnband .why{font-size:1.32cqi;line-height:1.45;color:var(--muted)}
+
+/* predictor de conversiones (diapositiva 9) */
+.opts{display:flex;gap:.9cqi;flex-wrap:wrap}
+.opt{
+  font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;
+  border:1px solid var(--line);border-radius:6px;background:var(--surface);
+  color:var(--ink);padding:.75cqi 1.5cqi;cursor:pointer;
+}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt.good{background:var(--fn-soft);border:2px solid var(--fn);font-weight:600;padding:.65cqi 1.4cqi}
+.opt.bad{background:var(--surface-2);border-color:var(--muted);color:var(--muted);text-decoration:line-through}
+.opt:disabled{cursor:default}
+.verdict{font-size:1.4cqi;line-height:1.45;color:var(--ink);min-height:7cqi}
+.verdict .head{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:.5cqi}
+.verdict .head.ok{color:var(--fn)}
+.verdict .head.no{color:var(--imp)}
+
+/* columna que difiere entre modelos de datos (diapositiva 10) */
+th.diff,td.diff{background:var(--imp-soft)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 1.5 — componentes que no existían en la 1.4.
+   No se modificó ningún token de color ni ningún tamaño anterior; todo
+   lo que sigue son componentes nuevos que usan los mismos tokens.
+   ====================================================================== */
+
+/* cadena de las cinco piezas (diapositiva 3) */
+.chain{display:flex;align-items:stretch;gap:.8cqi;flex-wrap:nowrap}
+.link{
+  flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface-2);padding:1.1cqi 1cqi;
+  display:flex;flex-direction:column;gap:.5cqi;text-align:center;
+}
+.link .n{font-family:"IBM Plex Mono",monospace;font-size:1.02cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.link .w{font-size:1.42cqi;font-weight:600;line-height:1.2;color:var(--ink)}
+.link .d{font-size:1.12cqi;line-height:1.35;color:var(--muted)}
+.link.hot{border-color:var(--imp);background:var(--imp-soft)}
+.arrowmini{display:flex;align-items:center;color:var(--muted);font-size:1.6cqi;flex:0 0 auto}
+
+/* comparación de las dos versiones (diapositiva 5) */
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:2cqi;align-items:stretch}
+.vcard{
+  border:1px solid var(--line);border-radius:8px;padding:1.6cqi 1.8cqi;
+  display:flex;flex-direction:column;gap:.9cqi;background:var(--surface-2);
+}
+.vcard.bad{border:2px solid var(--muted);opacity:.82}
+.vcard.good{border:2px solid var(--fn);background:var(--fn-soft)}
+.vcard .vh{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.vcard.bad .vh{color:var(--muted)}
+.vcard.good .vh{color:var(--fn)}
+.vcard h4{margin:0;font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif}
+.vrow{display:flex;justify-content:space-between;gap:1cqi;font-size:1.3cqi;line-height:1.4;border-bottom:1px solid var(--line);padding-bottom:.5cqi}
+.vrow:last-of-type{border-bottom:0}
+.vrow span:first-child{color:var(--muted)}
+.vrow span:last-child{text-align:right;font-family:"IBM Plex Mono",monospace;color:var(--ink)}
+.vcard.good .vrow span:last-child{font-weight:600}
+
+/* selector de ruta por sistema operativo (diapositiva 6) */
+.osbtns{display:flex;gap:.8cqi;flex-wrap:wrap}
+.osbtn{
+  font:inherit;font-family:"IBM Plex Sans",sans-serif;font-size:1.45cqi;
+  border:1px solid var(--line);border-radius:7px;background:var(--surface);
+  color:var(--ink);padding:.85cqi 1.6cqi;cursor:pointer;
+  display:flex;align-items:center;gap:.7cqi;
+}
+.osbtn:hover{border-color:var(--accent);color:var(--accent)}
+.osbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.osbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ospanel{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:1cqi;min-height:26cqi;
+}
+.ospanel .oh{font-size:1.9cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600;color:var(--ink)}
+.ospanel .ol{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.ospanel ol{margin:0;padding-left:2.4cqi;display:flex;flex-direction:column;gap:.7cqi}
+.ospanel li{font-size:1.42cqi;line-height:1.4}
+.ospanel .nope{font-size:1.28cqi;line-height:1.45;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.2cqi}
+
+/* teclas (diapositiva 8) */
+.kbd{
+  font-family:"IBM Plex Mono",monospace;font-size:1.35cqi;font-weight:600;
+  border:1px solid var(--line);border-bottom-width:3px;border-radius:5px;
+  background:var(--surface);padding:.35cqi .9cqi;color:var(--ink);white-space:nowrap;
+}
+.keyrow{display:flex;flex-direction:column;gap:1cqi}
+.keyline{display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi}
+.keyline .txt{color:var(--ink)}
+.keyline .txt em{font-style:normal;color:var(--muted);font-size:1.25cqi}
+
+/* lista de verificación pulsable (diapositiva 12) */
+.checks{display:flex;flex-direction:column;gap:.85cqi}
+.chk{
+  font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  border:1px solid var(--line);border-radius:7px;background:var(--surface-2);
+  padding:1cqi 1.4cqi;display:flex;align-items:center;gap:1.2cqi;font-size:1.45cqi;
+}
+.chk:hover{border-color:var(--accent)}
+.chk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chk .mk{
+  flex:0 0 auto;width:2.2cqi;height:2.2cqi;border-radius:5px;
+  border:2px solid var(--line);display:flex;align-items:center;
+  justify-content:center;font-size:1.3cqi;color:transparent;
+}
+.chk[aria-pressed="true"]{background:var(--fn-soft);border-color:var(--fn)}
+.chk[aria-pressed="true"] .mk{background:var(--fn);border-color:var(--fn);color:#fff}
+.tally{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.tally b{color:var(--fn);font-size:2cqi}
+
+/* modificador de densidad: para las diapositivas cuyo contenido es
+   irreducible sin perder información (la tabla de los cinco tipos de
+   entorno y la comparación de macOS). Solo ajusta espaciados y escala
+   tipográfica dentro de la diapositiva; no toca ningún token. */
+.dense{gap:1.6cqi}
+.dense table{font-size:1.36cqi}
+.dense th,.dense td{padding:.6cqi 1cqi}
+.dense .alert{font-size:1.36cqi;padding:1cqi 1.4cqi}
+.dense .note{font-size:1.34cqi}
+.dense .lead{font-size:1.78cqi}
+.dense .panel li{font-size:1.38cqi}
+.dense .panel p{font-size:1.38cqi}
+.dense pre{font-size:1.3cqi}
+
+/* banda de advertencia sobria (varias diapositivas) */
+.alert{
+  border-left:3px solid var(--imp);background:var(--imp-soft);
+  border-radius:0 7px 7px 0;padding:1.3cqi 1.7cqi;
+  font-size:1.5cqi;line-height:1.45;
+}
+.alert b{color:var(--imp)}
+
+/* ======================================================================
+   AÑADIDOS DE LA CÁPSULA 2.1 / 2.2 — componentes que no existían en la
+   1.5. No se modificó ningún token de color ni ningún tamaño anterior;
+   todo lo que sigue son componentes nuevos que usan los mismos tokens.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos se dibujan en tinta neutra; el ámbar marca «esto es lo
+   que estamos mirando» o «esto está mal», y el verde azulado marca
+   «esto está bien». Siempre acompañado de etiqueta de texto.
+   ====================================================================== */
+
+/* diagramas de flujo en SVG */
+.fc{
+  width:100%;height:auto;display:block;
+  --dimp:var(--imp);--dimps:var(--imp-soft);
+  --dfn:var(--fn);--dfns:var(--fn-soft);
+  --dacc:var(--accent);--dink:var(--ink);
+  --dmut:var(--muted);--dline:var(--line);--dsurf:var(--surface);
+}
+.fc .sh{fill:var(--dsurf);stroke:var(--dink);stroke-width:2.4}
+.fc .sh.hot{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc .sh.ok{fill:var(--dfns);stroke:var(--dfn);stroke-width:3.4}
+.fc .sh.err{fill:var(--dimps);stroke:var(--dimp);stroke-width:4;stroke-dasharray:7 5}
+.fc .t{
+  fill:var(--dink);font-family:"IBM Plex Mono",monospace;
+  font-size:15px;text-anchor:middle;dominant-baseline:middle;
+}
+.fc .t.sm{font-size:13px}
+.fc .fl{fill:none;stroke:var(--dmut);stroke-width:2.2}
+.fc .fl.err{stroke:var(--dimp);stroke-width:3.2;stroke-dasharray:7 5}
+.fc .fll{fill:var(--dacc);font-family:"IBM Plex Mono",monospace;font-size:13px;text-anchor:middle}
+.fc .cap{fill:var(--dmut);font-family:"IBM Plex Mono",monospace;font-size:12px;text-anchor:middle}
+.fc .spot{cursor:pointer}
+.fc .spot .ring{fill:none;stroke:var(--dimp);stroke-width:3;opacity:0}
+.fc .spot[data-found="1"] .ring{opacity:1}
+.fc .mark{fill:var(--dimp);font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;text-anchor:middle;opacity:0}
+.fc .spot[data-found="1"] .mark{opacity:1}
+#armk path{fill:var(--muted)}
+
+/* vitrina de un solo símbolo (diapositiva 5) */
+.symstage{
+  border:1px solid var(--line);border-radius:8px;background:var(--surface-2);
+  padding:1.2cqi;display:flex;align-items:center;justify-content:center;
+  min-height:19cqi;
+}
+.symstage svg{width:100%;max-height:17cqi}
+
+/* fila de equivalencias pseudocódigo ↔ símbolo */
+.eq{display:flex;flex-direction:column;gap:.7cqi}
+.eqrow{
+  display:grid;grid-template-columns:1.1fr 1.4cqi 1fr;gap:1.1cqi;align-items:center;
+  border-bottom:1px solid var(--line);padding-bottom:.6cqi;
+}
+.eqrow:last-child{border-bottom:0}
+.eqrow .k1{font-family:"IBM Plex Mono",monospace;font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2{font-size:1.36cqi;color:var(--ink)}
+.eqrow .k2 em{font-style:normal;color:var(--muted);font-size:1.2cqi;display:block}
+.eqrow .to{color:var(--muted);font-size:1.3cqi;text-align:center}
+
+/* reglas numeradas de trazado */
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:1.1cqi 2cqi}
+.rule{display:flex;gap:1.1cqi;align-items:flex-start}
+.rule .rn{
+  flex:0 0 auto;width:2.5cqi;height:2.5cqi;border-radius:50%;
+  border:2px solid var(--accent);color:var(--accent);
+  font-family:"IBM Plex Mono",monospace;font-size:1.25cqi;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+}
+.rule .rt{font-size:1.42cqi;line-height:1.38}
+.rule .rt b{display:block;font-size:1.5cqi;margin-bottom:.15cqi}
+.rule .rt span{color:var(--muted);font-size:1.26cqi}
+
+/* marcador del cazador de errores */
+.hunt{display:flex;align-items:center;gap:1.4cqi;flex-wrap:wrap}
+.hunt .score{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;color:var(--muted)}
+.hunt .score b{color:var(--imp);font-size:2.1cqi}
+.huntmsg{font-size:1.38cqi;line-height:1.42;color:var(--ink);min-height:6.4cqi}
+.huntmsg .head{
+  font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.1em;
+  text-transform:uppercase;display:block;margin-bottom:.4cqi;
+}
+.huntmsg .head.no{color:var(--imp)}
+.huntmsg .head.ok{color:var(--fn)}
+
+/* separador de cápsula dentro de la misma presentación */
+.divider{
+  justify-content:center;gap:1.4cqi;
+  background:linear-gradient(115deg, var(--accent-soft) 0%, transparent 55%);
+}
+.divider .big{font-size:4.6cqi;line-height:1.06;letter-spacing:-.02em}
+.divider .kicker{
+  font-family:"IBM Plex Mono",monospace;font-size:1.4cqi;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);font-weight:600;
+}
+
+/* ficha de herramienta (diapositiva 20) */
+.tool{
+  border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--surface-2);
+  padding:1.5cqi 1.8cqi;display:flex;flex-direction:column;gap:.9cqi;min-height:27cqi;
+}
+.tool .th{font-size:2cqi;font-family:"IBM Plex Serif",Georgia,serif;font-weight:600}
+.tool .tf{font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.tool .tp{font-size:1.4cqi;line-height:1.42;color:var(--ink)}
+.tool .tlim{font-size:1.26cqi;line-height:1.42;color:var(--imp);border-left:3px solid var(--imp);padding-left:1.1cqi}
+.tool .tsrc{font-family:"IBM Plex Mono",monospace;font-size:1.08cqi;color:var(--muted);line-height:1.5}
+
+/* el modificador .dense de la cápsula 1.5, extendido a los componentes
+   nuevos de esta cápsula. Sigue sin tocar ningún token de color. */
+.dense .rules{gap:.8cqi 1.6cqi}
+.dense .rule .rt{font-size:1.32cqi}
+.dense .rule .rt b{font-size:1.4cqi}
+.dense .rule .rt span{font-size:1.18cqi}
+.dense .vrow{font-size:1.22cqi}
+.dense .vcard{padding:1.2cqi 1.4cqi;gap:.7cqi}
+.dense .vcard h4{font-size:1.8cqi}
+.dense .tool{min-height:24cqi;padding:1.2cqi 1.5cqi;gap:.7cqi}
+.dense .tp{font-size:1.3cqi}
+.dense .eqrow .k1,.dense .eqrow .k2{font-size:1.26cqi}
+.dense .callout{font-size:1.38cqi;padding:1.1cqi 1.5cqi}
+.dense .refs{font-size:1.2cqi}
+.dense .fc .t{font-size:14px}
+
+/* el diagrama vertical completo, cuando comparte diapositiva con texto */
+.fc.fit{max-height:40cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LAS CÁPSULAS 2.3 / 2.4 / CICLOS — componentes que no
+   existían en la 2.1-2.2. No se modificó ningún token de color ni ningún
+   tamaño anterior: todo lo que sigue usa los mismos tokens del curso.
+
+   Regla de color respetada: el color NO codifica el tipo de símbolo.
+   Los símbolos van en tinta neutra; el ámbar marca «esto está mal» y el
+   verde azulado «esto está bien», siempre con etiqueta de texto.
+   ====================================================================== */
+
+/* punto de reunión / de retorno: la unión de dos caminos en uno */
+.fc .jn{fill:var(--dmut);stroke:none}
+
+/* los diagramas de esta cápsula son más altos que los de la 2.1: se
+   limita su altura para que nunca desborden la diapositiva. El ancho
+   sigue mandando; la altura solo recorta cuando el diagrama es vertical. */
+.slide .fc{max-height:34cqi}
+.dense .fc{max-height:32cqi}
+.trio .fc{max-height:28cqi}
+.split .fc, .split-r .fc{max-height:34cqi}
+
+/* tabla compacta para la traza del ciclo (diapositiva 22) */
+table.mini{font-size:1.3cqi;font-variant-numeric:tabular-nums}
+table.mini th, table.mini td{padding:.42cqi .8cqi}
+table.mini thead th{font-size:1.05cqi}
+table.mini td.mono{font-family:"IBM Plex Mono",monospace}
+table.mini tr.on td{background:var(--accent-soft)}
+table.mini tr.out td{color:var(--muted)}
+
+/* reglas numeradas en una sola columna (diapositiva 27) */
+.rules.one{grid-template-columns:1fr;gap:1cqi}
+
+/* ficha de las cinco piezas / los cinco pasos */
+.faces .txt b{margin-bottom:.1cqi}
+
+/* separador de bloque: el mismo de la 2.2, con la variante de ciclos */
+.divider .lead{max-width:56ch}
+
+/* pseudocódigo dentro de una tarjeta de comparación */
+.vcard pre{background:var(--surface);font-size:1.3cqi}
+.vcard .note{font-size:1.32cqi;line-height:1.45}
+.vcard h4{font-size:1.75cqi;line-height:1.25}
+
+/* el panel de la traza no debe estirarse */
+.controls{margin-top:.8cqi}
+
+/* el modificador .dense, extendido a lo nuevo de esta cápsula */
+.dense .faces .txt{font-size:1.36cqi}
+.dense .faces .txt b{font-size:1.46cqi}
+.dense .faces .txt span{font-size:1.24cqi}
+.dense .versus .vcard{padding:1.2cqi 1.4cqi}
+.dense table.mini{font-size:1.22cqi}
+.dense .verdict{font-size:1.3cqi;min-height:5cqi}
+
+/* lista de verificación compacta (diapositiva 29) */
+.dense .checks{gap:.5cqi}
+.dense .chk{padding:.5cqi .85cqi;font-size:1.22cqi;line-height:1.3}
+.dense .chk .mk{width:1.7cqi;height:1.7cqi;font-size:1.05cqi}
+.dense .tally{font-size:1.3cqi}
+.dense .tally b{font-size:1.7cqi}
+.dense .refs{font-size:1.16cqi;line-height:1.5}
+.dense .panel li{line-height:1.34}
+
+/* resaltado de una pieza del diagrama durante la traza (diapositiva 22).
+   Ambar = «esto es lo que estamos mirando», nunca un tipo de símbolo. */
+.fc g.hot .sh{fill:var(--dimps);stroke:var(--dimp);stroke-width:4}
+.fc g.hot .fl{stroke:var(--dimp);stroke-width:3}
+.fc g.hot .t{font-weight:600}
+
+/* los dos diagramas comparativos de la diapositiva 20 */
+.trio .panel .fc{max-height:28cqi;margin-top:.4cqi}
+.tag em{font-style:normal;color:var(--muted);text-transform:none;letter-spacing:0}
+
+/* el pseudocódigo, un punto más compacto en las diapositivas .dense */
+.dense pre{font-size:1.26cqi;line-height:1.45;padding:1.1cqi 1.3cqi}
+
+/* filas de la traza todavia no alcanzadas: ocupan sitio, no distraen */
+table.mini tr.pend td{color:var(--line)}
+
+/* diapositiva 26: el diagrama mas complejo del curso necesita ancho */
+.split.ancho{grid-template-columns:1.5fr 1fr}
+.split.ancho .fc{max-height:38cqi}
+
+/* .grande: los diagramas casi cuadrados se reducen mucho al caber en la
+   diapositiva, asi que su tipografia interna se dibuja mas grande para que
+   siga leyendose. Solo cambia el tamano del texto dentro del SVG. */
+.fc.grande .t{font-size:21px}
+.fc.grande .t.sm{font-size:19px}
+.fc.grande .fll{font-size:18px}
+.fc.grande .cap{font-size:16px}
+
+/* nota bajo un diagrama (diapositiva 22) */
+.split > div > .note{margin-top:.8cqi;font-size:1.3cqi}
+
+/* diapositiva 22: la traza ocupa alto fijo; el diagrama cede un poco */
+#trzBody + tr, .slide .panel table.mini{margin-bottom:.2cqi}
+.dense .split .fc.ej1, .split .fc.ej1{max-height:26cqi}
+
+/* el mensaje de la traza reserva su alto: la diapositiva no salta al avanzar */
+#trzMsg{min-height:5.6cqi;margin-top:.5cqi}
+
+/* correcciones de herencia sobre componentes de la 1.4/1.5 -------------
+   .face .txt b es display:block en la hoja base (sirve para el titulo de
+   la ficha); los <b> que van DENTRO del parrafo tienen que seguir en
+   linea. Y el texto de una casilla va en un solo elemento, porque .chk es
+   un contenedor flex y cada nodo suelto se separaria del resto. */
+.face .txt span b, .dense .faces .txt span b{display:inline;font-size:inherit}
+.chk .lbl{flex:1 1 auto}
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 3 — componentes nuevos (código C, consola,
+   ejemplo guiado paso a paso, explorador de etapas). No se modificó ningún
+   token ni ningún tamaño anterior: todo usa los tokens del curso.
+   Regla de color respetada: ámbar = C / lo que cambia / lo que estamos
+   mirando; verde azulado = lo correcto; el color siempre va con texto.
+   ====================================================================== */
+
+/* consola: la salida REAL de un programa. Se distingue del código por
+   el filete verde azulado y la etiqueta «consola», no por un fondo propio. */
+pre.con{background:var(--ground);border-left:4px solid var(--fn);color:var(--ink)}
+pre.con .u{color:var(--accent);font-weight:600}      /* lo que teclea el usuario */
+pre.con .e{color:var(--imp);font-weight:600}         /* error / advertencia */
+pre.cc{border-left:4px solid var(--imp)}             /* código C */
+.dense pre.con, .dense pre.cc{font-size:1.2cqi;line-height:1.42}
+pre.tiny{font-size:1.08cqi !important;line-height:1.38 !important;padding:.8cqi 1cqi !important}
+
+/* líneas de código enlazadas con una figura del diagrama */
+pre .ln{display:inline-block;width:100%;border-radius:3px;cursor:pointer}
+pre .ln:hover, pre .ln.hot{background:var(--imp-soft);outline:1px solid var(--imp)}
+
+/* anatomía del programa: partes pulsables */
+pre .part{cursor:pointer;border-bottom:2px dotted var(--accent);border-radius:2px}
+pre .part.on{background:var(--accent-soft);border-bottom-style:solid}
+
+/* ejemplo guiado: pasos */
+.gsteps{display:flex;gap:.5cqi;flex-wrap:wrap;margin:.2cqi 0 .9cqi}
+.gsteps .tbtn{font-size:1.15cqi;padding:.45cqi .9cqi}
+.gbody{display:grid}
+.gbody > .gpane{grid-area:1/1;visibility:hidden;min-width:0}
+.gbody > .gpane.on{visibility:visible}
+.gcols{display:grid;grid-template-columns:1.1fr 1fr;gap:2cqi;align-items:start}
+.gcols .fc{max-height:33.4cqi}
+.gdiag{position:relative}
+.gdiag.off .fc{opacity:.07}
+.gdiag.off::after{content:"el diagrama se construye en el paso 3";position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;color:var(--muted)}
+.gpane p, .gpane li{font-size:1.36cqi;line-height:1.45}
+.gpane table{font-size:1.25cqi}
+.gpane h4{font-family:"IBM Plex Serif",Georgia,serif;font-size:1.7cqi;margin:0 0 .5cqi}
+
+/* explorador de etapas (diapositiva 7): la figura pulsable */
+.fc .spot:hover .sh, .fc .spot.sel .sh{fill:var(--dimps);stroke:var(--dimp);stroke-width:3.4}
+#etOut{min-height:8cqi}
+
+/* validador de identificadores y tabla de verdad */
+.idgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6cqi}
+.idgrid .opt{font-family:"IBM Plex Mono",monospace;font-size:1.25cqi}
+.kw{display:flex;flex-wrap:wrap;gap:.35cqi .5cqi;font-family:"IBM Plex Mono",monospace;font-size:1.08cqi}
+.kw span{padding:.15cqi .45cqi;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.kw span.new{border-color:var(--imp);color:var(--imp)}
+.tv{display:grid;grid-template-columns:repeat(3,1fr);gap:.8cqi;text-align:center;margin-top:.8cqi}
+.tv .tvc{display:flex;flex-direction:column;align-items:center;gap:.3cqi;border:1px solid var(--line);border-radius:8px;padding:.8cqi;background:var(--surface)}
+.tv .tvc b{font-family:"IBM Plex Mono",monospace;font-size:2.6cqi;line-height:1}
+.tv .tvc span{font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;color:var(--muted)}
+.tv .tvc.v1 b{color:var(--fn)} .tv .tvc.v0 b{color:var(--imp)}
+
+/* evaluación de expresiones paso a paso */
+.evsteps{font-family:"IBM Plex Mono",monospace;font-size:1.45cqi;line-height:1.7}
+.evsteps div{padding:.1cqi .6cqi;border-radius:4px}
+.evsteps div.pend{color:var(--line)}
+.evsteps div.cur{background:var(--accent-soft)}
+.evsteps u{text-decoration:none;background:var(--imp-soft);outline:1px solid var(--imp);border-radius:3px}
+
+/* callouts y listas un poco más compactos en diapositivas densas */
+.dense .panel p{margin:.3cqi 0}
+.split.w46{grid-template-columns:1fr 1.15fr}
+.split.w64{grid-template-columns:1.3fr 1fr}
+.split .fc.mid{max-height:30cqi}
+.fc.wide{max-height:none !important;flex-shrink:0}
+.mono.b{font-weight:600}
+/* altura fija de los tres diagramas de proceso: no se encogen (flex) ni
+   empujan el resto de la diapositiva fuera del escenario */
+.fc.wide.dciclo{height:22cqi}
+.fc.wide.detapas{height:22cqi}
+.fc.wide.dfallas{height:16cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 4 — sin tocar tokens: tabla ASCII, predicciones
+   y leyenda de rangos. Mismo sistema de color (ámbar = C / lo que se mira;
+   verde azulado = lo correcto), siempre con texto.
+   ====================================================================== */
+.ascii{display:grid;grid-template-columns:repeat(16,1fr);gap:.28cqi}
+.ascii button{font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;padding:.35cqi 0;border:1px solid var(--line);
+  border-radius:4px;background:var(--surface);color:var(--ink);cursor:pointer;line-height:1.2}
+.ascii button:hover{border-color:var(--accent)}
+.ascii button.d{border-color:var(--fn)} .ascii button.M{border-color:var(--imp)} .ascii button.m{border-color:var(--accent)}
+.ascii button.sel{background:var(--imp-soft);outline:2px solid var(--imp)}
+.asciiout{font-family:"IBM Plex Mono",monospace;font-size:1.5cqi;margin:.3cqi 0;min-height:4.4cqi}
+.rg{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;padding:0 .4cqi;border-radius:3px;border:1px solid var(--line)}
+.rg.d{border-color:var(--fn)} .rg.M{border-color:var(--imp)} .rg.m{border-color:var(--accent)}
+.pred{display:flex;flex-direction:column;gap:.4cqi}
+.pred .row{display:flex;gap:.8cqi;align-items:center}
+.pred pre.con{min-height:2.2cqi;margin:0;flex:1}
+.pred pre.con.hid{color:transparent}
+.pred .tbtn{font-size:1.1cqi;padding:.35cqi .8cqi;white-space:nowrap}
+#bisTab td{padding:.25cqi .8cqi}
+#bisOut, #brkA, #brkB{min-height:5.2cqi}
+#ordA, #ordB{min-height:2.4cqi}
+.tri .panel .refs{margin:.2cqi 0 0;font-size:1cqi}
+.tri .panel pre.con{margin:.1cqi 0 .2cqi}
+.tri .panel .note{margin:.4cqi 0 0}
+table.mini{font-size:1.15cqi}
+table.mini td, table.mini th{padding:.2cqi .6cqi}
+tr.bad td{background:var(--imp-soft)}
+.split > *, .split-r > *, .duo > *, .gcols > *{min-width:0}
+pre.con.wr{white-space:pre-wrap;overflow-wrap:anywhere}
+.cuatro{display:grid;grid-template-columns:repeat(4,1fr);gap:1cqi}
+.cuatro .pred .row{flex-direction:column;align-items:stretch}
+.tri{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:1.4cqi;align-items:start}
+.tri .refs{margin:0 0 .3cqi}
+.tri pre.con{margin:.2cqi 0 .5cqi}
+.tri .panel .note{font-size:1.1cqi;line-height:1.3}
+.split.r16{grid-template-columns:1fr 1.7fr}
+.segunbox .fc{max-height:21cqi;width:100%}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 5 — sin tocar tokens: traza vuelta por vuelta,
+   tres fragmentos en fila, sumatoria y tamaños de los diagramas de ciclo.
+   Mismo sistema de color (ámbar = C / lo que cambia / lo que se mira;
+   verde azulado = lo correcto), siempre con texto.
+   ====================================================================== */
+.tri3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2cqi;margin-bottom:.8cqi}
+.tri3 .panel{display:flex;flex-direction:column;gap:.3cqi}
+.tri3 .panel p{font-size:1.15cqi;line-height:1.35;margin:.2cqi 0}
+table.trz{font-size:1.25cqi;width:100%}
+table.trz td, table.trz th{padding:.25cqi .7cqi;text-align:center}
+table.trz td:first-child, table.trz th:first-child{text-align:left}
+table.trz tr.pend td{color:transparent}
+table.trz tr.cur td{background:var(--imp-soft)}
+#trzMsg{min-height:4.6cqi}
+.sigma{display:flex;align-items:center;gap:.8cqi;margin:.2cqi 0 .6cqi;font-size:1.3cqi}
+.sigma .big{font-family:"IBM Plex Serif",Georgia,serif;font-size:4cqi;line-height:1}
+.sigma .lim{display:flex;flex-direction:column;font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;line-height:1.5}
+.sigma .term{font-family:"IBM Plex Serif",Georgia,serif;font-size:2.2cqi}
+.sigma .arrow{font-size:2cqi;color:var(--muted)}
+.dnota .fc{max-height:34cqi;width:100%}
+.dcua .fc{max-height:34cqi;width:100%}
+.dtri .fc{max-height:36cqi;width:100%}
+.dventas .fc, .split.w64 > div > .fc{max-height:33cqi;width:100%}
+#recOut{min-height:2.4cqi}
+#recMsg{min-height:2.6cqi}
+#triOut{min-height:14cqi}
+.tbtns.rec .tbtn{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi}
+.tbtns.trzb .tbtn{font-size:1.05cqi;padding:.35cqi .7cqi}
+.nowrap td:last-child{white-space:nowrap}
+ul.abrev li{font-size:1.3cqi;line-height:1.5}
+.cuatro.dos{grid-template-columns:repeat(2,1fr);gap:.8cqi 1.4cqi}
+.cuatro.dos .pred{flex-direction:row;align-items:flex-start;gap:1cqi}
+.cuatro.dos .pred > pre.cc{flex:1.4;margin:0}
+.cuatro.dos .pred .row{flex:1;flex-direction:column;align-items:stretch}
+.cuatro.dos .pred .tag{writing-mode:vertical-rl;transform:rotate(180deg)}
+.tri.trg{grid-template-columns:1fr .85fr 1.35fr}
+.cuatro.dos .pred{padding:.8cqi 1cqi}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 6 — sin tocar tokens: árboles de llamadas,
+   memoria de las llamadas (marcos de main y de la función), salida de
+   procedimientos. Verde azulado = función que devuelve un valor;
+   ámbar = procedimiento void / lo que cambia. Siempre con texto.
+   ====================================================================== */
+.fc .sh.fnr{fill:var(--dfns);stroke:var(--dfn);stroke-width:2.6}
+.fc .sh.prc{fill:var(--dimps);stroke:var(--dimp);stroke-width:2.6}
+.fc.arbol .t{font-family:"IBM Plex Mono",monospace;font-size:14px}
+.fc.arbol .t.sm{font-family:"IBM Plex Sans",sans-serif;font-size:12px;fill:var(--dmut)}
+.darbol .fc{width:100%;max-height:22cqi}
+.dmayor{display:grid;grid-template-columns:1fr 1.25fr;gap:1cqi;align-items:start}
+.dmayor .fc{width:100%;max-height:33cqi}
+.marcos{display:grid;grid-template-columns:1fr 1fr;gap:1cqi;margin:.4cqi 0}
+.marco{border:1px solid var(--line);border-radius:6px;padding:.6cqi .9cqi;background:var(--surface)}
+.marco h5{margin:0 0 .4cqi;font-family:"IBM Plex Mono",monospace;font-size:1.2cqi;font-weight:600}
+.marco.fun{border-top:3px solid var(--imp)}
+.marco.main{border-top:3px solid var(--fn)}
+.marco.off{opacity:.35}
+.cajas{display:flex;gap:.8cqi;flex-wrap:wrap}
+.caja{min-width:6.5cqi;border:1px solid var(--line);border-radius:4px;padding:.3cqi .6cqi;text-align:center;font-family:"IBM Plex Mono",monospace}
+.caja b{display:block;font-size:1cqi;color:var(--muted);font-weight:500}
+.caja span{font-size:1.6cqi}
+.caja.cambia{background:var(--imp-soft);border-color:var(--imp)}
+#memMsg, #pilaMsg{min-height:4.4cqi}
+.pila{display:flex;flex-direction:column-reverse;gap:.35cqi;min-height:9.5cqi;justify-content:flex-start}
+.pila .fr{border:1px solid var(--line);border-left:4px solid var(--imp);border-radius:4px;padding:.3cqi .8cqi;font-family:"IBM Plex Mono",monospace;font-size:1.15cqi;background:var(--surface)}
+.pila .fr.main{border-left-color:var(--fn)}
+.pila .fr.vac{visibility:hidden}
+#linOut{min-height:9cqi}
+.errc{font-size:1.05cqi;line-height:1.4;white-space:pre-wrap}
+.pred3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1cqi}
+.pred3 .pred{display:flex;flex-direction:column;gap:.4cqi;padding:.8cqi 1cqi}
+.pred3 .pred > pre.cc{margin:0;font-size:.98cqi !important;line-height:1.34 !important}
+.pred3 .pred .row{display:flex;flex-direction:row;align-items:flex-start;gap:.6cqi}
+.pred3 .pred .row .tbtn{white-space:nowrap}
+.pred3 .pred .row pre.con{flex:1;margin:0}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 7 — sin tocar tokens: casillas de un vector con
+   su índice, marcas de inicio/medio/fin de la búsqueda binaria y estado
+   de las pasadas de los ordenamientos. Ámbar = lo que cambia en este paso;
+   verde azulado = lo que ya quedó en su lugar. Siempre con texto.
+   ====================================================================== */
+.vec{display:flex;gap:.35cqi;flex-wrap:nowrap;margin:.5cqi 0}
+.vec .cel{min-width:3.6cqi;border:1px solid var(--line);border-radius:4px;background:var(--surface);text-align:center;padding:.25cqi .3cqi;font-family:"IBM Plex Mono",monospace}
+.vec .cel b{display:block;font-size:1.45cqi;font-weight:600}
+.vec .cel .ix{display:block;font-size:.95cqi;color:var(--muted)}
+.vec .cel.cambia{background:var(--imp-soft);border-color:var(--imp)}
+.vec .cel.fijo{background:var(--fn-soft);border-color:var(--fn)}
+.vec .cel.fuera{opacity:.35}
+.vec .cel.nul b{color:var(--muted)}
+.vec .cel.extra{border-style:dashed}
+.vec.mini .cel{min-width:2.9cqi}
+.vec.mini .cel b{font-size:1.15cqi}
+.vec .cel .mk{display:block;font-size:.9cqi;min-height:1.3cqi;color:var(--accent);font-weight:600}
+.vlab{font-family:"IBM Plex Mono",monospace;font-size:1.05cqi;color:var(--muted);margin:.2cqi 0 0}
+#binMsg, #burMsg, #selMsg{min-height:4.4cqi}
+.leyenda{display:flex;gap:1.2cqi;font-size:1cqi;color:var(--muted);margin:.3cqi 0}
+.leyenda span::before{content:"";display:inline-block;width:1cqi;height:1cqi;border-radius:2px;margin-right:.4cqi;vertical-align:-.1cqi;border:1px solid var(--line)}
+.leyenda .lc::before{background:var(--imp-soft);border-color:var(--imp)}
+.leyenda .lf::before{background:var(--fn-soft);border-color:var(--fn)}
+.gcols.glin{grid-template-columns:1fr 1fr}
+.dlin .fc{width:100%;max-height:32.5cqi}
+table.mini td.num, table.mini th.num{text-align:right;font-family:"IBM Plex Mono",monospace}
+
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 8 — sin tocar tokens: tabla de los cinco
+   patrones, mensajes de los pasos de cada interactivo (alto fijo, para
+   que la diapositiva no cambie de tamaño al avanzar) y casillas fuera de
+   la cantidad usada. Ámbar = lo que cambia en este paso; verde azulado =
+   lo que ya quedó o la posición guardada. Siempre con texto.
+   ====================================================================== */
+.smsg{min-height:4.4cqi;margin:.4cqi 0}
+table.mini.pat{width:100%;margin:.8cqi 0 1cqi}
+table.mini.pat td, table.mini.pat th{padding:.7cqi 1cqi}
+table.mini.pat td{font-size:1.35cqi}
+.leyenda .lc::before{background:var(--imp-soft);border-color:var(--imp)}
+table.mini td.ok{color:var(--fn);font-weight:600}
+table.mini.casos td{vertical-align:top}
+table.mini.casos td.mono{white-space:nowrap}
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 10 — sin tocar tokens: diagramas de memoria
+   (casilla con nombre, valor y dirección ficticia), marcos de la pila,
+   mapa de memoria, matriz dinámica como vector de filas y tres paneles
+   en fila. Ámbar = lo que cambió en este paso; verde azulado = la
+   variable a la que llega el apuntador. Siempre con texto.
+   ====================================================================== */
+.smsg{min-height:4.4cqi;margin:.4cqi 0}
+.mem{display:flex;gap:1.2cqi;align-items:stretch;margin:.6cqi 0;flex-wrap:nowrap}
+.marco{border:1px dashed var(--line);border-radius:6px;padding:.5cqi .8cqi .7cqi;display:flex;gap:.7cqi;align-items:flex-end;position:relative;transition:opacity .2s}
+.marco .fl{position:absolute;top:-.95cqi;left:.8cqi;background:var(--surface);padding:0 .4cqi;font-family:"IBM Plex Mono",monospace;font-size:.95cqi;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.marco.off{opacity:.3}
+.mc{min-width:6.2cqi;text-align:center;font-family:"IBM Plex Mono",monospace;margin-top:1cqi}
+.mc .nm{display:block;font-size:1.15cqi;font-weight:600;color:var(--ink)}
+.mc b{display:block;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:1.4cqi;font-weight:600;padding:.45cqi .4cqi;min-height:2.3cqi}
+.mc.ptr b{color:var(--accent)}
+.mc .ad{display:block;font-size:.92cqi;color:var(--muted);margin-top:.15cqi;min-height:1.2cqi}
+.mc.cambia b{background:var(--imp-soft);border-color:var(--imp)}
+.mc.apunta b{box-shadow:0 0 0 2px var(--fn) inset;background:var(--fn-soft)}
+.mc.cambia.apunta b{background:var(--imp-soft);box-shadow:0 0 0 2px var(--fn) inset}
+.mapa{display:flex;flex-direction:column;gap:.5cqi}
+.mapa .zona{border:1px solid var(--line);border-radius:6px;padding:.7cqi 1.1cqi;background:var(--surface);display:flex;gap:1.2cqi;align-items:baseline}
+.mapa .zona b{min-width:9cqi;font-size:1.45cqi}
+.mapa .zona span{font-size:1.25cqi;color:var(--ink)}
+.mapa .zona.imp{border-color:var(--imp);background:var(--imp-soft)}
+.mapa .zona.fn{border-color:var(--fn);background:var(--fn-soft)}
+.mapa .zona.hueco{border-style:dashed;background:transparent;justify-content:center;padding:.9cqi}
+.mapa .zona.hueco span{color:var(--muted);font-size:1.1cqi}
+.tri{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.4cqi;align-items:start;margin-bottom:1cqi}
+.small, .dense .panel p.small, .dense p.small{font-size:1.12cqi}
+p.mono.small{word-break:break-word;line-height:1.35}
+.vec .cel .ad{display:block;font-size:.85cqi;color:var(--muted)}
+.vec .cel.nores{border-style:dashed;opacity:.45}
+.mdin{display:flex;gap:1.4cqi;align-items:flex-start;margin:.4cqi 0 .8cqi;font-family:"IBM Plex Mono",monospace}
+.mdin .col{display:flex;flex-direction:column;gap:.35cqi}
+.mdin .cap{font-size:.95cqi;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.mdin .row{display:flex;gap:.3cqi;align-items:center}
+.mdin .bx{border:1px solid var(--line);border-radius:4px;background:var(--surface);min-width:4.6cqi;text-align:center;padding:.3cqi .3cqi;font-size:1.15cqi}
+.mdin .bx.p{color:var(--accent);font-weight:600}
+.mdin .bx.f{background:var(--fn-soft);border-color:var(--fn)}
+.mdin .ad{font-size:.85cqi;color:var(--muted);min-width:3.4cqi}
+table.mini.eqv{margin:.6cqi 0}
+table.mini.comp{width:100%;margin:.6cqi 0 1cqi}
+table.mini.comp td{font-size:1.3cqi;padding:.65cqi 1cqi}
+table.mini.fx4{width:100%;margin-top:.8cqi}
+.pred3 .pred > pre.cc{font-size:.9cqi !important}
+.pred3.apretado .pred > pre.cc{line-height:1.22 !important}
+.mdin .bx{white-space:nowrap;min-width:3.4cqi;font-size:1.05cqi}
+/* ======================================================================
+   AÑADIDOS DE LA SEMANA 11 — sin tocar tokens: caja de archivo (nombre +
+   contenido, o «no existe»), dos archivos lado a lado para el patrón del
+   temporal, flujo abrir-usar-cerrar, campos de un registro CSV y volcado
+   hexadecimal. Ámbar = la línea que se acaba de leer o lo que cambió;
+   verde azulado = lo que se conserva. Siempre con texto.
+   ====================================================================== */
+.arch{border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:.4cqi 0 .7cqi;overflow:hidden}
+.arch .an{display:flex;justify-content:space-between;gap:1cqi;font-family:"IBM Plex Mono",monospace;font-size:1.0cqi;color:var(--muted);background:var(--fn-soft);border-bottom:1px solid var(--line);padding:.3cqi .8cqi;text-transform:none}
+.arch .an i{font-style:normal;color:var(--imp)}
+.arch .ac{margin:0;padding:.45cqi .8cqi;font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;line-height:1.45;white-space:pre;color:var(--ink);background:transparent;border:0}
+.arch .al{font-family:"IBM Plex Mono",monospace;font-size:1.12cqi;line-height:1.45;padding:0 .8cqi;min-height:1.62cqi;white-space:pre}
+.arch .al.hl{background:var(--imp-soft);box-shadow:inset 3px 0 0 var(--imp)}
+.arch .al.nuevo{background:var(--fn-soft)}
+.arch.noex{border-style:dashed;opacity:.55}
+.arch.noex .an{background:transparent}
+.dosarch{display:grid;grid-template-columns:1fr 1fr;gap:1cqi}
+.flujo{display:flex;flex-direction:column;gap:.6cqi}
+.flujo .paso{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:.7cqi 1.1cqi;display:flex;flex-direction:column;gap:.25cqi}
+.flujo .paso b{font-size:1.5cqi}
+.flujo .paso .mono{font-size:1.2cqi;color:var(--accent)}
+.flujo .paso span{font-size:1.2cqi}
+.flujo .paso.imp{border-color:var(--imp);background:var(--imp-soft)}
+.flujo .paso.fn{border-color:var(--fn);background:var(--fn-soft)}
+.campos{display:flex;align-items:center;gap:.2cqi;margin:.4cqi 0 .6cqi;font-family:"IBM Plex Mono",monospace;font-size:1.3cqi}
+.campos .cmp{border:1px solid var(--line);border-radius:4px;padding:.25cqi .6cqi;background:var(--surface)}
+.campos .cmp.imp{border-color:var(--imp);background:var(--imp-soft)}
+.campos .cmp.fn{border-color:var(--fn);background:var(--fn-soft)}
+.campos .sep{color:var(--muted);padding:0 .15cqi}
+ol.pasos4{margin:.3cqi 0 .6cqi 1.6cqi;padding:0}
+ol.pasos4 li{font-size:1.22cqi;margin:.2cqi 0}
+.dense .panel ol.pasos4 li{font-size:1.15cqi}
+table.mini.modos{width:100%;margin:.3cqi 0 .6cqi}
+table.mini.modos td,table.mini.modos th{font-size:1.15cqi;padding:.45cqi .7cqi}
+table.mini.fmt{margin:.5cqi 0}
+table.mini.fmt td{font-size:1.2cqi;padding:.4cqi .8cqi}
+table.mini.ret{width:100%;margin:.3cqi 0 .6cqi}
+table.mini.ret td,table.mini.ret th{font-size:1.1cqi;padding:.35cqi .6cqi}
+pre.con.hex{font-size:1.0cqi !important;line-height:1.5}
+.small, .dense .panel p.small, .dense p.small{font-size:1.12cqi}
+.tri{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.4cqi;align-items:start;margin-bottom:1cqi}
+.smsg{min-height:3.4cqi;margin:.3cqi 0}
+.pred3 .pred > pre.cc{font-size:.84cqi !important;line-height:1.15 !important}
+.cc.xs{font-size:.95cqi !important}
+.tri.t3{grid-template-columns:1fr 1.25fr 1fr}
+table.mini.comp{width:100%;margin:.6cqi 0 1cqi}
+table.mini.comp td{font-size:1.25cqi;padding:.6cqi 1cqi}
+</style>
+<div class="rail">
+  <span class="id"><b>IS284</b> · Programación II</span>
+  <span class="id">Semana 11 · Archivos</span>
+  <span class="spacer"></span>
+  <span class="counter"><b id="cur">1</b> / 27</span>
+  <button class="btn" id="prev" type="button">← Anterior</button>
+  <button class="btn" id="next" type="button">Siguiente →</button>
+  <button class="btn" id="toggleNotes" type="button" aria-pressed="false">Notas (N)</button>
+</div>
+<div class="progress"><span id="bar" style="width:3.70%"></span></div>
+
+<div class="wrap">
+<div class="stage" id="stage">
+
+<!-- 1 ............................................................. -->
+<section class="slide cover on" data-t="11.1 archivos de texto · 0:30">
+  <p class="inst">UNIVERSIDAD TECNOLÓGICA DE PEREIRA<br>Facultad de Ingenierías · Ingeniería de Sistemas y Computación</p>
+  <p class="course">Programación II · IS284 · Semana 11 · Cápsulas 11.1 a 11.4</p>
+  <h1>Archivos</h1>
+  <div class="who">
+    <span>Docente<b>Ing. Andres Vargas</b></span>
+    <span>Contenido<b>fopen y sus modos · fprintf, fscanf, fgets · CSV y sscanf · archivo temporal · remove y rename · feof · perror · fwrite y fread</b></span>
+    <span>Video<b>Cuatro bloques de 5 a 6 minutos</b></span>
+    <span>Notación de la semana<b>C99</b></span>
+  </div>
+</section>
+
+<!-- 2 ............................................................. -->
+<section class="slide dense" data-t="11.1 archivos de texto · 0:44">
+  <p class="eyebrow"><span class="tick"></span> Qué tiene que lograr</p>
+  <h2 class="title">Que los datos del programa sobrevivan al cierre, y que se recuperen sin sorpresas</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">Objetivos observables</span>
+      <ul>
+        <li><b>Escribir</b> y <b>leer</b> un archivo de texto, comprobando que se pudo abrir (11.1).</li>
+        <li><b>Cargar</b> un archivo de registros (CSV) a arreglos paralelos y <b>detectar</b> las líneas mal formadas (11.2).</li>
+        <li><b>Eliminar</b> y <b>modificar</b> registros con un archivo temporal, y <b>leer</b> con el ciclo correcto (11.3).</li>
+        <li><b>Guardar</b> y <b>recuperar</b> arreglos completos en binario, y <b>elegir</b> entre texto y binario (11.4).</li>
+      </ul>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Evidencia que se evalúa</span>
+      <p><b>Un formulario de 20 preguntas</b> con el código a la vista: <b>5 por cada cápsula</b>, de salida, de completar la línea que falta y de encontrar el error.</p>
+      <p>No se entregan programas.</p>
+      <p>Apoyo: <span class="mono">S11_lectura.md</span>, con <b>8 ejercicios guiados</b>, <b>16 de práctica</b> (con pistas y soluciones) y un reto opcional, y <span class="mono">S11_codigo/</span> con los programas y sus archivos de datos.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ............................................................. -->
+<section class="slide dense" data-t="11.1 archivos de texto · 0:46">
+  <p class="eyebrow"><span class="tick"></span> Bloque A · cápsula 11.1</p>
+  <h2 class="title">La memoria se borra al terminar; el disco conserva</h2>
+  <div class="split">
+    <div>
+      <div class="flujo">
+        <div class="paso imp"><b>Abrir</b><span class="mono">f = fopen("notas.txt", "w");</span><span>conecta el programa con el archivo; devuelve <span class="mono">NULL</span> si no puede</span></div>
+        <div class="paso"><b>Usar</b><span class="mono">fprintf(f, ...);  fscanf(f, ...);  fgets(..., f);</span><span>las mismas funciones de la consola, con una <span class="mono">f</span> de más</span></div>
+        <div class="paso fn"><b>Cerrar</b><span class="mono">fclose(f);</span><span>termina de escribir lo pendiente y libera la conexión</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">FILE * es un apuntador</span>
+        <p><span class="mono">FILE *f</span> guarda la dirección de los datos que C necesita para manejar el archivo abierto (semana 10). <span class="mono">FILE</span> está en <span class="mono">&lt;stdio.h&gt;</span>.</p>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">Por qué fclose es obligatorio</span>
+        <p><span class="mono">fprintf</span> no siempre escribe en el disco en el momento: puede dejar los datos esperando en memoria. <span class="mono">errores/sin_fclose.c</span> escribe, no cierra y se interrumpe de golpe: medido en Linux, <b><span class="mono">resultado.txt</span> quedó con 0 bytes</b>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ............................................................. -->
+<section class="slide dense" data-t="11.1 archivos de texto · 0:51">
+  <p class="eyebrow"><span class="tick"></span> fopen</p>
+  <h2 class="title">El modo decide qué pasa con el archivo</h2>
+  <div class="split w64">
+    <div>
+      <table class="mini modos">
+        <thead><tr><th>Modo</th><th>Para</th><th>Si el archivo existe</th><th>Si no existe</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">"r"</td><td>leer</td><td>lo lee desde el principio</td><td><span class="mono">fopen</span> devuelve <span class="mono">NULL</span></td></tr>
+          <tr><td class="mono">"w"</td><td>escribir</td><td><b>borra su contenido</b></td><td>lo crea</td></tr>
+          <tr><td class="mono">"a"</td><td>agregar</td><td>escribe <b>al final</b>, sin borrar</td><td>lo crea</td></tr>
+        </tbody>
+      </table>
+      <p class="vlab">Pruébelo: el archivo <span class="mono">datos.txt</span> tiene una línea, «antes». El programa lo abre, escribe «nuevo» si puede y lo vuelve a leer.</p>
+      <div class="tbtns trzb stepbtns" id="moBtns" data-k="mo"><button class="tbtn" type="button" aria-pressed="false" data-i="0">inicio</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">"r" · existe</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">"r" · no existe</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">"w" · existe</button><button class="tbtn" type="button" aria-pressed="false" data-i="4">"w" · no existe</button><button class="tbtn" type="button" aria-pressed="false" data-i="5">"a" · existe</button><button class="tbtn" type="button" aria-pressed="false" data-i="6">"a" · no existe</button></div>
+      <div class="arch" id="arch-mo-0"><span class="an">datos.txt<i></i></span><div class="al"></div><div class="al"></div></div>
+      <p class="smsg" id="moMsg"></p>
+    </div>
+    <div>
+      <pre class="cc tiny" data-src="escribir_notas.c">f = fopen(<span class="s">"notas.txt"</span>, <span class="s">"w"</span>);
+<span class="k">if</span> (f == <span class="k">NULL</span>) {
+    printf(<span class="s">"No se pudo crear notas.txt\n"</span>);
+    <span class="k">return</span> <span class="n">1</span>;
+}</pre>
+      <div class="panel imp">
+        <span class="tag imp">La regla</span>
+        <p>Después de cada <span class="mono">fopen</span>, <b>preguntar por NULL</b> antes de usar el archivo. Es el mismo cuidado que con <span class="mono">malloc</span>.</p>
+      </div>
+      <p class="note">Los seis resultados los produjo un programa real, ejecutado una vez por cada caso.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 ............................................................. -->
+<section class="slide dense" data-t="11.1 archivos de texto · 0:40">
+  <p class="eyebrow"><span class="tick"></span> Escribir</p>
+  <h2 class="title">fprintf: como printf, pero hacia el archivo</h2>
+  <div class="split">
+    <div>
+      <pre class="cc tiny" data-src="escribir_notas.c">f = fopen(<span class="s">"notas.txt"</span>, <span class="s">"w"</span>);
+<span class="k">if</span> (f == <span class="k">NULL</span>) {
+    printf(<span class="s">"No se pudo crear notas.txt\n"</span>);
+    <span class="k">return</span> <span class="n">1</span>;
+}
+<span class="k">for</span> (i = <span class="n">1</span>; i &lt;= n; i++) {
+    printf(<span class="s">"Nota %d: "</span>, i);
+    scanf(<span class="s">"%lf"</span>, &amp;nota);
+    fprintf(f, <span class="s">"%.1f\n"</span>, nota);
+}
+fclose(f);</pre>
+    </div>
+    <div>
+      <p class="vlab">Consola</p>
+      <pre class="con tiny">Cuantas notas? <span class="u">3</span>
+Nota 1: <span class="u">4.5</span>
+Nota 2: <span class="u">3.2</span>
+Nota 3: <span class="u">2.8</span>
+Se guardaron 3 notas en notas.txt</pre>
+      <p class="vlab">Lo que quedó en el disco</p>
+      <div class="arch "><span class="an">notas.txt<i>3 líneas</i></span><pre class="ac">4.5
+3.2
+2.8</pre></div>
+      <div class="panel fn">
+        <span class="tag fn">Un archivo de texto es texto</span>
+        <p>Se puede abrir con el Bloc de notas. Cada <span class="mono">\n</span> que escribe <span class="mono">fprintf</span> es un salto de línea en el archivo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ............................................................. -->
+<section class="slide dense" data-t="11.1 archivos de texto · 0:44">
+  <p class="eyebrow"><span class="tick"></span> Leer</p>
+  <h2 class="title">fscanf para datos, fgets para líneas: el ciclo se detiene con lo que devuelven</h2>
+  <div class="duo">
+    <div>
+      <span class="tag fn">fscanf devuelve cuántos datos leyó</span>
+      <pre class="cc tiny" data-src="leer_numeros.c"><span class="k">while</span> (fscanf(f, <span class="s">"%lf"</span>, &amp;nota) == <span class="n">1</span>) {
+    suma = suma + nota;
+    n++;
+}
+fclose(f);</pre>
+      <pre class="con tiny">Notas leidas: 3
+Promedio: 3.50</pre>
+      <p class="small">Con el <span class="mono">notas.txt</span> de la diapositiva anterior. Al llegar al final, <span class="mono">fscanf</span> ya no lee nada y devuelve <span class="mono">EOF</span>: el ciclo termina.</p>
+    </div>
+    <div>
+      <span class="tag fn">fgets devuelve NULL al final</span>
+      <pre class="cc tiny" data-src="leer_lineas.c"><span class="k">while</span> (fgets(linea, LINEA, f) != <span class="k">NULL</span>) {
+    quitar_salto(linea);
+    n++;
+    printf(<span class="s">"%2d | %s\n"</span>, n, linea);
+}</pre>
+      <pre class="con tiny"> 1 | La memoria se borra al terminar el programa
+ 2 | El disco conserva los datos
+ 3 | Un archivo de texto se abre con el Bloc de notas
+ 4 | fgets lee hasta el salto de linea
+Lineas: 4</pre>
+      <p class="small"><span class="mono">fgets</span> guarda el <span class="mono">\n</span> del final; <span class="mono">quitar_salto</span> lo quita con <span class="mono">strlen</span>, como en la semana 9.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 ............................................................. -->
+<section class="slide dense" data-t="11.1 archivos de texto · 0:44">
+  <p class="eyebrow"><span class="tick"></span> Cuando el archivo no está</p>
+  <h2 class="title">El archivo inexistente y la ruta relativa</h2>
+  <div class="tri t3">
+    <div class="panel fn">
+      <span class="tag fn">Con la comprobación</span>
+      <p class="small"><span class="mono">leer_numeros.c</span> sin <span class="mono">notas.txt</span>:</p>
+      <pre class="con tiny">No existe notas.txt
+Ejecute primero escribir_notas</pre>
+      <p class="small">El programa avisa y termina con <span class="mono">return 1</span>.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Sin la comprobación</span>
+      <pre class="cc tiny" data-src="sin_verificar.c"><span class="k">FILE</span> *f = fopen(<span class="s">"no_existe.txt"</span>, <span class="s">"r"</span>);
+<span class="c">...</span>
+printf(<span class="s">"Antes de leer\n"</span>);
+fscanf(f, <span class="s">"%d"</span>, &amp;dato);</pre>
+      <pre class="con tiny">Antes de leer</pre>
+      <p class="small">Compila <b>sin avisos</b>. Medido en Linux: termina por la señal <span class="mono">SIGSEGV</span> (violación de segmento) en el <span class="mono">fscanf</span>; la segunda línea nunca aparece.</p>
+    </div>
+    <div class="panel">
+      <span class="tag">Ruta relativa</span>
+      <p class="small"><span class="mono">"notas.txt"</span>, sin carpeta, es una <b>ruta relativa</b>: se busca en la <b>carpeta de trabajo</b> del programa, que no siempre es la del <span class="mono">.c</span>.</p>
+      <p class="small">Si no sabe cuál es, ejecute <span class="mono">donde_estoy.c</span>: crea <span class="mono">aqui_estoy.txt</span> y basta con buscarlo.</p>
+    </div>
+  </div>
+  <p class="alert"><b>En el curso:</b> los archivos de datos van en la misma carpeta desde la que se ejecuta el programa, y todo <span class="mono">fopen</span> pregunta por <span class="mono">NULL</span>.</p>
+</section>
+
+<!-- 8 ............................................................. -->
+<section class="slide dense" data-t="11.1 archivos de texto · 0:30">
+  <p class="eyebrow"><span class="tick"></span> Compruebe antes de seguir</p>
+  <h2 class="title">¿Qué muestra cada programa?</h2>
+  <p class="note">Escriba en un papel lo que tiene el archivo después de cada <span class="mono">fopen</span>; después pulse <b>Ver salida</b>. Sin <span class="mono">#include &lt;stdio.h&gt;</span> y, para que quepan, sin las comprobaciones de <span class="mono">NULL</span>.</p>
+  <div class="pred3">
+<div class="panel pred"><span class="tag">Programa 1</span><pre class="cc tiny"><span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">FILE</span> *f;
+    <span class="k">int</span> x, suma = <span class="n">0</span>;
+
+    f = fopen(<span class="s">"a.txt"</span>, <span class="s">"w"</span>);
+    fprintf(f, <span class="s">"10\n"</span>);
+    fclose(f);
+    f = fopen(<span class="s">"a.txt"</span>, <span class="s">"w"</span>);
+    fprintf(f, <span class="s">"20\n"</span>);
+    fclose(f);
+    f = fopen(<span class="s">"a.txt"</span>, <span class="s">"a"</span>);
+    fprintf(f, <span class="s">"30\n"</span>);
+    fclose(f);
+
+    f = fopen(<span class="s">"a.txt"</span>, <span class="s">"r"</span>);
+    <span class="k">while</span> (fscanf(f, <span class="s">"%d"</span>, &amp;x) == <span class="n">1</span>) {
+        suma = suma + x;
+    }
+    fclose(f);
+    printf(<span class="s">"%d\n"</span>, suma);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pa1">Ver salida</button><pre class="con tiny hid" id="pa1">50</pre></div></div>
+<div class="panel pred"><span class="tag">Programa 2</span><pre class="cc tiny"><span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">FILE</span> *f;
+    <span class="k">char</span> linea[<span class="n">50</span>];
+    <span class="k">int</span> n = <span class="n">0</span>;
+
+    f = fopen(<span class="s">"b.txt"</span>, <span class="s">"w"</span>);
+    fprintf(f, <span class="s">"uno\ndos\n\ntres\n"</span>);
+    fclose(f);
+
+    f = fopen(<span class="s">"b.txt"</span>, <span class="s">"r"</span>);
+    <span class="k">while</span> (fgets(linea, <span class="n">50</span>, f) != <span class="k">NULL</span>) {
+        n++;
+    }
+    fclose(f);
+    printf(<span class="s">"%d\n"</span>, n);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pa2">Ver salida</button><pre class="con tiny hid" id="pa2">4</pre></div></div>
+<div class="panel pred"><span class="tag">Programa 3</span><pre class="cc tiny"><span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">FILE</span> *f;
+    <span class="k">int</span> x, n = <span class="n">0</span>, suma = <span class="n">0</span>;
+
+    f = fopen(<span class="s">"c.txt"</span>, <span class="s">"w"</span>);
+    fprintf(f, <span class="s">"4 7 x 9\n"</span>);
+    fclose(f);
+
+    f = fopen(<span class="s">"c.txt"</span>, <span class="s">"r"</span>);
+    <span class="k">while</span> (fscanf(f, <span class="s">"%d"</span>, &amp;x) == <span class="n">1</span>) {
+        n++;
+        suma = suma + x;
+    }
+    fclose(f);
+    printf(<span class="s">"%d %d\n"</span>, n, suma);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pa3">Ver salida</button><pre class="con tiny hid" id="pa3">2 11</pre></div></div>
+  </div>
+</section>
+
+<!-- 9 ............................................................. -->
+<section class="slide dense" data-t="11.2 registros · 0:57">
+  <p class="eyebrow"><span class="tick"></span> Bloque B · cápsula 11.2</p>
+  <h2 class="title">Un archivo de registros: una línea por registro, los campos separados por comas</h2>
+  <div class="split">
+    <div>
+      <div class="arch "><span class="an">estudiantes.csv<i>6 líneas</i></span><pre class="ac">1001,Ana Rios,4.2
+1002,Luis Mora,2.8
+1003,Sara Gil,3.5
+1004,Juan Paz,1.9
+1005,Eva Cano,4.8
+1006,Ivan Sosa,3.0</pre></div>
+      <div class="campos"><span class="cmp imp">1003</span><span class="sep">,</span><span class="cmp fn">Sara Gil</span><span class="sep">,</span><span class="cmp">3.5</span><span class="sep">\n</span></div>
+      <p class="note">Una línea = un <b>registro</b> (un estudiante). Cada dato = un <b>campo</b>: código, nombre y nota. Este formato se llama <b>CSV</b> (valores separados por comas) y lo abren las hojas de cálculo.</p>
+    </div>
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">Secuencial: en un solo sentido</span>
+        <p>El archivo se lee de la primera línea a la última. Para volver al principio, se cierra y se abre otra vez.</p>
+      </div>
+      <div class="panel imp">
+        <span class="tag imp">En memoria: arreglos paralelos</span>
+        <p>Cada campo va a su propio arreglo y la posición <span class="mono">i</span> es el mismo estudiante en los tres: <span class="mono">cod[i]</span>, <span class="mono">nom[i]</span>, <span class="mono">nota[i]</span>. Los nombres van en una matriz de <span class="mono">char</span>, como en la semana 9.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 ............................................................ -->
+<section class="slide dense" data-t="11.2 registros · 1:08">
+  <p class="eyebrow"><span class="tick"></span> Separar los campos</p>
+  <h2 class="title">sscanf lee de una cadena y dice cuántos campos logró leer</h2>
+  <div class="split">
+    <div>
+      <pre class="cc">sscanf(linea, "%d,%39[^,],%lf", &amp;cod[n], nom[n], &amp;nota[n])</pre>
+      <table class="mini fmt">
+        <tbody>
+          <tr><td class="mono">%d</td><td>el código, un entero</td></tr>
+          <tr><td class="mono">,</td><td>una coma, tal cual</td></tr>
+          <tr><td class="mono">%39[^,]</td><td>hasta 39 caracteres <b>que no sean coma</b>: el nombre, con espacios</td></tr>
+          <tr><td class="mono">%lf</td><td>la nota, un <span class="mono">double</span></td></tr>
+        </tbody>
+      </table>
+      <p class="note"><span class="mono">nom[n]</span> no lleva <span class="mono">&amp;</span>: ya es la dirección de la fila (semana 10). El 39 deja lugar para el <span class="mono">'\0'</span> de una fila de 40.</p>
+    </div>
+    <div>
+      <p class="vlab">Lo que devuelve, para cuatro líneas (ejecutado)</p>
+      <table class="mini ret"><thead><tr><th>linea</th><th>devuelve</th><th></th></tr></thead><tbody><tr><td class="mono">1003,Sara Gil,3.5</td><td class="mono"><b>3</b></td><td>válido</td></tr><tr><td class="mono">1002,Luis Mora,</td><td class="mono"><b>2</b></td><td>mal formado</td></tr><tr><td class="mono">1004,Juan Paz,cuatro</td><td class="mono"><b>2</b></td><td>mal formado</td></tr><tr><td class="mono">1003;Sara Gil;3.5</td><td class="mono"><b>1</b></td><td>mal formado</td></tr></tbody></table>
+      <div class="panel imp">
+        <span class="tag imp">La regla</span>
+        <p>Un registro es válido <b>solo si</b> <span class="mono">sscanf</span> devuelve 3. Si devuelve menos, los campos que faltan quedan con lo que tenían antes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 ............................................................ -->
+<section class="slide dense" data-t="11.2 registros · 1:05">
+  <p class="eyebrow"><span class="tick"></span> Cargar · procesar · guardar</p>
+  <h2 class="title">Se lee el archivo una vez, se trabaja en memoria</h2>
+  <div class="split w64">
+    <div>
+      <pre class="cc tiny xs" data-src="cargar_estudiantes.c"><span class="k">int</span> cargar(<span class="k">const</span> <span class="k">char</span> *nombre, <span class="k">int</span> cod[], <span class="k">char</span> nom[][TAM], <span class="k">double</span> nota[], <span class="k">int</span> max)
+{
+<span class="c">...</span>
+    f = fopen(nombre, <span class="s">"r"</span>);
+    <span class="k">if</span> (f == <span class="k">NULL</span>) {
+        <span class="k">return</span> -<span class="n">1</span>;
+    }
+    <span class="k">while</span> (fgets(linea, LINEA, f) != <span class="k">NULL</span> &amp;&amp; n &lt; max) {
+        num++;
+        <span class="k">if</span> (sscanf(linea, <span class="s">"%d,%39[^,],%lf"</span>, &amp;cod[n], nom[n], &amp;nota[n]) == <span class="n">3</span>) {
+            n++;
+        } <span class="k">else</span> {
+            printf(<span class="s">"Linea %d mal formada: se omite\n"</span>, num);
+        }
+    }
+    fclose(f);
+    <span class="k">return</span> n;
+}</pre>
+    </div>
+    <div>
+      <pre class="con tiny">Archivo: <span class="u">estudiantes.csv</span>
+Codigo Nombre       Nota
+1001   Ana Rios      4.2
+1002   Luis Mora     2.8
+1003   Sara Gil      3.5
+1004   Juan Paz      1.9
+1005   Eva Cano      4.8
+1006   Ivan Sosa     3.0
+Registros cargados: 6</pre>
+      <div class="panel fn">
+        <span class="tag fn">Qué devuelve cargar</span>
+        <p>La cantidad de registros cargados, o <span class="mono">-1</span> si no pudo abrir el archivo. <span class="mono">n &lt; max</span> impide escribir fuera de los arreglos si el archivo trae más líneas de las que caben.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 ............................................................ -->
+<section class="slide dense" data-t="11.2 registros · 0:55">
+  <p class="eyebrow"><span class="tick"></span> Datos que no vienen bien</p>
+  <h2 class="title">Una línea mal formada se informa y se omite</h2>
+  <div class="tri">
+    <div>
+      <div class="arch "><span class="an">estudiantes_malo.csv<i>5 líneas</i></span><pre class="ac">1001,Ana Rios,4.2
+1002,Luis Mora,
+1003,Sara Gil,3.5
+1004,Juan Paz,cuatro
+1005,Eva Cano,4.8</pre></div>
+      <p class="small">La línea 2 no tiene nota. La línea 4 tiene una palabra donde va un número.</p>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">Revisando lo que devuelve sscanf</span>
+      <pre class="con tiny">Archivo: <span class="u">estudiantes_malo.csv</span>
+Linea 2 mal formada: se omite
+Linea 4 mal formada: se omite
+Codigo Nombre       Nota
+1001   Ana Rios      4.2
+1003   Sara Gil      3.5
+1005   Eva Cano      4.8
+Registros cargados: 3</pre>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Sin revisarlo</span>
+      <p class="small"><span class="mono">errores/sscanf_sin_contar.c</span> llama a <span class="mono">sscanf</span> y muestra los campos sin mirar lo que devolvió:</p>
+      <pre class="con tiny">1001 Ana Rios   4.2
+1002 Luis Mora  4.2
+1003 Sara Gil   3.5
+1004 Juan Paz   3.5
+1005 Eva Cano   4.8</pre>
+      <p class="small">Luis y Juan aparecen con la nota del registro anterior. Nadie avisa: el error <b>no se ve</b> en la salida.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 13 ............................................................ -->
+<section class="slide dense" data-t="11.2 registros · 0:47">
+  <p class="eyebrow"><span class="tick"></span> Con memoria dinámica</p>
+  <h2 class="title">Contar, reservar justo lo necesario, cargar, filtrar y guardar en otro archivo</h2>
+  <div class="split">
+    <div>
+      <ol class="pasos4">
+        <li><b>Contar</b> los registros válidos: una primera lectura completa (<span class="mono">contar_validas</span>).</li>
+        <li><b>Reservar</b> <span class="mono">n</span> casillas con <span class="mono">malloc</span>; los nombres, como la matriz dinámica de la semana 10: <span class="mono">char **nom</span>, fila por fila.</li>
+        <li><b>Cargar</b>: segunda lectura, abriendo otra vez el archivo.</li>
+        <li><b>Guardar</b> los aprobados en <span class="mono">aprobados.csv</span> con <span class="mono">"w"</span>.</li>
+        <li><b>Liberar</b> todo, fila por fila.</li>
+      </ol>
+      <pre class="cc tiny" data-src="cargar_dinamico.c"><span class="k">for</span> (i = <span class="n">0</span>; i &lt; n; i++) {
+    <span class="k">if</span> (nota[i] &gt;= <span class="n">3.0</span>) {
+        fprintf(f, <span class="s">"%d,%s,%.1f\n"</span>, cod[i], nom[i], nota[i]);
+        k++;
+    }
+}</pre>
+    </div>
+    <div>
+      <pre class="con tiny">Registros cargados: 6 (memoria para 6)
+Aprobados escritos en aprobados.csv: 4</pre>
+      <p class="vlab">aprobados.csv, creado por el programa</p>
+      <div class="arch "><span class="an">aprobados.csv<i>4 líneas</i></span><pre class="ac">1001,Ana Rios,4.2
+1003,Sara Gil,3.5
+1005,Eva Cano,4.8
+1006,Ivan Sosa,3.0</pre></div>
+      <p class="note">Ejecutado también con AddressSanitizer: sin fugas ni accesos inválidos. El programa completo está en <span class="mono">S11_codigo/</span> y en la lectura (§ 3.5 y P8).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 14 ............................................................ -->
+<section class="slide dense" data-t="11.2 registros · 0:31">
+  <p class="eyebrow"><span class="tick"></span> Compruebe antes de seguir</p>
+  <h2 class="title">¿Qué muestra cada programa?</h2>
+  <p class="note">Para cada línea, cuente cuántos campos logra leer <span class="mono">sscanf</span>; después pulse <b>Ver salida</b>. Sin <span class="mono">#include &lt;stdio.h&gt;</span> ni comprobaciones de <span class="mono">NULL</span>.</p>
+  <div class="pred3">
+<div class="panel pred"><span class="tag">Programa 1</span><pre class="cc tiny"><span class="k">#define</span> F <span class="s">"%d,%19[^,],%lf"</span>
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">int</span> c, r1, r2, r3;
+    <span class="k">char</span> nom[<span class="n">20</span>];
+    <span class="k">double</span> nota;
+
+    r1 = sscanf(<span class="s">"7,Ana,4.5"</span>, F, &amp;c, nom, &amp;nota);
+    r2 = sscanf(<span class="s">"8,Luis,"</span>, F, &amp;c, nom, &amp;nota);
+    r3 = sscanf(<span class="s">"9;Eva;3.0"</span>, F, &amp;c, nom, &amp;nota);
+    printf(<span class="s">"%d %d %d\n"</span>, r1, r2, r3);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pb1">Ver salida</button><pre class="con tiny hid" id="pb1">3 2 1</pre></div></div>
+<div class="panel pred"><span class="tag">Programa 2</span><pre class="cc tiny"><span class="k">#define</span> F <span class="s">"%d,%19[^,],%lf"</span>
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">FILE</span> *f;
+    <span class="k">char</span> linea[<span class="n">60</span>], nom[<span class="n">20</span>];
+    <span class="k">int</span> c;
+    <span class="k">double</span> nota;
+
+    f = fopen(<span class="s">"e.csv"</span>, <span class="s">"w"</span>);
+    fprintf(f, <span class="s">"1,Ana,2.5\n2,Luis,3.0\n"</span>);
+    fprintf(f, <span class="s">"3,Eva,4.1\n"</span>);
+    fclose(f);
+
+    f = fopen(<span class="s">"e.csv"</span>, <span class="s">"r"</span>);
+    <span class="k">while</span> (fgets(linea, <span class="n">60</span>, f) != <span class="k">NULL</span>) {
+        <span class="k">if</span> (sscanf(linea, F, &amp;c, nom, &amp;nota) == <span class="n">3</span>
+            &amp;&amp; nota &gt;= <span class="n">3.0</span>) {
+            printf(<span class="s">"%s "</span>, nom);
+        }
+    }
+    fclose(f);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pb2">Ver salida</button><pre class="con tiny hid" id="pb2">Luis Eva </pre></div></div>
+<div class="panel pred"><span class="tag">Programa 3</span><pre class="cc tiny"><span class="k">#define</span> F <span class="s">"%d,%19[^,],%lf"</span>
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">FILE</span> *f;
+    <span class="k">char</span> linea[<span class="n">60</span>], nom[<span class="n">20</span>];
+    <span class="k">int</span> c = <span class="n">0</span>;
+    <span class="k">double</span> nota = <span class="n">0</span>;
+
+    f = fopen(<span class="s">"m.csv"</span>, <span class="s">"w"</span>);
+    fprintf(f, <span class="s">"1,Ana,4.0\n2,Luis,\n"</span>);
+    fclose(f);
+
+    f = fopen(<span class="s">"m.csv"</span>, <span class="s">"r"</span>);
+    <span class="k">while</span> (fgets(linea, <span class="n">60</span>, f) != <span class="k">NULL</span>) {
+        sscanf(linea, F, &amp;c, nom, &amp;nota);
+        printf(<span class="s">"%d %.1f\n"</span>, c, nota);
+    }
+    fclose(f);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pb3">Ver salida</button><pre class="con tiny hid" id="pb3">1 4.0
+2 4.0</pre></div></div>
+  </div>
+</section>
+
+<!-- 15 ............................................................ -->
+<section class="slide dense" data-t="11.3 actualización · 0:55">
+  <p class="eyebrow"><span class="tick"></span> Bloque C · cápsula 11.3</p>
+  <h2 class="title">Un archivo de texto no se corrige «en el sitio»: se reescribe en un temporal</h2>
+  <div class="split w64">
+    <div>
+      <div class="tbtns trzb stepbtns" id="tpBtns" data-k="tp"><button class="tbtn" type="button" aria-pressed="false" data-i="0">inicio</button><button class="tbtn" type="button" aria-pressed="false" data-i="1">línea 1</button><button class="tbtn" type="button" aria-pressed="false" data-i="2">línea 2</button><button class="tbtn" type="button" aria-pressed="false" data-i="3">línea 3</button><button class="tbtn" type="button" aria-pressed="false" data-i="4">línea 4</button><button class="tbtn" type="button" aria-pressed="false" data-i="5">línea 5</button><button class="tbtn" type="button" aria-pressed="false" data-i="6">línea 6</button><button class="tbtn" type="button" aria-pressed="false" data-i="7">remove</button><button class="tbtn" type="button" aria-pressed="false" data-i="8">rename</button></div>
+      <div class="dosarch"><div class="arch" id="arch-tp-0"><span class="an">estudiantes.csv<i></i></span><div class="al"></div><div class="al"></div><div class="al"></div><div class="al"></div><div class="al"></div><div class="al"></div></div><div class="arch" id="arch-tp-1"><span class="an">temporal.csv<i></i></span><div class="al"></div><div class="al"></div><div class="al"></div><div class="al"></div><div class="al"></div><div class="al"></div></div></div>
+      <p class="smsg" id="tpMsg"></p>
+      <p class="note">Estados impresos por una copia de <span class="mono">baja.c</span> ejecutada con el código 1004. Ámbar: la línea que se acaba de leer.</p>
+    </div>
+    <div>
+      <div class="panel fn">
+        <span class="tag fn">El patrón del archivo temporal</span>
+        <ol class="pasos4">
+          <li>Leer el original línea por línea.</li>
+          <li>Escribir en <span class="mono">temporal.csv</span> las que se quedan (o su versión corregida).</li>
+          <li>Cerrar los dos.</li>
+          <li><span class="mono">remove</span> el original.</li>
+          <li><span class="mono">rename</span> el temporal con el nombre del original.</li>
+        </ol>
+      </div>
+      <p class="small"><b>Alta</b>: al final, con <span class="mono">"a"</span>. <b>Baja</b> y <b>modificación</b>: con el temporal, porque las líneas de un archivo de texto no tienen largo fijo y no se pueden borrar ni alargar en el sitio.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 16 ............................................................ -->
+<section class="slide dense" data-t="11.3 actualización · 0:44">
+  <p class="eyebrow"><span class="tick"></span> Baja</p>
+  <h2 class="title">Eliminar un registro por su código</h2>
+  <div class="split w64">
+    <div>
+      <pre class="cc tiny" data-src="baja.c"><span class="k">while</span> (fgets(linea, LINEA, orig) != <span class="k">NULL</span>) {
+    <span class="k">if</span> (sscanf(linea, <span class="s">"%d"</span>, &amp;cod) == <span class="n">1</span> &amp;&amp; cod == buscado) {
+        hallado = <span class="n">1</span>;
+    } <span class="k">else</span> {
+        fputs(linea, temp);
+    }
+}
+fclose(orig);
+fclose(temp);
+
+<span class="k">if</span> (!hallado) {
+    remove(<span class="s">"temporal.csv"</span>);
+    printf(<span class="s">"No hay ningun registro con el codigo %d\n"</span>, buscado);
+    <span class="k">return</span> <span class="n">0</span>;
+}
+<span class="k">if</span> (remove(<span class="s">"estudiantes.csv"</span>) != <span class="n">0</span> ||
+    rename(<span class="s">"temporal.csv"</span>, <span class="s">"estudiantes.csv"</span>) != <span class="n">0</span>) {
+    printf(<span class="s">"No se pudo reemplazar estudiantes.csv\n"</span>);
+    <span class="k">return</span> <span class="n">1</span>;
+}</pre>
+    </div>
+    <div>
+      <pre class="con tiny">Codigo a eliminar: <span class="u">1004</span>
+Registro 1004 eliminado</pre>
+      <p class="vlab">estudiantes.csv después</p>
+      <div class="arch "><span class="an">estudiantes.csv<i>5 líneas</i></span><pre class="ac">1001,Ana Rios,4.2
+1002,Luis Mora,2.8
+1003,Sara Gil,3.5
+1005,Eva Cano,4.8
+1006,Ivan Sosa,3.0</pre></div>
+      <p class="small"><span class="mono">fputs</span> copia la línea tal como se leyó, con su <span class="mono">\n</span>. Si el código no existe, el temporal se borra y el original no se toca:</p>
+      <pre class="con tiny">Codigo a eliminar: <span class="u">9999</span>
+No hay ningun registro con el codigo 9999</pre>
+    </div>
+  </div>
+</section>
+
+<!-- 17 ............................................................ -->
+<section class="slide dense" data-t="11.3 actualización · 0:44">
+  <p class="eyebrow"><span class="tick"></span> Modificación y alta</p>
+  <h2 class="title">Modificar es copiar todo, cambiando una sola línea</h2>
+  <div class="split w64">
+    <div>
+      <pre class="cc tiny" data-src="modificar.c"><span class="k">while</span> (fgets(linea, LINEA, orig) != <span class="k">NULL</span>) {
+    <span class="k">if</span> (sscanf(linea, <span class="s">"%d,%39[^,],%lf"</span>, &amp;cod, nom, &amp;nota) == <span class="n">3</span>
+        &amp;&amp; cod == buscado) {
+        fprintf(temp, <span class="s">"%d,%s,%.1f\n"</span>, cod, nom, nueva);
+        printf(<span class="s">"%s: %.1f -&gt; %.1f\n"</span>, nom, nota, nueva);
+        hallado = <span class="n">1</span>;
+    } <span class="k">else</span> {
+        fputs(linea, temp);
+    }
+}</pre>
+      <pre class="con tiny">Codigo: <span class="u">1003</span>
+Nota nueva: <span class="u">3.9</span>
+Sara Gil: 3.5 -&gt; 3.9
+Registro actualizado</pre>
+    </div>
+    <div>
+      <p class="vlab">estudiantes.csv después</p>
+      <div class="arch "><span class="an">estudiantes.csv<i>6 líneas</i></span><pre class="ac">1001,Ana Rios,4.2
+1002,Luis Mora,2.8
+1003,Sara Gil,3.9
+1004,Juan Paz,1.9
+1005,Eva Cano,4.8
+1006,Ivan Sosa,3.0</pre></div>
+      <div class="panel fn">
+        <span class="tag fn">Alta: con "a", sin temporal</span>
+        <p class="small"><span class="mono">alta.c</span> primero lee el archivo para comprobar que el código no exista, y después lo abre con <span class="mono">"a"</span> para escribir al final:</p>
+        <pre class="con tiny">Codigo: <span class="u">1001</span>
+Ya existe un registro con el codigo 1001</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 18 ............................................................ -->
+<section class="slide dense" data-t="11.3 actualización · 0:47">
+  <p class="eyebrow"><span class="tick"></span> remove y rename</p>
+  <h2 class="title">El orden importa, y el temporal protege al original</h2>
+  <div class="tri">
+    <div class="panel fn">
+      <span class="tag fn">Los dos devuelven 0 si funcionan</span>
+      <p class="small"><span class="mono">remove("estudiantes.csv")</span> borra el archivo. <span class="mono">rename("temporal.csv", "estudiantes.csv")</span> le cambia el nombre. Cualquier otro valor es un error y se informa.</p>
+      <p class="small">Los dos se llaman con los archivos <b>ya cerrados</b>.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">Primero remove, después rename</span>
+      <p class="small">En Windows, la documentación de Microsoft indica que <span class="mono">rename</span> <b>falla</b> si ya existe un archivo con el nombre nuevo. En Linux, medido, lo reemplaza: <span class="mono">rename</span> devolvió 0 y el archivo de destino quedó con el contenido nuevo.</p>
+      <p class="small">Con <span class="mono">remove</span> antes, el programa funciona igual en los dos.</p>
+    </div>
+    <div class="panel">
+      <span class="tag">Si el programa se corta a mitad</span>
+      <p class="small"><span class="mono">corte.c</span> copia dos líneas y termina antes de <span class="mono">remove</span>:</p>
+      <pre class="con tiny">Corte simulado despues de 2 lineas</pre>
+      <p class="small">Medido: <span class="mono">estudiantes.csv</span> sigue con sus 6 líneas; <span class="mono">temporal.csv</span> quedó a medias, con 2.</p>
+    </div>
+  </div>
+  <p class="note">Fuente sobre Windows: documentación de <span class="mono">rename</span> de Microsoft Learn. Dev-C++ (TDM-GCC) usa la biblioteca de C de Microsoft, <span class="mono">msvcrt.dll</span>. No se ejecutó en Windows.</p>
+</section>
+
+<!-- 19 ............................................................ -->
+<section class="slide dense" data-t="11.3 actualización · 0:43">
+  <p class="eyebrow"><span class="tick"></span> El error clásico</p>
+  <h2 class="title">while (!feof(f)) procesa la última línea dos veces</h2>
+  <div class="duo">
+    <div class="panel imp">
+      <span class="tag imp">Incorrecto · errores/feof_mal.c</span>
+      <pre class="cc tiny" data-src="feof_mal.c"><span class="k">while</span> (!feof(f)) {
+    fgets(linea, LINEA, f);
+    n++;
+    printf(<span class="s">"%2d | %s"</span>, n, linea);
+}</pre>
+      <pre class="con tiny"> 1 | La memoria se borra al terminar el programa
+ 2 | El disco conserva los datos
+ 3 | Un archivo de texto se abre con el Bloc de notas
+ 4 | fgets lee hasta el salto de linea
+ 5 | fgets lee hasta el salto de linea
+Lineas: 5</pre>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">Correcto · leer_lineas.c</span>
+      <pre class="cc tiny" data-src="leer_lineas.c"><span class="k">while</span> (fgets(linea, LINEA, f) != <span class="k">NULL</span>) {
+    quitar_salto(linea);
+    n++;
+    printf(<span class="s">"%2d | %s\n"</span>, n, linea);
+}</pre>
+      <pre class="con tiny"> 1 | La memoria se borra al terminar el programa
+ 2 | El disco conserva los datos
+ 3 | Un archivo de texto se abre con el Bloc de notas
+ 4 | fgets lee hasta el salto de linea
+Lineas: 4</pre>
+    </div>
+  </div>
+  <p class="alert"><b>Por qué:</b> <span class="mono">feof</span> solo se vuelve verdadero <b>después</b> de una lectura que falló. Tras leer la cuarta línea todavía es falso; la quinta vuelta, <span class="mono">fgets</span> falla, no cambia <span class="mono">linea</span>, y se muestra otra vez la cuarta. <b>La condición del ciclo es lo que devuelve la lectura.</b></p>
+</section>
+
+<!-- 20 ............................................................ -->
+<section class="slide dense" data-t="11.3 actualización · 0:47">
+  <p class="eyebrow"><span class="tick"></span> Más modos y mensajes de error</p>
+  <h2 class="title">r+, w+, a+ para leer y escribir; perror y ferror para explicar qué falló</h2>
+  <div class="split">
+    <div>
+      <table class="mini modos">
+        <thead><tr><th>Modo</th><th>Si existe</th><th>Si no existe</th><th>Dónde escribe</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">"r+"</td><td>lo abre sin borrar</td><td><span class="mono">NULL</span></td><td>donde va la lectura</td></tr>
+          <tr><td class="mono">"w+"</td><td><b>lo borra</b></td><td>lo crea</td><td>donde va la lectura</td></tr>
+          <tr><td class="mono">"a+"</td><td>lo abre sin borrar</td><td>lo crea</td><td><b>siempre al final</b></td></tr>
+        </tbody>
+      </table>
+      <pre class="cc tiny" data-src="modo_amas.c">f = fopen(<span class="s">"bitacora.txt"</span>, <span class="s">"a+"</span>);
+<span class="c">...</span>
+fprintf(f, <span class="s">"revisado\n"</span>);
+rewind(f);
+<span class="k">while</span> (fgets(linea, LINEA, f) != <span class="k">NULL</span>) {
+    printf(<span class="s">"%s"</span>, linea);
+}</pre>
+      <p class="small">Con <span class="mono">bitacora.txt</span> = «inicio»: <span class="mono">muestra «inicio» y «revisado»</span>. Entre escribir y leer el mismo archivo hay que llamar a <span class="mono">rewind</span> (vuelve al principio) o a <span class="mono">fflush</span>. En el curso es más sencillo abrir, usar y cerrar.</p>
+    </div>
+    <div>
+      <pre class="cc tiny" data-src="leer_seguro.c">f = fopen(nombre, <span class="s">"r"</span>);
+<span class="k">if</span> (f == <span class="k">NULL</span>) {
+    perror(nombre);
+    <span class="k">return</span> <span class="n">1</span>;
+}
+<span class="k">while</span> (fgets(linea, LINEA, f) != <span class="k">NULL</span>) {
+    n++;
+}
+<span class="k">if</span> (ferror(f)) {
+    perror(<span class="s">"Error al leer"</span>);
+}</pre>
+      <pre class="con tiny">Archivo: <span class="u">frases.txt</span>
+frases.txt tiene 4 lineas</pre>
+      <pre class="con tiny">Archivo: <span class="u">nada.txt</span>
+nada.txt: No such file or directory</pre>
+      <p class="small"><span class="mono">perror</span> agrega el motivo que da el sistema (medido en Linux; en Windows el texto puede cambiar). <span class="mono">ferror</span> distingue «se acabó el archivo» de «falló la lectura».</p>
+    </div>
+  </div>
+</section>
+
+<!-- 21 ............................................................ -->
+<section class="slide dense" data-t="11.3 actualización · 0:32">
+  <p class="eyebrow"><span class="tick"></span> Compruebe antes de seguir</p>
+  <h2 class="title">¿Qué muestra cada programa?</h2>
+  <p class="note">Siga lo que tiene cada archivo y lo que vale cada variable en cada vuelta; después pulse <b>Ver salida</b>. Sin <span class="mono">#include &lt;stdio.h&gt;</span>; el segundo, sin comprobación de <span class="mono">NULL</span>.</p>
+  <div class="pred3">
+<div class="panel pred"><span class="tag">Programa 1</span><pre class="cc tiny"><span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">FILE</span> *f;
+    <span class="k">int</span> x = <span class="n">0</span>, suma = <span class="n">0</span>;
+
+    f = fopen(<span class="s">"n.txt"</span>, <span class="s">"w"</span>);
+    fprintf(f, <span class="s">"5\n6\n"</span>);
+    fclose(f);
+
+    f = fopen(<span class="s">"n.txt"</span>, <span class="s">"r"</span>);
+    <span class="k">while</span> (!feof(f)) {
+        fscanf(f, <span class="s">"%d"</span>, &amp;x);
+        suma = suma + x;
+    }
+    fclose(f);
+    printf(<span class="s">"%d\n"</span>, suma);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pc1">Ver salida</button><pre class="con tiny hid" id="pc1">17</pre></div></div>
+<div class="panel pred"><span class="tag">Programa 2</span><pre class="cc tiny"><span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">FILE</span> *f = fopen(<span class="s">"a.txt"</span>, <span class="s">"w"</span>);
+    <span class="k">int</span> r1, r2;
+
+    fprintf(f, <span class="s">"hola\n"</span>);
+    fclose(f);
+    r1 = rename(<span class="s">"a.txt"</span>, <span class="s">"b.txt"</span>);
+    r2 = rename(<span class="s">"a.txt"</span>, <span class="s">"c.txt"</span>);
+    printf(<span class="s">"%d %d\n"</span>, r1 == <span class="n">0</span>, r2 == <span class="n">0</span>);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pc2">Ver salida</button><pre class="con tiny hid" id="pc2">1 0</pre></div></div>
+<div class="panel pred"><span class="tag">Programa 3</span><pre class="cc tiny"><span class="k">int</span> abre(<span class="k">const</span> <span class="k">char</span> *modo)
+{
+    <span class="k">FILE</span> *f = fopen(<span class="s">"x.txt"</span>, modo);
+
+    <span class="k">if</span> (f == <span class="k">NULL</span>) {
+        <span class="k">return</span> <span class="n">0</span>;
+    }
+    fclose(f);
+    <span class="k">return</span> <span class="n">1</span>;
+}
+
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">int</span> a = abre(<span class="s">"r+"</span>);
+    <span class="k">int</span> b = abre(<span class="s">"a+"</span>);
+    <span class="k">int</span> c = abre(<span class="s">"r+"</span>);
+
+    printf(<span class="s">"%d %d %d\n"</span>, a, b, c);
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre><div class="row"><button class="tbtn" type="button" data-o="pc3">Ver salida</button><pre class="con tiny hid" id="pc3">0 1 1</pre></div></div>
+  </div>
+</section>
+
+<!-- 22 ............................................................ -->
+<section class="slide dense" data-t="11.4 binarios · 1:04">
+  <p class="eyebrow"><span class="tick"></span> Bloque D · cápsula 11.4</p>
+  <h2 class="title">Texto o binario: los mismos datos, guardados de dos maneras</h2>
+  <div class="duo">
+    <div class="panel fn">
+      <span class="tag fn">catalogo.csv · texto · 75 bytes</span>
+      <div class="arch "><span class="an">catalogo.csv<i>5 líneas</i></span><pre class="ac">101,2500.00,40
+102,1800.50,12
+103,12000.00,3
+104,950.00,150
+105,4300.75,27</pre></div>
+      <p class="small">Cada número se escribe con sus <b>caracteres</b>: <span class="mono">40</span> son dos bytes, <span class="mono">12000.00</span> son ocho. Se lee con el Bloc de notas.</p>
+    </div>
+    <div class="panel imp">
+      <span class="tag imp">catalogo.bin · binario · 84 bytes</span>
+      <pre class="con tiny hex">05 00 00 00 65 00 00 00 66 00 00 00 67 00 00 00
+68 00 00 00 69 00 00 00 00 00 00 00 00 88 a3 40</pre>
+      <p class="small">Cada número se copia <b>tal como está en la memoria</b>: todo <span class="mono">int</span> ocupa 4 bytes y todo <span class="mono">double</span> 8, valga lo que valga. Abierto con el Bloc de notas se ve como basura. Arriba, sus primeros 32 bytes en hexadecimal.</p>
+    </div>
+  </div>
+  <p class="alert"><b>Medido:</b> con estos datos el binario ocupa <b>más</b> (84 contra 75 bytes), porque los números son cortos. El binario no siempre es más pequeño: depende de los datos.</p>
+</section>
+
+<!-- 23 ............................................................ -->
+<section class="slide dense" data-t="11.4 binarios · 0:56">
+  <p class="eyebrow"><span class="tick"></span> fwrite y fread</p>
+  <h2 class="title">Un arreglo completo se escribe y se lee con una sola llamada</h2>
+  <div class="duo">
+    <div>
+      <span class="tag fn">Guardar · "wb"</span>
+      <pre class="cc tiny" data-src="guardar_catalogo.c"><span class="k">FILE</span> *f = fopen(nombre, <span class="s">"wb"</span>);
+
+<span class="k">if</span> (f == <span class="k">NULL</span>) {
+    <span class="k">return</span> <span class="n">1</span>;
+}
+fwrite(&amp;n, <span class="k">sizeof</span>(<span class="k">int</span>), <span class="n">1</span>, f);
+fwrite(cod, <span class="k">sizeof</span>(<span class="k">int</span>), n, f);
+fwrite(precio, <span class="k">sizeof</span>(<span class="k">double</span>), n, f);
+fwrite(exist, <span class="k">sizeof</span>(<span class="k">int</span>), n, f);
+fclose(f);</pre>
+      <p class="small"><span class="mono">fwrite(dirección, tamaño de un elemento, cuántos, archivo)</span>. Primero se guarda <span class="mono">n</span>, para saber al leer cuántos vienen.</p>
+    </div>
+    <div>
+      <span class="tag fn">Recuperar · "rb"</span>
+      <pre class="cc tiny" data-src="leer_catalogo_bin.c"><span class="k">if</span> (fread(&amp;n, <span class="k">sizeof</span>(<span class="k">int</span>), <span class="n">1</span>, f) != <span class="n">1</span> || n &lt; <span class="n">0</span> || n &gt; MAX) {
+    printf(<span class="s">"catalogo.bin no tiene el formato esperado\n"</span>);
+    fclose(f);
+    <span class="k">return</span> <span class="n">1</span>;
+}
+<span class="k">if</span> (fread(cod, <span class="k">sizeof</span>(<span class="k">int</span>), n, f) != (<span class="k">size_t</span>) n ||
+    fread(precio, <span class="k">sizeof</span>(<span class="k">double</span>), n, f) != (<span class="k">size_t</span>) n ||
+    fread(exist, <span class="k">sizeof</span>(<span class="k">int</span>), n, f) != (<span class="k">size_t</span>) n) {</pre>
+      <pre class="con tiny">Codigo     Precio Exist.
+101       2500.00     40
+102       1800.50     12
+103      12000.00      3
+104        950.00    150
+105       4300.75     27</pre>
+      <p class="small"><span class="mono">fread</span> devuelve cuántos elementos leyó: si es menos de los pedidos, el archivo está incompleto. Se lee <b>en el mismo orden</b> en que se escribió.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 24 ............................................................ -->
+<section class="slide dense" data-t="11.4 binarios · 0:48">
+  <p class="eyebrow"><span class="tick"></span> Exactitud y la b del modo</p>
+  <h2 class="title">El binario devuelve el valor exacto; el texto, lo que dejó el formato</h2>
+  <div class="split">
+    <div>
+      <p class="small"><span class="mono">reales_bin.c</span> guarda cinco <span class="mono">double</span> en binario y en texto con <span class="mono">%.2f</span>. En <b>otra ejecución</b> los lee y los compara con los originales:</p>
+      <pre class="con tiny">1 Guardar  2 Verificar: <span class="u">1</span>
+Guardados 5 reales en reales.bin y en reales.txt</pre>
+      <pre class="con tiny">1 Guardar  2 Verificar: <span class="u">2</span>
+Binario: 5 de 5 iguales al original
+Texto con %.2f: 2 de 5 iguales al original</pre>
+      <p class="small">El texto guardó <span class="mono">3.14</span> en lugar de <span class="mono">3.14159265</span>: al leerlo, ya no es el mismo número.</p>
+    </div>
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">"rb" y "wb", no "r" y "w"</span>
+        <p class="small">En <b>Windows</b>, según la documentación de Microsoft, el modo texto cambia cada <span class="mono">\n</span> por <span class="mono">\r\n</span> al escribir y al revés al leer. Sobre un archivo binario eso <b>altera los bytes</b>. La <span class="mono">b</span> lo evita.</p>
+        <p class="small">En <b>Linux</b> la <span class="mono">b</span> no cambia nada (lo dice la norma POSIX y se midió: el mismo texto escrito con <span class="mono">"w"</span> y con <span class="mono">"wb"</span> dio archivos idénticos, byte por byte). Se escribe igual, para que el programa funcione en los dos.</p>
+      </div>
+      <p class="note">Fuentes: documentación de <span class="mono">fopen</span> de Microsoft Learn y página <span class="mono">fopen</span> de POSIX (The Open Group). No se ejecutó en Windows.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 25 ............................................................ -->
+<section class="slide dense" data-t="11.4 binarios · 0:55">
+  <p class="eyebrow"><span class="tick"></span> Persistencia del programa completo</p>
+  <h2 class="title">Cargar al iniciar, guardar al salir</h2>
+  <div class="duo">
+    <div><p class="vlab">Primera ejecución: no hay archivo</p><pre class="con tiny">Primera ejecucion: inventario vacio
+1 Listar 2 Agregar 3 Cambiar 0 Salir: <span class="u">2</span>
+Codigo y existencias: <span class="u">501 30</span>
+1 Listar 2 Agregar 3 Cambiar 0 Salir: <span class="u">2</span>
+Codigo y existencias: <span class="u">502 8</span>
+1 Listar 2 Agregar 3 Cambiar 0 Salir: <span class="u">1</span>
+  501: 30 unidades
+  502: 8 unidades
+1 Listar 2 Agregar 3 Cambiar 0 Salir: <span class="u">0</span>
+Se guardaron 2 productos en inventario.bin</pre></div>
+    <div><p class="vlab">Segunda ejecución: los datos volvieron</p><pre class="con tiny">Se cargaron 2 productos de inventario.bin
+1 Listar 2 Agregar 3 Cambiar 0 Salir: <span class="u">1</span>
+  501: 30 unidades
+  502: 8 unidades
+1 Listar 2 Agregar 3 Cambiar 0 Salir: <span class="u">3</span>
+Codigo y existencias nuevas: <span class="u">502 20</span>
+1 Listar 2 Agregar 3 Cambiar 0 Salir: <span class="u">0</span>
+Se guardaron 2 productos en inventario.bin</pre></div>
+  </div>
+  <div class="duo">
+    <div>
+      <pre class="cc tiny" data-src="inventario.c">n = cargar(cod, exist, MAX);
+<span class="k">if</span> (n &lt; <span class="n">0</span>) {
+    printf(<span class="s">"Primera ejecucion: inventario vacio\n"</span>);
+    n = <span class="n">0</span>;
+}
+<span class="c">...</span>
+<span class="k">if</span> (guardar(cod, exist, n) != <span class="n">0</span>) {</pre>
+    </div>
+    <div class="panel fn">
+      <span class="tag fn">La primera vez no es un error</span>
+      <p class="small">Que el archivo no exista es lo normal la primera vez: el programa empieza vacío. Es lo que pide el proyecto.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 26 ............................................................ -->
+<section class="slide dense" data-t="11.4 binarios · 0:53">
+  <p class="eyebrow"><span class="tick"></span> Criterio</p>
+  <h2 class="title">¿Texto o binario?</h2>
+  <table class="mini comp">
+    <thead><tr><th></th><th>Texto · <span class="mono">fprintf</span>, <span class="mono">fgets</span>, <span class="mono">sscanf</span></th><th>Binario · <span class="mono">fwrite</span>, <span class="mono">fread</span></th></tr></thead>
+    <tbody>
+      <tr><td><b>Lo puede leer una persona</b></td><td>sí, y abrir en una hoja de cálculo</td><td>no</td></tr>
+      <tr><td><b>Código para guardar un arreglo</b></td><td>un ciclo con <span class="mono">fprintf</span>, y separar campos al leer</td><td>una llamada a <span class="mono">fwrite</span> y una a <span class="mono">fread</span></td></tr>
+      <tr><td><b>Valores reales</b></td><td>se guardan con los decimales del formato</td><td>exactos</td></tr>
+      <tr><td><b>Tamaño</b></td><td>depende de cuántos caracteres tenga cada número</td><td>fijo por tipo; en el ejemplo, mayor</td></tr>
+      <tr><td><b>Otro equipo u otro compilador</b></td><td>lo lee sin problema</td><td>puede no leerlo si los tamaños o la representación cambian</td></tr>
+      <tr><td><b>Conviene para</b></td><td>datos que alguien revisa, edita o exporta</td><td>datos que solo usa el propio programa</td></tr>
+    </tbody>
+  </table>
+  <p class="note">En el proyecto se aceptan los dos. Lo que se exige: que los datos se carguen al iniciar, que sobrevivan al cierre y que el programa funcione la primera vez, sin archivo.</p>
+</section>
+
+<!-- 27 ............................................................ -->
+<section class="slide dense" data-t="11.4 binarios · 0:40">
+  <p class="eyebrow"><span class="tick"></span> Cierre</p>
+  <h2 class="title">Lista de chequeo de los archivos</h2>
+  <div class="split">
+    <div>
+      <div class="checks" id="lista">
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Cada <span class="mono">fopen</span> pregunta por <span class="mono">NULL</span>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Cada archivo abierto tiene su <span class="mono">fclose</span>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">El ciclo de lectura se controla con lo que devuelve <span class="mono">fgets</span>, <span class="mono">fscanf</span> o <span class="mono">fread</span>, nunca con <span class="mono">feof</span>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Un registro se acepta solo si <span class="mono">sscanf</span> leyó todos sus campos.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">Baja y modificación: temporal, cerrar los dos, <span class="mono">remove</span> y después <span class="mono">rename</span>.</span></button>
+        <button class="chk" type="button" aria-pressed="false"><span class="mk">✓</span> <span class="lbl">El programa funciona la primera vez, cuando el archivo todavía no existe.</span></button>
+      </div>
+      <p class="tally"><b id="tallyN">0</b> / 6 · <span id="tallyMsg">empiece por la primera</span></p>
+    </div>
+    <div>
+      <div class="panel imp">
+        <span class="tag imp">Esta semana</span>
+        <p>El <b>formulario de 20 preguntas</b> (5 por cápsula). En la lectura, 8 ejercicios guiados, 16 de práctica y el reto opcional: agregar persistencia a un programa de la semana 7.</p>
+      </div>
+      <div class="panel fn">
+        <span class="tag fn">La próxima semana</span>
+        <p><b>Recursión</b>: funciones que se llaman a sí mismas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="notes" id="notesBox">
+  <h5>Guion del presentador · <span class="time" id="notesTime"></span></h5>
+  <p id="notesText"></p>
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var cur = document.getElementById('cur');
+  var bar = document.getElementById('bar');
+  var notesBox = document.getElementById('notesBox');
+  var notesText = document.getElementById('notesText');
+  var notesTime = document.getElementById('notesTime');
+  function $(id){ return document.getElementById(id); }
+  function all(sel, root){ return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  /* El panel de notas es guion de narración: los cuatro bloques llevan
+     video. El texto es el mismo del libreto S11_libreto.md, generado desde
+     la misma fuente (guion_data.py), y el campo de tiempo es la duración
+     de cada diapositiva dentro de su bloque.                              */
+  var NOTES = [
+  "Semana once: archivos. Hasta ahora, todo lo que un programa calcula se pierde cuando termina: los vectores, las matrices y la memoria dinámica viven en la memoria, y la memoria se libera al salir. Esta semana los datos se guardan en el disco y se recuperan en la siguiente ejecución. Son cuatro videos. Este primero: cómo escribir y leer un archivo de texto.",
+  "Cuatro objetivos, uno por video: escribir y leer un archivo de texto comprobando que se pudo abrir; cargar un archivo de registros a arreglos paralelos y detectar las líneas mal formadas; eliminar y modificar registros con un archivo temporal; y guardar arreglos completos en binario. La evidencia es un formulario de veinte preguntas, cinco por cada video, todas con el código a la vista. No se entregan programas. La lectura trae ocho ejercicios guiados, dieciséis de práctica y un reto opcional, y la carpeta de código trae los programas con sus archivos de datos.",
+  "Trabajar con un archivo tiene siempre tres pasos. Abrir: fopen conecta el programa con el archivo y devuelve un FILE asterisco, un apuntador, o NULL si no pudo. Usar: las mismas funciones de la consola con una efe delante y el archivo como dato: fprintf, fscanf, fgets. Y cerrar, con fclose. Cerrar no es un detalle: fprintf puede dejar los datos esperando en memoria antes de pasarlos al disco. El programa de errores sin fclose escribe, no cierra y se interrumpe de golpe; el archivo queda vacío, con cero bytes. El dato nunca llegó al disco.",
+  "El segundo dato de fopen es el modo. Erre abre para leer, y si el archivo no existe, fopen devuelve NULL. Doble ve abre para escribir: si el archivo no existe lo crea, y si existe, borra todo su contenido. A abre para agregar: escribe al final sin borrar nada, y también crea el archivo si hace falta. Pruebe los seis casos con los botones: cada resultado lo produjo un programa real. Fíjese en doble ve con el archivo existente: la línea antes desaparece. La regla es la misma de malloc: después de cada fopen, se pregunta por NULL antes de usar el archivo.",
+  "Escribir_notas pide cuántas notas hay, abre notas punto txt con doble ve, pregunta por NULL, y en el ciclo lee cada nota del teclado y la escribe en el archivo con fprintf. El formato es el de printf; la diferencia es el primer dato, el archivo. Al final, fclose. Con tres notas, el archivo queda con tres líneas. Un archivo de texto es solo texto: se puede abrir con el Bloc de notas, y cada barra ene que escribe fprintf es un salto de línea.",
+  "Para leer hay dos herramientas. fscanf lee datos, como scanf, y devuelve cuántos logró leer. El ciclo se repite mientras devuelva uno; al final del archivo ya no lee nada y el ciclo termina. Con el archivo de la diapositiva anterior, tres notas y su promedio. fgets lee una línea completa y devuelve NULL al llegar al final. fgets guarda también el salto de línea; la función quitar salto lo borra con strlen, como en la semana nueve. En los dos casos, la condición del ciclo es lo que devuelve la lectura.",
+  "¿Qué pasa si el archivo no está? Con la comprobación, leer números avisa y termina con return uno. Sin la comprobación, fscanf recibe NULL: el programa alcanza a mostrar el primer mensaje y termina por una violación de segmento, medido en Linux. Otra causa frecuente de NULL: la ruta. Notas punto txt, sin carpeta, es una ruta relativa, y se busca en la carpeta de trabajo del programa, que no siempre es la del archivo punto c. Si no sabe cuál es, ejecute donde estoy: crea un archivo, y basta con buscarlo.",
+  "Antes de seguir, tres programas. En cada uno, escriba en un papel lo que tiene el archivo después de cada fopen, y después compruebe con el botón. Para que quepan, no tienen las comprobaciones de NULL; los suyos sí las llevan. En el siguiente video: archivos de registros, una línea por registro.",
+  "Segundo video: archivos de registros. Un registro es el grupo de datos de una misma cosa: un estudiante, con su código, su nombre y su nota. En el archivo, cada registro ocupa una línea y sus campos van separados por comas. Este formato se llama ce ese ve, valores separados por comas, y lo abre cualquier hoja de cálculo. El archivo es secuencial: se lee de la primera línea a la última, en un solo sentido; para volver al principio, se cierra y se abre otra vez. En memoria, cada campo va a su propio arreglo, y la posición i es el mismo estudiante en los tres: arreglos paralelos. Los nombres van en una matriz de char, como en la semana nueve.",
+  "Cada línea se lee con fgets y se separa con sscanf, que lee de una cadena en vez del teclado. El formato dice qué esperar: un entero, una coma, el nombre y la nota. El nombre usa por ciento treinta y nueve corchete: hasta treinta y nueve caracteres que no sean coma, así que puede tener espacios. nom de ene no lleva ampersand, porque ya es una dirección. Lo importante es lo que devuelve sscanf: cuántos campos logró leer. Con la línea completa, tres. Sin nota, dos. Con una palabra donde va la nota, dos. La regla: un registro es válido solo si sscanf devuelve tres; si devuelve menos, los campos que faltan quedan con lo que tenían. ¿Por qué treinta y nueve? Porque cada fila de la matriz de nombres tiene cuarenta casillas, y una se reserva para el cero final de la cadena.",
+  "El patrón de casi todo programa con archivos es cargar, procesar y guardar: se lee el archivo una sola vez, se trabaja con los arreglos en memoria, y al final se escribe el resultado. La función cargar abre el archivo, y si no puede, devuelve menos uno. Lee línea por línea, y solo cuando sscanf devuelve tres avanza ene; si no, informa el número de la línea. La condición ene menor que max impide escribir fuera de los arreglos si el archivo trae más líneas de las que caben. Devuelve la cantidad de registros cargados. Con el archivo de estudiantes, seis registros. Después, la función reporte recorre los arreglos y los muestra en columnas: ya no toca el archivo. Si el programa necesitara los datos otra vez, los tiene en memoria; no hace falta volver a leer el disco.",
+  "Los datos reales casi nunca vienen perfectos. En este archivo, la línea dos no tiene nota y la línea cuatro tiene la palabra cuatro donde va un número. El programa revisa lo que devuelve sscanf: informa las dos líneas, las omite y carga tres registros. A la derecha, el mismo archivo con un programa que no revisa lo que devuelve sscanf. Luis y Juan aparecen con la nota del registro anterior, y nadie avisa. Ese es el peligro: el error no se ve en la salida. Por eso, cuando pruebe su programa, no use solo archivos perfectos: prepare uno con una línea incompleta y otra con un dato equivocado, y compruebe que el programa los informa.",
+  "¿Y si no se sabe cuántos registros hay? Con la memoria dinámica de la semana diez, se reserva justo lo necesario. Primero se cuentan los registros válidos con una lectura completa. Después se reserva con malloc: los códigos, las notas y los nombres, estos como la matriz dinámica, fila por fila. Se abre el archivo otra vez y se carga. Se filtran los aprobados y se escriben en un archivo nuevo con doble ve. Y al final se libera todo. Con seis registros, cuatro aprobados en el archivo nuevo. El programa se ejecutó también con AddressSanitizer: sin fugas.",
+  "Tres programas para comprobar. En cada línea, cuente cuántos campos logra leer sscanf antes de mirar la salida. El tercero muestra otra vez el error de no revisar lo que devuelve sscanf: compare lo que muestra con lo que tiene el archivo. En el siguiente video: cómo eliminar y modificar registros de un archivo.",
+  "Tercer video: actualizar un archivo. Las líneas de un archivo de texto no tienen un largo fijo, así que no se puede borrar una ni alargarla en el sitio. Agregar al final es fácil, con a. Para eliminar o modificar se usa un archivo temporal. Se lee el original línea por línea, y en el temporal se escriben las que se quedan, o su versión corregida. Se cierran los dos. Se borra el original con remove, y el temporal recibe su nombre con rename. Con los botones, paso a paso, la baja del registro mil cuatro: esa línea se lee, pero no se copia. Observe que el original no cambia hasta el último paso.",
+  "Este es baja punto c. En el ciclo, sscanf saca solo el código de cada línea. Si es el buscado, se marca como hallado y no se copia; si no, fputs copia la línea tal como se leyó, con su salto de línea. Al salir del ciclo se cierran los dos archivos. Si el código no estaba, se borra el temporal y el original no se toca. Si estaba, remove y rename, y si alguno devuelve algo distinto de cero, se informa. Con mil cuatro, el archivo queda con cinco registros.",
+  "Modificar es copiar todo cambiando una sola línea. Cuando aparece el código buscado, en vez de copiar la línea se escribe una nueva con fprintf, con la nota nueva. Las demás se copian con fputs. Con mil tres y tres coma nueve, la nota de Sara cambia y lo demás queda igual. El alta no necesita temporal: alta punto c primero lee el archivo para comprobar que el código no exista, y después lo abre con a para escribir al final. Con un código repetido, avisa y no agrega nada.",
+  "remove y rename devuelven cero si funcionan, y se llaman con los archivos ya cerrados. El orden importa. Según la documentación de Microsoft, en Windows rename falla si ya existe un archivo con el nombre nuevo; en Linux, medido, lo reemplaza. Con remove primero, el programa funciona igual en los dos. Y el temporal protege los datos: corte punto c copia dos líneas y termina antes de remove, como si fallara a mitad. El original quedó completo y solo sobra un temporal incompleto. Si se hubiera escrito directamente sobre el original, se habrían perdido datos.",
+  "Un error clásico: controlar el ciclo con feof. A la izquierda, la última línea aparece dos veces y el conteo dice cinco. La razón: feof solo se vuelve verdadero después de una lectura que falló. Tras leer la cuarta línea todavía es falso; en la quinta vuelta fgets falla, no cambia la cadena, y se muestra otra vez la cuarta. A la derecha, el ciclo correcto: la condición es lo que devuelve fgets. Para fscanf y fread es igual: el ciclo se controla con lo que devuelve la lectura.",
+  "Con un signo más, el archivo se puede leer y escribir. Erre más exige que exista y no lo borra. Doble ve más lo crea o lo borra. A más lo crea si hace falta y siempre escribe al final. Entre escribir y leer el mismo archivo hay que llamar a rewind, que vuelve al principio. En el curso es más sencillo abrir, usar y cerrar. Para explicar los errores, perror muestra un texto seguido del motivo que da el sistema, y ferror distingue si el ciclo terminó porque se acabó el archivo o porque falló la lectura.",
+  "Tres programas. El primero repite el error de feof, ahora con fscanf: siga el valor de equis en cada vuelta. El segundo revisa lo que devuelve rename. El tercero prueba erre más y a más: recuerde cuál exige que el archivo exista. En el último video: archivos binarios y un programa completo que guarda sus datos.",
+  "Último video: archivos binarios. El mismo catálogo de cinco productos, guardado de dos maneras. En texto, cada número se escribe con sus caracteres: cuarenta son dos bytes y doce mil punto cero cero son ocho. En binario, cada número se copia tal como está en la memoria: todo int ocupa cuatro bytes y todo double ocho, valga lo que valga. Abierto con el Bloc de notas, el binario parece basura. Un dato medido que conviene recordar: con estos datos, el binario ocupa más, ochenta y cuatro bytes contra setenta y cinco, porque los números son cortos. El binario no siempre es más pequeño: con números largos o con muchos decimales, el texto crecería y el binario no. A la derecha se ven los primeros bytes en hexadecimal: el cinco del principio es ene, la cantidad de productos.",
+  "fwrite recibe la dirección de los datos, el tamaño de un elemento, cuántos elementos y el archivo. Con eso, un arreglo completo se guarda en una sola llamada. El archivo se abre con doble ve be. Primero se guarda ene, para saber al leer cuántos vienen; después los tres arreglos. Para recuperarlos, fread con erre be, en el mismo orden. fread devuelve cuántos elementos leyó: si es menos de los pedidos, el archivo está incompleto o tiene otro formato. Y ene se valida antes de usarlo, para no leer más allá de los arreglos. Si el archivo se escribió en un orden y se lee en otro, fread no avisa: los bytes se interpretan mal y salen números sin sentido.",
+  "El binario guarda el valor exacto. Reales bin guarda cinco números en binario y en texto con dos decimales, y en otra ejecución los compara con los originales. Del binario vuelven los cinco iguales; del texto, solo dos: tres punto catorce no es tres punto catorce uno cinco nueve. Y la be del modo: en Windows, según la documentación de Microsoft, el modo texto convierte cada salto de línea al leer y al escribir, y eso alteraría los bytes de un archivo binario. En Linux la be no cambia nada, medido. Se escribe siempre, para que funcione en los dos.",
+  "Así se arma un programa que conserva sus datos. Al iniciar, carga el archivo. Si no existe, no es un error: es la primera ejecución, y el programa empieza vacío. Después trabaja en memoria con su menú, y al salir guarda todo. En la primera ejecución se agregan dos productos. En la segunda, el programa los carga del archivo, se cambian unas existencias, y al salir se guardan otra vez. Esto es lo que pide el proyecto: cargar al iniciar, guardar al salir, y funcionar la primera vez. Las funciones cargar y guardar son las de la diapositiva anterior, con dos arreglos en vez de tres. Pruébelo usted mismo: ejecútelo, agregue algo, salga y vuelva a ejecutarlo.",
+  "¿Cuál usar? El texto lo puede leer una persona y abrir una hoja de cálculo, pero hay que separar los campos al leer y los reales se guardan con los decimales del formato. El binario guarda un arreglo en una línea y los valores exactos, pero nadie lo puede leer y puede no servir en otro equipo con otros tamaños. Texto para datos que alguien revisa o exporta; binario para datos que solo usa el programa. En el proyecto se aceptan los dos; elija según quién va a leer el archivo. Si duda, empiece con texto: se puede revisar con el Bloc de notas mientras programa, y eso ayuda a encontrar errores.",
+  "Antes de dar por terminado un programa con archivos, revise esta lista: cada fopen pregunta por NULL; cada archivo tiene su fclose; el ciclo se controla con lo que devuelve la lectura, nunca con feof; un registro se acepta solo si sscanf leyó todos sus campos; baja y modificación con temporal, remove y después rename; y el programa funciona la primera vez, sin archivo. Esta semana: el formulario de veinte preguntas. La próxima semana, recursión: funciones que se llaman a sí mismas."
+];
+
+  function show(n){
+    if(n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('on');
+    slides[i].scrollTop = 0;
+    cur.textContent = String(i + 1);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+    notesText.textContent = NOTES[i];
+    notesTime.textContent = slides[i].getAttribute('data-t');
+  }
+  $('next').addEventListener('click', function(){ show(i + 1); });
+  $('prev').addEventListener('click', function(){ show(i - 1); });
+  var tn = $('toggleNotes');
+  tn.addEventListener('click', function(){
+    var on = notesBox.classList.toggle('on');
+    tn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'PageDown'){ show(i + 1); }
+    else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ show(i - 1); }
+    else if(e.key === 'n' || e.key === 'N'){ tn.click(); }
+  });
+
+  var DATA = {"mo": [{"cajas": [{"ex": true, "lineas": ["antes"]}], "m": "Elija un modo y si el archivo existe antes de abrirlo."}, {"cajas": [{"ex": true, "lineas": ["antes"], "nuevas": []}], "m": "<span class=\"mono\">fopen(\"datos.txt\", \"r\")</span>: se abre para leer. Con \"r\" no se escribe: el archivo queda igual. Antes de abrir, el archivo tenía «antes»."}, {"cajas": [{"ex": false, "lineas": [], "nuevas": []}], "m": "<span class=\"mono\">fopen(\"datos.txt\", \"r\")</span>: <b>fopen devuelve NULL</b>. No hay nada que leer y el archivo sigue sin existir. Antes de abrir, el archivo no existía."}, {"cajas": [{"ex": true, "lineas": ["nuevo"], "nuevas": [0]}], "m": "<span class=\"mono\">fopen(\"datos.txt\", \"w\")</span>: <b>«antes» desapareció</b>. \"w\" borró el contenido al abrir; quedó solo «nuevo». Antes de abrir, el archivo tenía «antes»."}, {"cajas": [{"ex": true, "lineas": ["nuevo"], "nuevas": [0]}], "m": "<span class=\"mono\">fopen(\"datos.txt\", \"w\")</span>: el archivo no existía; \"w\" lo creó, con «nuevo». Antes de abrir, el archivo no existía."}, {"cajas": [{"ex": true, "lineas": ["antes", "nuevo"], "nuevas": [1]}], "m": "<span class=\"mono\">fopen(\"datos.txt\", \"a\")</span>: «nuevo» quedó <b>después</b> de «antes»: \"a\" escribe al final. Antes de abrir, el archivo tenía «antes»."}, {"cajas": [{"ex": true, "lineas": ["nuevo"], "nuevas": [0]}], "m": "<span class=\"mono\">fopen(\"datos.txt\", \"a\")</span>: el archivo no existía; \"a\" lo creó, con «nuevo». Antes de abrir, el archivo no existía."}], "tp": [{"cajas": [{"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1004,Juan Paz,1.9", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"]}, {"ex": true, "lineas": []}], "m": "Abiertos: el original con \"r\" y <span class=\"mono\">temporal.csv</span> con \"w\", vacío. Se busca el código <b>1004</b>."}, {"cajas": [{"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1004,Juan Paz,1.9", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"], "hl": 0}, {"ex": true, "lineas": ["1001,Ana Rios,4.2"], "nuevas": [0]}], "m": "Línea 1: código 1001. Se copia al temporal con <span class=\"mono\">fputs</span>."}, {"cajas": [{"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1004,Juan Paz,1.9", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"], "hl": 1}, {"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8"], "nuevas": [1]}], "m": "Línea 2: código 1002. Se copia al temporal con <span class=\"mono\">fputs</span>."}, {"cajas": [{"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1004,Juan Paz,1.9", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"], "hl": 2}, {"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5"], "nuevas": [2]}], "m": "Línea 3: código 1003. Se copia al temporal con <span class=\"mono\">fputs</span>."}, {"cajas": [{"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1004,Juan Paz,1.9", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"], "hl": 3}, {"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5"], "nuevas": []}], "m": "Línea 4: código 1004. <b>Es el buscado: no se copia.</b>"}, {"cajas": [{"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1004,Juan Paz,1.9", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"], "hl": 4}, {"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1005,Eva Cano,4.8"], "nuevas": [3]}], "m": "Línea 5: código 1005. Se copia al temporal con <span class=\"mono\">fputs</span>."}, {"cajas": [{"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1004,Juan Paz,1.9", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"], "hl": 5}, {"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"], "nuevas": [4]}], "m": "Línea 6: código 1006. Se copia al temporal con <span class=\"mono\">fputs</span>."}, {"cajas": [{"ex": false, "lineas": []}, {"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"]}], "m": "Se cierran los dos. <span class=\"mono\">remove(\"estudiantes.csv\")</span>: el original <b>ya no existe</b>; los datos están a salvo en el temporal."}, {"cajas": [{"ex": true, "lineas": ["1001,Ana Rios,4.2", "1002,Luis Mora,2.8", "1003,Sara Gil,3.5", "1005,Eva Cano,4.8", "1006,Ivan Sosa,3.0"]}, {"ex": false, "lineas": []}], "m": "<span class=\"mono\">rename</span>: el temporal pasa a llamarse <span class=\"mono\">estudiantes.csv</span>. Quedan 5 registros, sin el 1004."}]};
+
+  /* ====== cajas de archivo (4 y 15) ====================================
+     Las líneas existen siempre (solo cambian su texto y su clase): la
+     diapositiva no cambia de alto al avanzar. Los estados los produjeron
+     programas reales (un programa por caso en la 4; una copia de baja.c
+     con un printf por línea en la 15).                                  */
+  function marcar(nom, k){
+    all('#' + nom + 'Btns .tbtn').forEach(function(o){ o.setAttribute('aria-pressed', +o.getAttribute('data-i') === k ? 'true' : 'false'); });
+  }
+  function pintarCaja(id, e){
+    var box = $(id);
+    box.classList.toggle('noex', !e.ex);
+    box.querySelector('.an i').textContent = e.ex ? (e.lineas.length ? e.lineas.length + (e.lineas.length === 1 ? ' línea' : ' líneas') : 'vacío') : 'no existe';
+    all('.al', box).forEach(function(l, j){
+      l.textContent = (e.ex && j < e.lineas.length) ? e.lineas[j] : '';
+      l.classList.toggle('hl', e.hl === j);
+      l.classList.toggle('nuevo', (e.nuevas || []).indexOf(j) >= 0);
+    });
+  }
+  function pintar(nom, k){
+    var e = DATA[nom][k];
+    marcar(nom, k);
+    e.cajas.forEach(function(c, j){ pintarCaja('arch-' + nom + '-' + j, c); });
+    $(nom + 'Msg').innerHTML = e.m;
+  }
+  all('.stepbtns').forEach(function(bx){
+    var nom = bx.getAttribute('data-k');
+    all('.tbtn', bx).forEach(function(b){ b.addEventListener('click', function(){ pintar(nom, +b.getAttribute('data-i')); }); });
+    pintar(nom, 0);
+  });
+
+  /* ====== 8, 14 y 21 · predicciones ======================================= */
+  all('.pred .tbtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var pre = document.getElementById(b.getAttribute('data-o'));
+      var oculto = pre.classList.toggle('hid');
+      b.textContent = oculto ? 'Ver salida' : 'Ocultar';
+    });
+  });
+
+  /* ====== 27 · lista de chequeo =================================== */
+  var chks = all('#lista .chk');
+  var MSG = ['empiece por la primera', 'siga', 'va bien', 'la mitad', 'ya casi', 'falta una', 'lista completa'];
+  chks.forEach(function(c){
+    c.addEventListener('click', function(){
+      c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      var n = chks.filter(function(x){ return x.getAttribute('aria-pressed') === 'true'; }).length;
+      $('tallyN').textContent = n;
+      $('tallyMsg').textContent = MSG[n];
+    });
+  });
+
+  show(0);
+})();
+</script>
